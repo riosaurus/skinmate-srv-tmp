@@ -1,5 +1,4 @@
-const client = require("./Client");
+const Client = require("./Client");
+const Doctor = require("./Doctor");
 
-module.exports = {
-    Client: client
-}
+module.exports = { Client, Doctor };
