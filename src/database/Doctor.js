@@ -1,7 +1,6 @@
 const mongoose=require('mongoose')
 const validator=require('validator')
 
-
 const DoctorSchema=new mongoose.Schema({
     name:{
         type:String,
