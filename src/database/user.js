@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
         type:String,
         required:true,
         unique:true,
+        trim:true,
         toLowerCase:true,
         validate(email){
             if(!validator.isEmail(email)){
@@ -20,11 +21,19 @@ const userSchema = new mongoose.Schema({
     },
     password:{
         type:String,
-        required:true
+        required:true,
+        trim:true,
+        validate(value){
+            if(!validator.isStrongPassword(value)){
+                throw new Error('Invalid password')
+            }
+        }
+
 
     },
     name: {
         type:String,
+        trim:true,
         default:'abc'
 
     },
@@ -32,6 +41,7 @@ const userSchema = new mongoose.Schema({
  type:String,
  required:true
     },
+
     devices: [
         {
             type:mongoose.Schema.Types.ObjectId,
