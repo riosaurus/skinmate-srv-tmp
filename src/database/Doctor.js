@@ -27,6 +27,7 @@ const _schema = new Schema({
         required: true,
     },
     slots: {
+        type:Schema.Types.ObjectId,
         default:[],
         ref: 'Slots'
     }
