@@ -11,7 +11,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    await Client.deleteMany();
+    await Client.model.deleteMany();
     await database.connection.close();
 });
 

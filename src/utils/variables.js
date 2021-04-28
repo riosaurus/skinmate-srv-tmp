@@ -18,5 +18,5 @@ module.exports = {
      * MongoDB connection URI
      * @default test (fallback collection)
      */
-    MONGO_URI: () => process.env['DB_URI'] || "mongodb://127.0.0.1:27017/test"
+    MONGO_URI: () => process.env['MONGO_URI'] || "mongodb://127.0.0.1:27017/test"
 }

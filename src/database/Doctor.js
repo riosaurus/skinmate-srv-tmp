@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose');
 const validator = require('validator');
 
+
 const _schema = new Schema({
     name: {
         type: String,
@@ -15,6 +16,7 @@ const _schema = new Schema({
         validate: { validator: validator.isEmail, message: "Invalid email address" }
     },
     phone: {
+        type: String,
         required: true,
         unique: true,
     },
@@ -27,8 +29,9 @@ const _schema = new Schema({
         required: true,
     },
     slots: {
-        default:[],
-        ref: 'Slots'
+        type: Schema.Types.ObjectId,
+        ref: 'Slots',
+        default: [],
     }
 });
 

@@ -2,9 +2,10 @@ const { Schema, model } = require("mongoose");
 
 
 const _schema = new Schema({
-    userId: {
-        type: Schema.Types.ObjectId
-        // TODO: reference User._id
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     },
     userAgent: {
         type: String,
@@ -18,21 +19,9 @@ const _schema = new Schema({
     timestamps: true
 });
 
-clientSchema.pre("save", function () {
+_schema.pre("save", function () {
     this.token = sign(this.id, Environment.TOKEN_KEY());
 });
-
-clientSchema.statics['findByToken'] = async function (token) {
-    return this.findOne({ token });
-}
-
-clientSchema.statics["registerClient"] = async function (userid, device) {
-    return this.create({ userid, device });
-}
-
-clientSchema.statics["revokeClient"] = async function (userid, token) {
-    return this.findOneAndDelete({ userid, token });
-}
 
 const _model = model("Client", _schema);
 
