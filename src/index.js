@@ -19,7 +19,7 @@ const argv = yargs(process.argv.slice(2))
     })
     .parse();
 
-config({ path: argv.development ? ".env" : ".env.test" });
+config({ path: argv.development ? ".test.env" : ".env" });
 
 process.stdout.write("[+] connecting to mongodb");
 connect(Environment.MONGO_URI(), { useCreateIndex: true, useNewUrlParser: true, useUnifiedTopology: true })
