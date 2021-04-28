@@ -15,19 +15,38 @@ afterAll(async () => {
     await database.connection.close();
 });
 
-describe("Unit tests for User model", () => {
-
-    const dummyUser = {
-        email: "dummy@dummy.com",
-        phone: "+919191919191",
-        password: "#$Strong^20Password",
-        name: "Dumb Dummy",
-        address: "#1-100/1, Dummy Residence, Dummy Town - 000001",
-        userAgent: "SomeImaginaryDevice"
-    };
+describe("Testing User model", () => {
     
-    it("Must register user", () => {
-        expect(User.model.create(dummyUser))
-            .resolves;
+    it("must throw invalid email address error", () => {
+        expect(User.model.create({
+            email: "dummy@dummy.",
+            password: "#@!Qwerdfc1204",
+            phone: "+919233239087",
+            address: "qwert, gjfkslcmvn - 904459"
+        }))
+        .rejects
+        .toThrowError("Invalid email address");
+    });
+
+    it("must throw weak password error", () => {
+        expect(User.model.create({
+            email: "dummy@dummy.com",
+            password: "#1204",
+            phone: "+919233239087",
+            address: "qwert, gjfkslcmvn - 904459"
+        }))
+        .rejects
+        .toThrowError("Weak password");
+    });
+
+    it("must throw invalid phone number error", () => {
+        expect(User.model.create({
+            email: "dummy@dummy.com",
+            password: "#@!Qwerdfc1204",
+            phone: "+91233239087",
+            address: "qwert, gjfkslcmvn - 904459"
+        }))
+        .rejects
+        .toThrowError("Invalid phone number");
     });
 });

@@ -1,7 +1,7 @@
 const { Schema, model } = require('mongoose');
 const { genSalt, hash } = require('bcryptjs');
 const validator = require('validator');
-const Client = require('./Client');
+
 
 const _schema = new Schema({
     email: {
