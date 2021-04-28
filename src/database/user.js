@@ -1,7 +1,8 @@
-const { Schema, model } = require('mongoose')
-const validator = require('validator')
+const { Schema, model } = require('mongoose');
+const validator = require('validator');
+const Client = require('./Client');
 
-const userSchema = new Schema({
+const _schema = new Schema({
     email: {
         type: String,
         required: true,
@@ -10,49 +11,45 @@ const userSchema = new Schema({
         validate: { validator: validator.isEmail, message: "Invalid email address" }
     },
     phone: {
-        type:String,
-        required:true,
-        unique:true
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+        validate: { validator: validator.isMobilePhone, message: "Invalid phone number" }
     },
-    password:{
-        type:String,
-        required:true
-
+    password: {
+        type: String,
+        required: true,
+        trim: true,
+        validate: { validator: validator.isStrongPassword, message: "Weak password" }
     },
     name: {
-        type:String,
-        default:'abc'
-
+        type: String,
+        trim: true,
+        default: "User"
     },
     address: {
- type:String,
- required:true
+        type: String,
+        required: true
     },
-    devices: [
-        {
-            type:mongoose.Schema.Types.ObjectId,
-            required:true,
-            ref:'Client'
-        }
-    ],
-    family: [
-
-    ],
- 
-    
+    devices: [{
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: Client.schema
+    }],
+    family: [],
     verifiedPhone: {
-        type:Boolean,
-        default:false
-
+        type: Boolean,
+        default: false
     },
     verifiedEmail : {
-        type:Boolean,
-        default:false
-
+        type: Boolean,
+        default: false
     }
+}, {
+    timestamps: true
+});
 
-})
+const _model = model('User',userSchema)
 
-const User = mongoose.model('User',userSchema)
-
-module.exports = User
+module.exports = { schema: _schema, model: _model };
