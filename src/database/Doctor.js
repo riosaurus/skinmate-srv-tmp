@@ -14,9 +14,11 @@ const _schema = new Schema({
         toLowerCase: true,
         validate: { validator: validator.isEmail, message: "Invalid email address" }
     },
-    phone: {
+    phone:{
+        type: String,
         required: true,
-        unique: true,
+        trim:true,
+        validate: { validator: validator.isMobilePhone, message: "Invalid phone number" }  
     },
     avatar: {
         type: Buffer,
@@ -30,6 +32,7 @@ const _schema = new Schema({
         type:Schema.Types.ObjectId,
         default:[],
         ref: 'Slots'
+        
     }
 });
 

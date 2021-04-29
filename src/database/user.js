@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose');
+const bcrypt=require('bcryptjs')
 const validator = require('validator');
 const Client = require('./Client');
 
@@ -35,7 +36,7 @@ const _schema = new Schema({
     devices: [{
         type: Schema.Types.ObjectId,
         required: true,
-        ref: Client.schema
+        ref: 'Client'
     }],
     family: [],
     verifiedPhone: {
@@ -49,7 +50,16 @@ const _schema = new Schema({
 }, {
     timestamps: true
 });
-
-const _model = model('User',userSchema)
+_schema.methods.toJSON=function(){
+    let userObject=this.user.toObject()
+    delete userObject.password
+    return userObject
+}
+_schema.pre('save',async function(){
+    if(this.user.password.modified){
+        user.password=await bcrypt.hash(this.user.password,8)
+    }
+})
+const _model = model('User',_schema)
 
 module.exports = { schema: _schema, model: _model };
