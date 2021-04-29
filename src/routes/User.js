@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const { Router, urlencoded } = require('express');
 const { User, Client } = require('../database');
 
@@ -33,22 +34,30 @@ router.post(
       });
 
       // Validate the document before generating a client
-      await user.validate();
+      await user.validate()
+        .catch((error) => {
+          console.error(error);
+          response.status(412);
+          throw new Error(`Invalid details: ${error.message}`);
+        });
 
       // On-register-direct-login approach
-      const client = await Client.addDevice(user, request.headers['user-agent']);
+      const client = await Client.addDevice(user, request.headers['user-agent'])
+        .catch((error) => {
+          console.error(error);
+          response.status(500);
+          throw new Error('Couldn\'t add client');
+        });
 
       // Assign client access to the user
       user.linkClient().addDevice(request.headers['user-agent'])
         .catch((error) => {
-          // eslint-disable-next-line no-console
           console.error(error);
           response.status(500);
           throw new Error('User created; Failed to register device');
         });
 
       await user.save().catch((error) => {
-        // eslint-disable-next-line no-console
         console.error(error);
         response.status(500);
         throw new Error(`Couldn't create user: ${error.message}`);
