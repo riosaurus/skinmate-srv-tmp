@@ -126,15 +126,11 @@
 { }
 ```
 
-***
-
 **Possible errors**
 
 | Status | Message |
 | --: | --- |
 | 400 | Unrecognized user-agent |
-
-***
 
 * This route doesn't send any data with response (if no error)
 
@@ -158,15 +154,13 @@
 }
 ```
 
-***
-
 **Possible errors**
 
 | Status | Message |
 | --: | --- |
 | 400 | Unrecognized user-agent |
 
-***
+**Note**
 
 * This route always responds with **user-profile** pattern (if no error)
 
@@ -188,15 +182,13 @@
 { }
 ```
 
-***
-
 **Possible errors**
 
 | Status | Message |
 | --: | --- |
 | 400 | Unrecognized user-agent |
 
-***
+**Note**
 
 * This route doesn't send any data with response (if no error)
 
@@ -220,15 +212,13 @@
 }
 ```
 
-***
-
 **Possible errors**
 
 | Status | Message |
 | --: | --- |
 | 400 | Unrecognized user-agent |
 
-***
+**Note**
 
 * This route always responds with **user-profile** pattern (if no error)
 
