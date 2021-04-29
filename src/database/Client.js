@@ -23,23 +23,6 @@ const schema = new Schema({
   timestamps: true,
 });
 
-<<<<<<< HEAD
-_schema.pre("save", function () {
-    this.token = sign(this.id, Environment.TOKEN_KEY());
-});
-
-_schema.statics['findByToken'] = async function (token) {
-    return this.findOne({ token });
-}
-
-_schema.statics["registerClient"] = async function (userid, device) {
-    return this.create({ userid, device });
-}
-
-_schema.statics["revokeClient"] = async function (userid, token) {
-    return this.findOneAndDelete({ userid, token });
-}
-=======
 /**
  * Pre save hook to sign a JWT
  */
@@ -65,7 +48,6 @@ schema.statics.addDevice = function addDevice(user, userAgent) {
 schema.statics.removeUserDevices = function removeUserDevices(user) {
   return this.deleteMany({ user });
 };
->>>>>>> 882b4228f4942b9c3aeae3851ce841b9fe55401a
 
 /**
  * Find a device asscociated with the device

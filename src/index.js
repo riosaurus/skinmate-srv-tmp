@@ -3,9 +3,11 @@ const { config } = require('dotenv');
 const yargs = require('yargs');
 const { connect } = require('mongoose');
 const { Environment } = require('./utils');
-const {UserRouter}=require('./routes')
+const { UserRouter } = require('./routes');
+
 const App = express();
-App.use('/user',UserRouter)
+App.use(UserRouter);
+
 const argv = yargs(process.argv.slice(2))
   .options({
     development: {

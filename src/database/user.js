@@ -1,9 +1,5 @@
 const { Schema, model } = require('mongoose');
-<<<<<<< HEAD
-const bcrypt=require('bcryptjs')
-=======
 const { genSalt, hash, compare } = require('bcryptjs');
->>>>>>> 882b4228f4942b9c3aeae3851ce841b9fe55401a
 const validator = require('validator');
 
 /**
@@ -26,26 +22,15 @@ const schema = new Schema({
       validator: validator.isMobilePhone,
       message: 'Invalid phone number',
     },
-<<<<<<< HEAD
-    devices: [{
-        type: Schema.Types.ObjectId,
-        required: true,
-        ref: 'Client'
-    }],
-    family: [],
-    verifiedPhone: {
-        type: Boolean,
-        default: false
-=======
   },
   password: {
     type: String,
     required: true,
     trim: true,
+    select: false,
     validate: {
       validator: validator.isStrongPassword,
       message: 'Weak password',
->>>>>>> 882b4228f4942b9c3aeae3851ce841b9fe55401a
     },
   },
   name: {
@@ -88,19 +73,6 @@ schema.pre('save', async function preSave() {
     this.password = hashed;
   }
 });
-<<<<<<< HEAD
-_schema.methods.toJSON=function(){
-    let userObject=this.user.toObject()
-    delete userObject.password
-    return userObject
-}
-_schema.pre('save',async function(){
-    if(this.user.password.modified){
-        user.password=await bcrypt.hash(this.user.password,8)
-    }
-})
-const _model = model('User',_schema)
-=======
 
 /**
  * Static method to find a user by email
@@ -117,7 +89,8 @@ schema.statics.findByEmail = async function findByEmail(email) {
  * @returns {Promise<boolean>}
  */
 schema.methods.isPasswordMatch = async function isPasswordMatch(password) {
-  return compare(password, this.password);
+  const hashed = await this.select('password').exec();
+  return compare(password, hashed);
 };
 
 /**
@@ -164,7 +137,6 @@ schema.methods.deactivate = function deactivate() {
   if (this.isDeleted) throw new Error('Already deactivated');
   this.isDeleted = true;
 };
->>>>>>> 882b4228f4942b9c3aeae3851ce841b9fe55401a
 
 /**
  * User model
