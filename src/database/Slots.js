@@ -1,25 +1,36 @@
 const { Schema, model } = require('mongoose');
 
-const _schema = new Schema({
-    day: {
-        type: Date,
-        default: Date.now
-    },
-    doctor: {
-        type: Schema.Types.ObjectId,
-        ref: 'Doctor',
-        required: true
-    },
-    slots: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Slot'
-    }]
+const schema = new Schema({
+  day: {
+    type: Number,
+    min: 0,
+    max: 6,
+  },
+  doctor: {
+    type: Schema.Types.ObjectId,
+    ref: 'Doctor',
+    required: true,
+  },
+  slots: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Slot',
+  }],
 }, {
-    timestamps: true
+  timestamps: true,
 });
 
-_schema.index({ day: 1, doctor: 1 }, { unique: true });
+schema.index({ day: 1, doctor: 1 }, { unique: true });
 
-const _model = model("Slots", _schema);
+// <hooks>
 
-module.exports = { schema: _schema, model: _model };
+// </hooks>
+
+// <statics>
+
+// </statics>
+
+// <methods>
+
+// </methods>
+
+module.exports = model('Slots', schema);
