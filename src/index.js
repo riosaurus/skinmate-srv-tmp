@@ -5,6 +5,7 @@ const { connect } = require('mongoose');
 const { Environment } = require('./utils');
 const {UserRouter}=require('./routes')
 const App = express();
+App.use(express.json())
 App.use('/user',UserRouter)
 const argv = yargs(process.argv.slice(2))
   .options({

@@ -1,7 +1,6 @@
 const express=require('express')
 const Router=express.Router()
 const {User}=require('../database')
-
 Router.post('/create',async(req,res)=>{
       try{
             let user=new User(req.body)
@@ -9,7 +8,7 @@ Router.post('/create',async(req,res)=>{
             res.status(201).send(user)
       }
       catch(error){
-            res.status(500).send(error)
+            res.status(403).send(error)
       }
 })
 
