@@ -26,10 +26,15 @@ const schema = new Schema({
     type: String,
     required: true,
   },
-  slots: {
-    type: Schema.Types.ObjectId,
-    ref: 'Slots',
-  },
+  busySlots:[{
+    date:{
+        type:Date,
+    },
+    time:[{
+        type:String
+    }]
+}     
+]
 });
 
 module.exports =model('Doctor', schema)

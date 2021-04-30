@@ -1,7 +1,8 @@
 const { Router, response, request } = require("express");
 const Doctor = require("../database/Doctor");
 const { route } = require("./User");
-
+const multer  = require('multer')
+const sharp = require('sharp')
 const router=Router()
 
 //doctor creation
@@ -108,5 +109,62 @@ router.delete(
      }
   }
 )
- 
+router.get(
+  '/accounts/:userid',
+  middlewares.inflate({
+    strict: true, token: true, userAgent: true, deviceId: true,
+  }),
+  async (request, response) => {
+    try {
+      // Get the client document
+      const client = await Client.findOne({
+        _id: request.params.deviceId,
+        user: request.params.userid,
+        token: request.params.token,
+        userAgent: request.params.userAgent,
+      });
+
+      // Check if client belongs to user
+      if (client.user.toString() !== request.params.userid) {
+        response.status(403);
+        throw new Error('Device isn\'t registered with user');
+      }
+
+      // Get the user
+      const user = await User.findById(request.params.userid);
+
+      // Send user data
+      response.json(user);
+    } catch (error) {
+      console.error(error);
+      response.send(error.message);
+    }
+  },
+);
+
+const upload = multer({
+  limits:{
+    fileSize:1000000,
+  },
+  fileFilter(request,file,cb)
+  {
+    if(!file.originalname.match(/\.(jpg|jpeg|png)$/)) 
+    return cb(new Error('pelase upload a jpeg or jpg or png'))
+
+    cb(null,true)
+  }
+})
+
+
+router.post(
+  '/doctor/:id/avatar',upload.single('file'),
+  async (request,response) => {
+  const buffer = await sharp(request.file.buffer).png().toBuffer()
+  const doctor = await Doctor.findById(request.params.id)
+  doctor.avatar = buffer
+  await doctor.save()
+  response.send()
+},(error,request,response,next) => {
+  response.status(400).send({error})
+})
 module.exports=router

@@ -1,21 +1,24 @@
 const { Schema, model } = require('mongoose');
 
 const schema = new Schema({
-  doctor: {
+  doctorId: {
     type: Schema.Types.ObjectId,
     required: true,
     ref: 'Doctor',
   },
-  user: {
+  userId: {
     type: Schema.Types.ObjectId,
     required: true,
     ref: 'User',
   },
-  slot: {
-    type: Schema.Types.ObjectId,
-    required: true,
-    ref: 'Slots',
-  },
+  date:{
+    type:Date,
+    required:true
+    },
+  time:[{
+        type:String,
+        required:true
+    }]  
 }, {
   timestamps: true,
 });
