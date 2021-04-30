@@ -41,6 +41,7 @@
     emailVerified: boolean, // Email verification status
     createdAt: Date,    // Date of account creation
     updatedAt: Date,    // Date of last account updation
+    __v?: Number,   // Document version
 }
 // Fields marked with a * mark are to be implemented in forthcoming versions.
 ```
