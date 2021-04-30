@@ -2,7 +2,7 @@ const { Schema, model } = require('mongoose');
 const validator = require('validator');
 
 const schema = new Schema({
-  name: {
+  name:{
     type: String,
     required: true,
     trim: true,
@@ -21,7 +21,6 @@ const schema = new Schema({
   },
   avatar: {
     type: Buffer,
-    default: [],
   },
   qualification: {
     type: String,
@@ -38,4 +37,4 @@ const schema = new Schema({
 ]
 });
 
-module.exports = model('Doctor', schema);
+module.exports =model('Doctor', schema)

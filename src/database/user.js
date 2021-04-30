@@ -73,6 +73,12 @@ usersSchema.pre('save', async function preSave() {
   }
 });
 
+// schema.methods.toJSON=async function(){
+//   let user=this
+//    let userObject=user.toObject()
+//    delete userObject.password
+//    return userObject
+// }
 /**
  * User model
  */
