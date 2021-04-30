@@ -5,7 +5,7 @@ const validator = require('validator');
 /**
  * User schema
  */
-const schema = new Schema({
+const usersSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
@@ -63,10 +63,18 @@ const schema = new Schema({
   timestamps: true,
 });
 
+
+usersSchema.virtual('appointments',{
+  ref:'Appointment',
+  localField:'_id',
+  foreignField:'appointmentOwner'
+
+})
+
 /**
  * Pre save hook to hash password on user creation & password updation
  */
-schema.pre('save', async function preSave() {
+usersSchema.pre('save', async function preSave() {
   if (this.isModified('password')) {
     const salt = await genSalt(8);
     const hashed = await hash(this.password, salt);
@@ -79,7 +87,7 @@ schema.pre('save', async function preSave() {
  * @param {string} email
  * @returns {Promise<Document | null>} User Document or null if user doesn't exist
  */
-schema.statics.findByEmail = async function findByEmail(email) {
+usersSchema.statics.findByEmail = async function findByEmail(email) {
   return this.findOne({ email, isDeleted: { $ne: true } });
 };
 
@@ -88,7 +96,7 @@ schema.statics.findByEmail = async function findByEmail(email) {
  * @param {string} password plaintext
  * @returns {Promise<boolean>}
  */
-schema.methods.isPasswordMatch = async function isPasswordMatch(password) {
+usersSchema.methods.isPasswordMatch = async function isPasswordMatch(password) {
   const hashed = await this.select('password').exec();
   return compare(password, hashed);
 };
@@ -98,7 +106,7 @@ schema.methods.isPasswordMatch = async function isPasswordMatch(password) {
  * @param {Client} client Client instance
  * @returns {void}
  */
-schema.methods.linkClient = function addClient(client) {
+usersSchema.methods.linkClient = function addClient(client) {
   this.devices.push(client);
 };
 
@@ -107,7 +115,7 @@ schema.methods.linkClient = function addClient(client) {
  * @param {Client} client Client instance
  * @returns {void}
  */
-schema.methods.unlinkClient = async function removeClient(client) {
+usersSchema.methods.unlinkClient = async function removeClient(client) {
   this.devices = this.devices.filter((device) => device.id !== client.id);
 };
 
@@ -116,7 +124,7 @@ schema.methods.unlinkClient = async function removeClient(client) {
  * (Logout everywhere)
  * @returns {void}
  */
-schema.methods.removeAllClients = function removeClient() {
+usersSchema.methods.removeAllClients = function removeClient() {
   this.devices = [];
 };
 
@@ -124,7 +132,7 @@ schema.methods.removeAllClients = function removeClient() {
  * Method to activate a user (restore)
  * @returns {void}
  */
-schema.methods.activate = function activate() {
+usersSchema.methods.activate = function activate() {
   if (!this.isDeleted) throw new Error('Already active');
   this.isDeleted = false;
 };
@@ -133,7 +141,7 @@ schema.methods.activate = function activate() {
  * Method to soft-delete a user
  * @returns {void}
  */
-schema.methods.deactivate = function deactivate() {
+usersSchema.methods.deactivate = function deactivate() {
   if (this.isDeleted) throw new Error('Already deactivated');
   this.isDeleted = true;
 };
@@ -141,4 +149,4 @@ schema.methods.deactivate = function deactivate() {
 /**
  * User model
  */
-module.exports = model('User', schema);
+module.exports = model('User', usersSchema);
