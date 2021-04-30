@@ -42,10 +42,6 @@ const schema = new Schema({
     type: String,
     required: true,
   },
-  devices: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Client',
-  }],
   family: [],
   verifiedPhone: {
     type: Boolean,
@@ -98,7 +94,7 @@ schema.methods.isPasswordMatch = async function isPasswordMatch(password) {
  * @param {Client} client Client instance
  * @returns {void}
  */
-schema.methods.linkClient = async function addClient(client) {
+schema.methods.linkClient = function addClient(client) {
   this.devices.push(client);
 };
 
