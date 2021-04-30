@@ -5,7 +5,7 @@ const validator = require('validator');
 /**
  * User schema
  */
-const usersSchema = new mongoose.Schema({
+const usersSchema = new Schema({
   email: {
     type: String,
     required: true,
@@ -55,21 +55,20 @@ const usersSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  avatar:{
-    type:Buffer,
-    default:123
-  }
+  avatar: {
+    type: Buffer,
+    default: 123,
+  },
 }, {
   timestamps: true,
 });
 
+usersSchema.virtual('appointments', {
+  ref: 'Appointment',
+  localField: '_id',
+  foreignField: 'appointmentOwner',
 
-usersSchema.virtual('appointments',{
-  ref:'Appointment',
-  localField:'_id',
-  foreignField:'appointmentOwner'
-
-})
+});
 
 /**
  * Pre save hook to hash password on user creation & password updation
