@@ -1,6 +1,5 @@
 const { Router, response, request } = require("express");
 const Doctor = require("../database/Doctor");
-const { route } = require("./User");
 const multer  = require('multer')
 const sharp = require('sharp')
 const router=Router()
