@@ -1,7 +1,9 @@
 /* eslint-disable no-console */
 const { Router, urlencoded } = require('express');
+const multer  = require('multer')
 const { User, Client } = require('../database');
 const { middlewares } = require('../utils');
+
 
 const router = Router();
 
@@ -94,6 +96,34 @@ router.get(
     }
   },
 );
+
+const upload = multer({
+  limits:{
+    fileSize:1000000
+  },
+  fileFilter(req,file,cb)
+  {
+    if(!file.originalname.match(/\.(jpg|jpeg|png)$/)) 
+    return cb(new Error('pelase upload a jpeg or jpg or png'))
+
+    cb(null,true)
+  }
+})
+
+
+router.post('/accounts/:userid/avatar',upload.single('avatar'),async (request,response) => {
+
+  const buffer = await sharp(req.file.buffer).png().toBuffer()
+  const user = await User.findById(request.params.userid)
+  user.avatar = buffer
+  await user.save()
+
+  response.send()
+
+
+},(error,req,res,next) => {
+  res.status(400).send({error:error.message})
+})
 
 /**
  * User router
