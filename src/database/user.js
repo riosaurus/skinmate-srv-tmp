@@ -26,8 +26,6 @@ const schema = new Schema({
   password: {
     type: String,
     required: true,
-    trim: true,
-    select: false,
     validate: {
       validator: validator.isStrongPassword,
       message: 'Weak password',
@@ -53,7 +51,7 @@ const schema = new Schema({
   },
   isDeleted: {
     type: Boolean,
-    default: true,
+    default: false,
   },
 }, {
   timestamps: true,
@@ -76,6 +74,9 @@ schema.pre('save', async function preSave() {
  * @returns {Promise<Document | null>} User Document or null if user doesn't exist
  */
 schema.statics.findByEmail = async function findByEmail(email) {
+  if (!validator.default.isEmail(email)) {
+    throw new Error('Provide a valid email address');
+  }
   return this.findOne({ email, isDeleted: { $ne: true } });
 };
 
@@ -85,53 +86,8 @@ schema.statics.findByEmail = async function findByEmail(email) {
  * @returns {Promise<boolean>}
  */
 schema.methods.isPasswordMatch = async function isPasswordMatch(password) {
-  const hashed = await this.select('password').exec();
-  return compare(password, hashed);
-};
-
-/**
- * Method to add the client access to user devices
- * @param {Client} client Client instance
- * @returns {void}
- */
-schema.methods.linkClient = function addClient(client) {
-  this.devices.push(client);
-};
-
-/**
- * Method to remove a client from user devices
- * @param {Client} client Client instance
- * @returns {void}
- */
-schema.methods.unlinkClient = async function removeClient(client) {
-  this.devices = this.devices.filter((device) => device.id !== client.id);
-};
-
-/**
- * Method to remove complete client access for the user.
- * (Logout everywhere)
- * @returns {void}
- */
-schema.methods.removeAllClients = function removeClient() {
-  this.devices = [];
-};
-
-/**
- * Method to activate a user (restore)
- * @returns {void}
- */
-schema.methods.activate = function activate() {
-  if (!this.isDeleted) throw new Error('Already active');
-  this.isDeleted = false;
-};
-
-/**
- * Method to soft-delete a user
- * @returns {void}
- */
-schema.methods.deactivate = function deactivate() {
-  if (this.isDeleted) throw new Error('Already deactivated');
-  this.isDeleted = true;
+  // const hashed = await this.select('password').exec();
+  return compare(password, this.password);
 };
 
 /**

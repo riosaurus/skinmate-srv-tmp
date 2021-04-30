@@ -54,7 +54,7 @@
 /**
  * @method {POST}
  * @path {/accounts}
- * @param {none}
+ * @requires `user-agent`
  * @body {x-www-form-urlencoded}
  * */
 {
@@ -69,12 +69,12 @@
 
 | Status | Message |
 | --: | --- |
-| 400 | Unrecognized user-agent |
-| 409 | Email already in use |
-| 412 | Validation failed (validation message) |
+| 403 | No user-agent |
 | 403 | Device already in use |
-| 500 | User created; Failed to register device |
+| 409 | Email already in use |
+| 412 | Validation failure message |
 | 500 | Couldn't create user: (error message) |
+| 500 | Couldn't add client |
 
 **Note**
 
@@ -92,8 +92,8 @@
 ```js
 /**
  * @method {GET}
- * @path {/accounts/:userid:}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts}
+ * @required `access-token` `device-id`
  * @body {none}
  * */
 { }
@@ -103,13 +103,17 @@
 
 | Status | Message |
 | --: | --- |
-| 400 | Unrecognized user-agent |
+| 401 | No access-token |
+| 401 | Invalid token |
+| 403 | No device-id |
+| 404 | Client doesn't exist |
+| 500 | any |
 
 **Note**
 
 * This route always responds with **user-profile** pattern (if no error)
 
-> Example: `[GET] http://domain.com/accounts/608a27075ca1962a18eabd3a`
+> Example: `[GET] http://domain.com/accounts`
 
 ***
 
@@ -120,8 +124,7 @@
 ```js
 /**
  * @method {GET}
- * @path {/accounts/:userid:/verify/otp}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts/verify/otp}
  * @body {none}
  * */
 { }
@@ -135,7 +138,7 @@
 
 * This route doesn't send any data with response (if no error)
 
-> Example: `[GET] http://domain.com/accounts/608a27075ca1962a18eabd3a/verify/otp`
+> Example: `[GET] http://domain.com/accounts/verify/otp`
 
 ***
 
@@ -146,8 +149,7 @@
 ```js
 /**
  * @method {POST}
- * @path {/accounts/:userid:/verify/otp}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts/verify/otp}
  * @body {x-www-form-urlencoded}
  * */
 {
@@ -176,8 +178,7 @@
 ```js
 /**
  * @method {GET}
- * @path {/accounts/:userid:/verify/email}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts/verify/email}
  * @body {none}
  * */
 { }
@@ -204,8 +205,7 @@
 ```js
 /**
  * @method {POST}
- * @path {/accounts/:userid:/verify/email}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts/verify/email}
  * @body {x-www-form-urlencoded}
  * */
 {
@@ -224,5 +224,32 @@
 * This route always responds with **user-profile** pattern (if no error)
 
 > Example: `[GET] http://domain.com/accounts/608a27075ca1962a18eabd3a/verify/email`
+
+***
+
+### Deleting user
+
+**Request structure**
+
+```js
+/**
+ * @method {DELETE}
+ * @path {/accounts}
+ * @body {x-www-form-urlencoded}
+ * */
+{ }
+```
+
+**Possible errors**
+
+| Status | Message |
+| --: | --- |
+| 400 | Unrecognized user-agent |
+
+**Note**
+
+* This route always has a blank response (if no error)
+
+> Example: `[DELETE] http://domain.com/accounts`
 
 ***

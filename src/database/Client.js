@@ -1,7 +1,17 @@
 const { Schema, model } = require('mongoose');
-const { sign } = require('jsonwebtoken');
-const validator = require('validator');
-const { constants } = require('../utils');
+const { sign, verify } = require('jsonwebtoken');
+const constants = require('../utils/variables');
+
+function tokenValidator() {
+  try {
+    if (verify(this.token, constants.token())) {
+      return true;
+    }
+    return false;
+  } catch (error) {
+    return false;
+  }
+}
 
 /**
  * Client schema
@@ -19,7 +29,7 @@ const schema = new Schema({
   token: {
     type: String,
     unique: true,
-    validate: { validator: validator.default.isJWT, message: 'Invalid token' },
+    validate: { validator: tokenValidator, message: 'Invalid token' },
   },
 }, {
   timestamps: true,
@@ -31,15 +41,6 @@ const schema = new Schema({
 schema.pre('save', function preSave() {
   this.token = sign(this.id, constants.token());
 });
-
-/**
- * Find a device asscociated with the device
- * @param {string} token JWT token
- * @returns {Document<Client>} Client document
- */
-schema.statics.findByToken = function findByToken(token) {
-  return this.findOne({ token });
-};
 
 /**
  * Client model

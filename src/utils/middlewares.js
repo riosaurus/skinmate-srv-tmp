@@ -1,44 +1,64 @@
-const validator = require('validator');
+const { Client } = require('../database');
 
 /**
- * Inflates request extras from incoming requests to `request.params`.
- * @return {RequestHandler} middleware
+ * Middleware to parse & enforce client security
+ * @param {boolean} inflate Inflate to `request.params`
+ * @default true
+ * @param {boolean} verify Verify Client
+ * @default false
+ * @returns {RequestHandler} Express middleware
  */
-function inflate({
-  strict, token, userAgent, deviceId,
-}) {
+function clientParser(inflate = true, verify = false, strict = true) {
   return async function middleware(request, response, next) {
     try {
-      if (token) {
-        if (strict && !request.headers['access-token']) {
-          response.status(401);
-          throw new Error('No token');
-        }
-        if (!validator.default.isJWT(request.headers['access-token'].toString())) {
-          response.status(401);
-          throw new Error('Invalid token');
-        }
+      if (strict && !request.headers['access-token']) {
+        response.status(401);
+        throw new Error('access-token required');
+      }
+
+      if (inflate && request.headers['access-token']) {
         request.params.token = request.headers['access-token'].toString();
       }
 
-      if (userAgent) {
-        if (strict && !request.headers['user-agent']) {
-          response.status(401);
-          throw new Error('user-agent not detected');
-        }
-        request.params.userAgent = request.headers['user-agent'] || '';
+      if (strict && !request.headers['user-agent']) {
+        response.status(403);
+        throw new Error('user-agent not detected');
       }
 
-      if (deviceId) {
-        if (strict && !request.headers['device-id']) {
-          response.status(403);
-          throw new Error('device-id not detected');
+      if (inflate && request.headers['user-agent']) {
+        request.params.userAgent = request.headers['user-agent'];
+      }
+
+      if (strict && !request.headers['device-id']) {
+        response.status(403);
+        throw new Error('device-id required');
+      }
+
+      if (inflate && request.headers['device-id']) {
+        request.params.deviceId = request.headers['device-id'].toString();
+      }
+
+      if (verify) {
+        const client = await Client.findOne({
+          _id: request.params.deviceId,
+          token: request.params.token,
+        });
+
+        // Check if client exists
+        if (!client) {
+          response.status(404);
+          throw new Error('Client doesn\'t exist');
         }
-        if (!validator.default.isMongoId(request.headers['device-id'].toString())) {
+
+        // Validate token
+        await client.validate().catch((error) => {
           response.status(401);
-          throw new Error('Invalid deviceId');
+          throw error;
+        });
+
+        if (inflate) {
+          request.params.userId = client.user.toString();
         }
-        request.params.deviceId = request.headers['device-id'] || '';
       }
 
       next();
@@ -48,18 +68,4 @@ function inflate({
   };
 }
 
-/**
- * Enforces strict security passes enabled for incoming requests.
- * @return {RequestHandler} middleware
- */
-function enforce() {
-  return async function middleware(request, response, next) {
-    try {
-      next();
-    } catch (error) {
-      response.send(error.message);
-    }
-  };
-}
-
-module.exports = { inflate, enforce };
+module.exports = { clientParser };
