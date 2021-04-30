@@ -1,3 +1,4 @@
-const Environment = require('./variables');
+const constants = require('./variables');
+const middlewares = require('./middlewares');
 
-module.exports = { Environment };
+module.exports = { constants, middlewares };

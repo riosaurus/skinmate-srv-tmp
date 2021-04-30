@@ -21,16 +21,4 @@ const schema = new Schema({
 
 schema.index({ day: 1, doctor: 1 }, { unique: true });
 
-// <hooks>
-
-// </hooks>
-
-// <statics>
-
-// </statics>
-
-// <methods>
-
-// </methods>
-
 module.exports = model('Slots', schema);

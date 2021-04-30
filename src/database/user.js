@@ -27,6 +27,7 @@ const schema = new Schema({
     type: String,
     required: true,
     trim: true,
+    select: false,
     validate: {
       validator: validator.isStrongPassword,
       message: 'Weak password',
@@ -41,10 +42,6 @@ const schema = new Schema({
     type: String,
     required: true,
   },
-  devices: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Client',
-  }],
   family: [],
   verifiedPhone: {
     type: Boolean,
@@ -94,7 +91,8 @@ schema.statics.findByEmail = async function findByEmail(email) {
  * @returns {Promise<boolean>}
  */
 schema.methods.isPasswordMatch = async function isPasswordMatch(password) {
-  return compare(password, this.password);
+  const hashed = await this.select('password').exec();
+  return compare(password, hashed);
 };
 
 /**
@@ -102,7 +100,7 @@ schema.methods.isPasswordMatch = async function isPasswordMatch(password) {
  * @param {Client} client Client instance
  * @returns {void}
  */
-schema.methods.linkClient = async function addClient(client) {
+schema.methods.linkClient = function addClient(client) {
   this.devices.push(client);
 };
 

@@ -1,3 +1,6 @@
-const UserRouter=require('./User')
-
-module.exports={UserRouter}
+const UserRouter = require('./User');
+const DoctorRouter=require('./Doctor')
+module.exports = {
+  UserRouter,
+  DoctorRouter
+};

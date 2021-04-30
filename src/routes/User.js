@@ -1,22 +1,19 @@
+/* eslint-disable no-console */
 const { Router, urlencoded } = require('express');
 const { User, Client } = require('../database');
+const { middlewares } = require('../utils');
 
 const router = Router();
 
 /**
- *
+ * `http POST` request handler for user creation
  */
 router.post(
   '/accounts',
   urlencoded({ extended: true }),
+  middlewares.inflate({ strict: true, userAgent: true }),
   async (request, response) => {
     try {
-      // Check if valid user-agent
-      if (!request.headers['user-agent']) {
-        response.status(400);
-        throw new Error('Unrecognized user-agent');
-      }
-
       // Check if user exists
       if (await User.exists({ email: request.body.email })) {
         response.status(409);
@@ -33,29 +30,66 @@ router.post(
       });
 
       // Validate the document before generating a client
-      await user.validate();
-
-      // On-register-direct-login approach
-      const client = await Client.addDevice(user, request.headers['user-agent']);
-
-      // Assign client access to the user
-      user.linkClient().addDevice(request.headers['user-agent'])
+      await user.validate()
         .catch((error) => {
-          // eslint-disable-next-line no-console
           console.error(error);
-          response.status(500);
-          throw new Error('User created; Failed to register device');
+          response.status(412);
+          throw new Error(`Invalid details: ${error.message}`);
         });
 
       await user.save().catch((error) => {
-        // eslint-disable-next-line no-console
         console.error(error);
         response.status(500);
         throw new Error(`Couldn't create user: ${error.message}`);
       });
 
-      response.status(201).json(client.toJSON({ useProjection: true }));
+      // On-register-direct-login approach
+      const client = await Client.create({ user: user.id, userAgent: request.headers['user-agent'] })
+        .catch((error) => {
+          console.error(error);
+          response.status(500);
+          throw new Error('Couldn\'t add client');
+        });
+
+      response.status(201).json(client);
     } catch (error) {
+      console.error(error);
+      response.send(error.message);
+    }
+  },
+);
+
+/**
+ * `http GET` request handler to fetch user
+ */
+router.get(
+  '/accounts/:userid',
+  middlewares.inflate({
+    strict: true, token: true, userAgent: true, deviceId: true,
+  }),
+  async (request, response) => {
+    try {
+      // Get the client document
+      const client = await Client.findOne({
+        _id: request.params.deviceId,
+        user: request.params.userid,
+        token: request.params.token,
+        userAgent: request.params.userAgent,
+      });
+
+      // Check if client belongs to user
+      if (client.user.toString() !== request.params.userid) {
+        response.status(403);
+        throw new Error('Device isn\'t registered with user');
+      }
+
+      // Get the user
+      const user = await User.findById(request.params.userid);
+
+      // Send user data
+      response.json(user);
+    } catch (error) {
+      console.error(error);
       response.send(error.message);
     }
   },
