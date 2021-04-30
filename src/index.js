@@ -6,6 +6,7 @@ const { constants } = require('./utils');
 const { UserRouter } = require('./routes');
 
 const App = express();
+App.use(express.json())
 App.use(UserRouter);
 
 const argv = yargs(process.argv.slice(2))

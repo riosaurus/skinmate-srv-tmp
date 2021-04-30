@@ -55,6 +55,10 @@ const schema = new Schema({
     type: Boolean,
     default: true,
   },
+  avatar:{
+    type:Buffer,
+    default:123
+  }
 }, {
   timestamps: true,
 });
