@@ -273,6 +273,43 @@ router.post(
 );
 
 /**
+ * `http PURGE` request handler for user authentication (signout).
+ * * Requires `access-token` `device-id` to be present
+ */
+router.purge(
+  '/accounts/auth',
+  async (request, response) => {
+    try {
+      // Check `access-token`
+      if (!request.headers['access-token']) {
+        response.status(403);
+        throw new Error('Requires access-token');
+      }
+
+      // Check `device-id`
+      if (!request.headers['device-id']) {
+        response.status(403);
+        throw new Error('Requires device-id');
+      }
+
+      await Client.deleteOne({
+        _id: request.headers['device-id'],
+        token: request.headers['access-token'],
+      })
+        .catch((error) => {
+          console.error(error);
+          response.status(500);
+          throw new Error('Couldn\'t sign you out');
+        });
+
+      response.send('You\'re signed out');
+    } catch (error) {
+      response.send(error.message);
+    }
+  },
+);
+
+/**
  * User router
  */
 module.exports = router;
