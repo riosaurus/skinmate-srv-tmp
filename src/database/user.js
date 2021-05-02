@@ -35,7 +35,7 @@ const usersSchema = new Schema({
     trim: true,
     required: true,
   },
-  family: [],
+  
   verifiedPhone: {
     type: Boolean,
     default: false,
