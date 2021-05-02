@@ -71,8 +71,6 @@ response.status(201).send(family);
         response.send(error.message)  
     }
 
-
-
 })
 
 
@@ -178,9 +176,6 @@ router.delete('/accounts/:id/delete',async (request,response) => {
 
           const familymember = await Family.findOneAndDelete({_id:request.params.id,user:user._id})
           
-
-          
-
           response.send(familymember)
 
         }catch(error){
