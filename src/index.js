@@ -3,11 +3,12 @@ const { config } = require('dotenv');
 const yargs = require('yargs');
 const { connect } = require('mongoose');
 const { constants } = require('./utils');
-const { UserRouter, DoctorRouter } = require('./routes');
+const { UserRouter, DoctorRouter ,FamilyRouter} = require('./routes');
 const App = express();
 App.use(express.json());
 App.use(UserRouter);
 App.use(DoctorRouter)
+App.use(FamilyRouter)
 const argv = yargs(process.argv.slice(2))
   .options({
     development: {

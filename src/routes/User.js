@@ -116,6 +116,7 @@ router.get(
   },
 );
 
+
 const upload = multer({
   limits: {
     fileSize: 1000000,
@@ -127,19 +128,120 @@ const upload = multer({
   },
 });
 
-router.post('/accounts/:userid/avatar', upload.single('file'), async (request, response) => {
+
+/**
+ * `http POST` request handler to upload user profile avatar
+ * * Requires `access-token` `device-id` `user-agent`
+ */
+
+router.post('/accounts/avatar', upload.single('file'), async (request, response) => {
+  
+  try{
+   // Check `access-token`
+   if (!request.headers['access-token']) {
+    response.status(403);
+    throw new Error('Requires access-token');
+  }
+
+  // Check `device-id`
+  if (!request.headers['device-id']) {
+    response.status(403);
+    throw new Error('Requires device-id');
+  }
+
+  // Get the client document
+  const client = await Client.findOne({
+    _id: request.headers['device-id'],
+    token: request.headers['access-token'],
+  });
+
+  if (!client) {
+    response.status(403);
+    throw new Error('Unrecognized device');
+  }
+
   const buffer = await sharp(request.file.buffer).png().toBuffer();
 
-  const user = await User.findById(request.params.userid);
+  const user = await User.findById(client.user);
 
   user.avatar = buffer;
 
   await user.save();
 
   response.send();
-}, (error, request, response) => {
-  response.status(400).send({ error });
+
+}catch (error) {
+  console.error(error);
+  response.send(error.message);
+}
+  }
+);
+
+
+/**
+ * `http PATCH` request handler to edit user profile
+ * * Requires `access-token` `device-id`
+ */
+
+router.patch('/accounts/update',async(request,response) => {
+
+  try{
+
+ // Check `access-token`
+ if (!request.headers['access-token']) {
+  response.status(403);
+  throw new Error('Requires access-token');
+}
+
+// Check `device-id`
+if (!request.headers['device-id']) {
+  response.status(403);
+  throw new Error('Requires device-id');
+}
+
+// Get the client document
+const client = await Client.findOne({
+  _id: request.headers['device-id'],
+  token: request.headers['access-token'],
 });
+
+if (!client) {
+  response.status(403);
+  throw new Error('Unrecognized device');
+}
+
+const user = await User.findOne({
+  _id: client.user,
+  isDeleted: { $ne: true },
+})
+
+if (!user) {
+  response.status(404);
+  throw new Error('Account not found');
+}
+
+
+const updates = Object.keys(request.body)
+const allowupdates = ['name','email','address','phone']
+const isvalidoperation = updates.every((update) => allowupdates.includes(update))
+
+if(!isvalidoperation)
+throw new Error('invalid property')
+
+updates.forEach((update) => user[update] = request.body[update])
+
+await user.save()
+
+const { password, isDeleted,avatar, ...rest } = user.toJSON();
+
+
+response.send(rest)
+
+  }catch(error) {
+    console.log(error)
+    response.send(error.message)
+  }
+})
 
 /**
  * `http DELETE` request handler to delete user
