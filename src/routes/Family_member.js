@@ -121,6 +121,10 @@ router.get('/accounts/getAllFamilymembers', async(request,response) => {
 
           const familymembers = await Family.find({user:user._id})
 
+          if (!familymembers) {
+            response.status(404);
+            throw new Error('family members not found');
+          }
           response.status(200).send(familymembers)
 
         }catch(error){
@@ -176,6 +180,10 @@ router.delete('/accounts/:id/delete',async (request,response) => {
 
           const familymember = await Family.findOneAndDelete({_id:request.params.id,user:user._id})
           
+          if (!familymember) {
+            response.status(404);
+            throw new Error('family member not found');
+          }
           response.send(familymember)
 
         }catch(error){
@@ -236,6 +244,11 @@ router.patch("/accounts/:id/update",async (request,response) => {
             response.status(500);
             throw new Error('Couldn\'t find family member');
           });
+
+          if (!family) {
+            response.status(404);
+            throw new Error('family member not found');
+          }
 
           
 
