@@ -26,7 +26,7 @@ router.get("/services", async (req, res) => {
   }
 });
 
-//find a service By It's Id
+//find a service By Its Id
 router.get("/service/:id", async (req, res) => {
   const _id = req.params.id;
 
