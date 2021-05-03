@@ -4,6 +4,8 @@ const { Router, urlencoded } = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
 const { User, Client } = require('../database');
+const TOTP = require('../database/TOTP');
+const { sendCode, verifyCode } = require('../utils/otp-server');
 
 const router = Router();
 
@@ -304,6 +306,139 @@ router.purge(
 
       response.send('You\'re signed out');
     } catch (error) {
+      response.send(error.message);
+    }
+  },
+);
+
+/**
+ * `http GET` request handler for user phone verification.
+ * * Requires `access-token` `device-id` to be present
+ */
+router.get(
+  '/accounts/verify',
+  async (request, response) => {
+    try {
+      // Check `access-token`
+      if (!request.headers['access-token']) {
+        response.status(403);
+        throw new Error('Requires access-token');
+      }
+
+      // Check `device-id`
+      if (!request.headers['device-id']) {
+        response.status(403);
+        throw new Error('Requires device-id');
+      }
+
+      // Get client to identify user
+      const client = await Client.findOne({
+        _id: request.headers['device-id'],
+        token: request.headers['access-token'],
+      })
+        .catch((error) => {
+          console.error(error);
+          response.status(500);
+          throw new Error('Couldn\'t sign you out');
+        });
+
+      // Get the user
+      const user = await User.findById(client.user.toString())
+        .catch((error) => {
+          console.error(error);
+          response.status(404);
+          throw new Error('Couldn\'t find user');
+        });
+
+      // Generate a TOTP document
+      const totp = await TOTP.create({ user: user.id })
+        .catch((error) => {
+          console.error(error);
+          response.status(500);
+          throw new Error('Couldn\'t register OTP');
+        });
+
+      // Send OTP to user.phone
+      await sendCode(user.phone, totp.secret)
+        .catch((error) => {
+          console.error(error);
+          response.status(500);
+          throw new Error('Couldn\'t send OTP');
+        });
+
+      const { secret, ...rest } = totp.toJSON();
+
+      // Send secret to user
+      response.json(rest);
+    } catch (error) {
+      console.error(error);
+      response.send(error.message);
+    }
+  },
+);
+
+/**
+ * `http POST` request handler for user phone verification.
+ * * Requires `access-token` `device-id` to be present in the headers.
+ * * Requires `requestId` `code` to be sent in the body.
+ */
+router.post(
+  '/accounts/verify',
+  urlencoded({ extended: true }),
+  async (request, response) => {
+    try {
+      // Check `access-token`
+      if (!request.headers['access-token']) {
+        response.status(403);
+        throw new Error('Requires access-token');
+      }
+
+      // Check `device-id`
+      if (!request.headers['device-id']) {
+        response.status(403);
+        throw new Error('Requires device-id');
+      }
+
+      // Get client to identify user
+      const client = await Client.findOne({
+        _id: request.headers['device-id'],
+        token: request.headers['access-token'],
+      })
+        .catch((error) => {
+          console.error(error);
+          response.status(500);
+          throw new Error('Couldn\'t sign you out');
+        });
+
+      // Get the user
+      const user = await User.findById(client.user.toString())
+        .catch((error) => {
+          console.error(error);
+          response.status(404);
+          throw new Error('Couldn\'t find user');
+        });
+
+      // Get the TOTP document
+      const totp = await TOTP.findOne({ _id: request.body.requestId, user: user.id })
+        .catch((error) => {
+          console.error(error);
+          response.status(500);
+          throw new Error('Couldn\'t register OTP');
+        });
+
+      // Verify OTP
+      if (!verifyCode(totp.secret, request.body.code)) {
+        response.status(401);
+        throw new Error('Incorrect OTP');
+      }
+
+      user.verifiedPhone = true;
+      await user.save();
+
+      // Acknowledge on success
+      response.send(`${user.phone} is now verified`);
+    } catch (error) {
+      console.error(error);
       response.send(error.message);
     }
   },

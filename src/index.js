@@ -1,17 +1,27 @@
+const { createServer } = require('http');
 const express = require('express');
 const { config } = require('dotenv');
 const yargs = require('yargs');
 const { connect } = require('mongoose');
 const { constants } = require('./utils');
 const { UserRouter, DoctorRouter } = require('./routes');
+const { otpServer } = require('./utils');
+
 const App = express();
 App.use(express.json());
 App.use(UserRouter);
-App.use(DoctorRouter)
+App.use(DoctorRouter);
+
+const server = createServer(App);
+
 const argv = yargs(process.argv.slice(2))
   .options({
     development: {
       describe: 'Run in development environment',
+      boolean: true,
+    },
+    rtengine: {
+      describe: 'Enable realtime analytics & services',
       boolean: true,
     },
     // dashboard:  {
@@ -35,10 +45,18 @@ connect(constants.mongoUri(), {
     process.stdout.write(`[*] mongodb v.${connection.version} online\n`);
 
     process.stdout.write('[+] setting up listener');
-    App.listen(constants.port(), () => {
+    server.listen(constants.port(), () => {
       process.stdout.clearLine(-1);
       process.stdout.cursorTo(0);
       process.stdout.write(`[*] listening on PORT ${constants.port()}\n`);
+
+      if (argv.rtengine) {
+        process.stdout.write('[+] setting up socket listener');
+        otpServer.setSocketServer(server);
+        process.stdout.clearLine(-1);
+        process.stdout.cursorTo(0);
+        process.stdout.write('[*] socket listener is up\n');
+      }
 
       // if (argv.dashboard) {
       //     process.stdout.write("[+] firing up default browser");
