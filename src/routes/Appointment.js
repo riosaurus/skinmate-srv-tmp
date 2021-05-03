@@ -22,7 +22,7 @@ router.post('/appointment/create',async(req,res)=>{
     })
     await doctor.save()
     res.send({
-        type:"Medicle",
+        type:"Medical",
         date:req.body.date,
         time:req.body.time[0],
         id:appointment._id, 
