@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 const { compare } = require('bcryptjs');
-const { Router, urlencoded } = require('express');
+const { Router, urlencoded, response } = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
 const { User, Client } = require('../database');
@@ -164,6 +164,11 @@ router.post('/accounts/avatar', upload.single('file'), async (request, response)
 
   const user = await User.findById(client.user);
 
+  if (!user) {
+    response.status(404);
+    throw new Error('Account not found');
+  }
+
   user.avatar = buffer;
 
   await user.save();
@@ -174,6 +179,9 @@ router.post('/accounts/avatar', upload.single('file'), async (request, response)
   console.error(error);
   response.send(error.message);
 }
+  },(error,request,response,next) => {
+    console.log(error)
+    response.send(error.message)
   }
 );
 

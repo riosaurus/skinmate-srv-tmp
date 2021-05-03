@@ -61,7 +61,9 @@ router.get(
 router.get(
   '/doctor/all',
   async(request,response)=>{
+    
     let doctor=await Doctor.find({})
+    
     if(doctor){
        response.status(200).send(doctor)
     }
