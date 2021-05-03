@@ -61,7 +61,9 @@ router.get(
 router.get(
   '/doctor/all',
   async(request,response)=>{
+    
     let doctor=await Doctor.find({})
+    
     if(doctor){
        response.status(200).send(doctor)
     }
@@ -108,38 +110,38 @@ router.delete(
      }
   }
 )
-router.get(
-  '/accounts/:userid',
-  middlewares.inflate({
-    strict: true, token: true, userAgent: true, deviceId: true,
-  }),
-  async (request, response) => {
-    try {
-      // Get the client document
-      const client = await Client.findOne({
-        _id: request.params.deviceId,
-        user: request.params.userid,
-        token: request.params.token,
-        userAgent: request.params.userAgent,
-      });
+// router.get(
+//   '/accounts/:userid',
+//   middlewares.inflate({
+//     strict: true, token: true, userAgent: true, deviceId: true,
+//   }),
+//   async (request, response) => {
+//     try {
+//       // Get the client document
+//       const client = await Client.findOne({
+//         _id: request.params.deviceId,
+//         user: request.params.userid,
+//         token: request.params.token,
+//         userAgent: request.params.userAgent,
+//       });
 
-      // Check if client belongs to user
-      if (client.user.toString() !== request.params.userid) {
-        response.status(403);
-        throw new Error('Device isn\'t registered with user');
-      }
+//       // Check if client belongs to user
+//       if (client.user.toString() !== request.params.userid) {
+//         response.status(403);
+//         throw new Error('Device isn\'t registered with user');
+//       }
 
-      // Get the user
-      const user = await User.findById(request.params.userid);
+//       // Get the user
+//       const user = await User.findById(request.params.userid);
 
-      // Send user data
-      response.json(user);
-    } catch (error) {
-      console.error(error);
-      response.send(error.message);
-    }
-  },
-);
+//       // Send user data
+//       response.json(user);
+//     } catch (error) {
+//       console.error(error);
+//       response.send(error.message);
+//     }
+//   },
+// );
 
 const upload = multer({
   limits:{
