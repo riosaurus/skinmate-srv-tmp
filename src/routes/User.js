@@ -173,7 +173,7 @@ router.post('/accounts/avatar', upload.single('file'), async (request, response)
 
   await user.save();
 
-  response.send();
+  response.send('avatar uploaded');
 
 }catch (error) {
   console.error(error);
@@ -191,7 +191,7 @@ router.post('/accounts/avatar', upload.single('file'), async (request, response)
  * * Requires `access-token` `device-id`
  */
 
-router.patch('/accounts/update',async(request,response) => {
+router.patch('/accounts',async(request,response) => {
 
   try{
 
@@ -233,8 +233,11 @@ const updates = Object.keys(request.body)
 const allowupdates = ['name','email','address','phone']
 const isvalidoperation = updates.every((update) => allowupdates.includes(update))
 
-if(!isvalidoperation)
+if(!isvalidoperation){
+  response.status(500)
 throw new Error('invalid property')
+}
+
 
 updates.forEach((update) => user[update] = request.body[update])
 

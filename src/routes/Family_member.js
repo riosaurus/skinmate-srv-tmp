@@ -8,14 +8,14 @@ const router = Router();
  * `http POST` request handler for family member creation.
  * * Requires `user-agent `device-id` to be present
  */
-router.post('/accounts/createFamilyMember',async (request,response) => {
+router.post('/familymember',async (request,response) => {
     try {
         // Check `access-token`
         if (!request.headers['access-token']) {
           response.status(403);
           throw new Error('Requires access-token');
         }
-  
+
         // Check `device-id`
         if (!request.headers['device-id']) {
           response.status(403);
@@ -79,7 +79,7 @@ response.status(201).send(family);
  * * Requires `user-agent `device-id` to be present
  */
 
-router.get('/accounts/getAllFamilymembers', async(request,response) => {
+router.get('/familymember/all', async(request,response) => {
 
     try {
         // Check `access-token`
@@ -139,7 +139,7 @@ router.get('/accounts/getAllFamilymembers', async(request,response) => {
  * `http DELETE` request handler to delete a family member.
  * * Requires `user-agent `device-id` to be present
  */
-router.delete('/accounts/:id/delete',async (request,response) => {
+router.delete('/familymember/:id',async (request,response) => {
     try {
         // Check `access-token`
         if (!request.headers['access-token']) {
@@ -184,7 +184,7 @@ router.delete('/accounts/:id/delete',async (request,response) => {
             response.status(404);
             throw new Error('family member not found');
           }
-          response.send(familymember)
+          response.send('family member deleted')
 
         }catch(error){
             console.error(error)
@@ -197,7 +197,7 @@ router.delete('/accounts/:id/delete',async (request,response) => {
  * `http PATCH` request handler to edit/update a family member.
  * * Requires `user-agent `device-id` to be present
  */
-router.patch("/accounts/:id/update",async (request,response) => {
+router.patch("/familymember/:id",async (request,response) => {
 
     try {
         // Check `access-token`
@@ -256,8 +256,10 @@ router.patch("/accounts/:id/update",async (request,response) => {
           const allowupdates = ['firstName','lastName','relationship','gender','dateOfBirth','bloodGroup','address','insurance','emergencyName','emergencyNumber']
           const isvalidoperation = updates.every((update) => allowupdates.includes(update))
           
-          if(!isvalidoperation)
+          if(!isvalidoperation){
+            response.status(500)
           throw new Error('invalid property')
+          }
 
           updates.forEach((update) => family[update] = request.body[update])
 
@@ -267,7 +269,7 @@ router.patch("/accounts/:id/update",async (request,response) => {
 
         }catch(error){
             console.error(error)
-            response.status(500).send(error.message)  
+            response.send(error.message)  
         }
 
 }
