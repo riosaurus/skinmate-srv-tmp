@@ -28,7 +28,7 @@ function sendCode(phone, secret) {
   return new Promise((resolve, reject) => {
     try {
       const otp = speakeasy.totp({
-        secret: secret.base32,
+        secret,
         encoding: 'base32',
         digits: 6,
       });
@@ -41,9 +41,9 @@ function sendCode(phone, secret) {
 }
 
 /**
- * Generates OTP based on `secret` and emits socket event to `phone`
- * @param {string} phone Phone address to send OTP to
- * @param {string} secret Base64 secret key for OTP generation
+ * Verifies OTP `token` based on `secret`
+ * @param {string} secret Base64 secret key
+ * @param {string} token Phone address to send OTP to
  * @returns {boolean}
  */
 function verifyCode(secret, token) {

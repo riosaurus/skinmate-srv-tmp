@@ -54,6 +54,7 @@
 /**
  * @method {POST}
  * @path {/accounts}
+ * @headers `user-agent`
  * @param {none}
  * @body {x-www-form-urlencoded}
  * */
@@ -61,7 +62,8 @@
     email: String,
     password: String,
     phone: String,
-    address: String
+    address: String,
+    name: String
 }
 ```
 
@@ -69,16 +71,16 @@
 
 | Status | Message |
 | --: | --- |
-| 400 | Unrecognized user-agent |
+| 400 | Requires user-agent |
 | 409 | Email already in use |
 | 412 | Validation failed (validation message) |
 | 403 | Device already in use |
-| 500 | User created; Failed to register device |
+| 500 | Couldn't add client |
 | 500 | Couldn't create user: (error message) |
 
 **Note**
 
-* This route always responds with **client-access** pattern (if no error).
+* This route always responds with **client-access** pattern with status code `201 Created` (if no error).
 * This route doesn't require header hydration.
 
 > Example: `[POST] http://domain.com/accounts`
@@ -92,8 +94,9 @@
 ```js
 /**
  * @method {GET}
- * @path {/accounts/:userid}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts}
+ * @headers `access-token` `device-id`
+ * @param {none}
  * @body {none}
  * */
 { }
@@ -112,11 +115,11 @@
 
 * This route always responds with **user-profile** pattern (if no error)
 
-> Example: `[GET] http://domain.com/accounts/608a27075ca1962a18eabd3a`
+> Example: `[GET] http://domain.com/accounts`
 
 ***
 
-### user Authentication (signin)
+### User Authentication (signin)
 
 **Request structure**
 
@@ -124,11 +127,13 @@
 /**
  * @method {POST}
  * @path {/accounts/auth}
+ * @headers `user-agent`
  * @param {none}
  * @body {x-www-form-urlencoded}
  * */
 {
-    email:String,  or phone:String
+    email: String, // or
+    phone: String  // this
     password:String
  }
 ```
@@ -148,7 +153,8 @@
 **Note**
 
 * This route always responds with **client-access** pattern (if no error).
-* This route doesn't require header(access-token) and header(device_id) is optional   
+* This route doesn't require `access-token` or `device_id`.
+* If `device-id` exists, pass it.
 
 > Example: `[POST] http://domain.com/accounts/auth`
 
@@ -163,6 +169,7 @@
 /**
  * @method {PURGE}
  * @path {/accounts/auth}
+ * @headers `access-token` `device-id`
  * @param {none} 
  * @body {none}
  * */
@@ -196,6 +203,7 @@
 /**
  * @method {DELETE}
  * @path {/accounts}
+ * @headers `access-token` `device-id`
  * @param {none} 
  * @body {none}
  * */
@@ -222,7 +230,7 @@
 
 ***
 
-### user profile update or edit
+### User profile updation
 
 **Request structure**
 
@@ -230,6 +238,7 @@
 /**
  * @method {PATCH}
  * @path {/accounts}
+ * @headers `access-token` `device-id`
  * @param {none} 
  * @body {x-www-form-urlencoded}
  * */
@@ -258,7 +267,7 @@
 
 ***
 
-### upload user profile avatar(profile picture)
+### User profile picture upload
 
 **Request structure**
 
@@ -270,7 +279,7 @@
  * @body {x-www-form-data}
  * */
 { 
-    file: 'an image ending (.jpg/jpeg/png)  
+    file: Buffer // 1:1 jpeg/jpg/png image
 }      
 
 
@@ -452,8 +461,9 @@
 ```js
 /**
  * @method {GET}
- * @path {/accounts/:userid:/verify/otp}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts/verify}
+ * @headers `access-token` `device-id`
+ * @param {none}
  * @body {none}
  * */
 { }
@@ -463,11 +473,18 @@
 
 | Status | Message |
 | --: | --- |
-| 400 | Unrecognized user-agent |
+| 403 | Requires `access-token` |
+| 403 | Requires `device-id` |
+| 500 | Couldn't sign in |
+| 404 | Couldn't find user |
+| 500 | Couldn't register OTP |
+| 500 | Couldn't send OTP |
 
-* This route doesn't send any data with response (if no error)
+* This route sends a document to identify user for the requested OTP (if no error).
+* A OTP code will be sent to the associated phone number.
+* Both the `_id` and OTP received is used to proceed with verification.
 
-> Example: `[GET] http://domain.com/accounts/608a27075ca1962a18eabd3a/verify/otp`
+> Example: `[GET] http://domain.com/accounts/verify`
 
 ***
 
