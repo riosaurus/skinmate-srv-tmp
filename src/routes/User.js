@@ -7,7 +7,7 @@ const { User, Client } = require('../database');
 const TOTP = require('../database/TOTP');
 const { middlewares } = require('../utils');
 const { sendCode, verifyCode } = require('../utils/otp-server');
-const {sendEmailForVerification,verifyEmail}= require('../utils/EmailVerification')
+const {sendEmailForVerification}= require('../utils/EmailVerification')
 const path=require('path');
 const router = Router();
 /**
