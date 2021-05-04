@@ -13,13 +13,11 @@ const schema = new Schema({
     },
     firstName:{
         type:String,
-        required:true,
         trim:true
 
     },
     lastName:{
         type:String,
-        required:true,
         trim:true
 
     },
@@ -30,41 +28,30 @@ const schema = new Schema({
     },
     gender:{
         type:String,
-        required:true,
         trim:true
 
     },
-    dateOfBirth:{
-        type:Date,
-        required:true
-
-    },
+    dateOfBirth:Date,
+        
     bloodGroup:{
         type:String,
         trim:true
-
     },
     address:{
         type: String,
         trim: true,
-        required: true,
-
     },
     insurance:{
         type:String,
-        required:true,
         trim:true
-
     },
     emergencyName:{
         type:String,
-        required:true,
         trim:true
 
     },
     emergencyNumber:{
         type: String,
-        required: true,
         trim: true,
         validate: { validator: validator.isMobilePhone, message: 'Invalid phone number' },
 
