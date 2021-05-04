@@ -1,7 +1,7 @@
 const { Schema, model } = require('mongoose');
 const { sign } = require('jsonwebtoken');
 const validator = require('validator');
-const { constants } = require('../utils/variables');
+const constants = require('../utils/variables');
 
 /**
  * Client schema
