@@ -1,7 +1,7 @@
 const Appointment = require('./Appointment');
 const Client = require('./Client');
 const Doctor = require('./Doctor');
-const User = require('./User');
+const User = require('./user');
 const Family = require('./Family_member');
 
 module.exports = {
