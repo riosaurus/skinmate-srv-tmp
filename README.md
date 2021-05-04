@@ -33,10 +33,17 @@
 /* User profile response pattern */
 {
     _id: String,    // The 24-char userid
-    email: String,  // The user-agent of the client device
-    phone: String,  // The access_token
-    address: Date,  // Date of login
-    family*: Array,   // Array of family member details
+    email: String,  
+    phone: String,  
+    firstName:String,
+    lastName:String,
+    gender:String,
+    dateOfBirth:Date,
+    bloodGroup:String,
+    address:String,
+    insurance:String,
+    emergencyName:String,
+    emergencyNumber:String
     phoneVerified: boolean, // OTP verification status
     emailVerified: boolean, // Email verification status
     createdAt: Date,    // Date of account creation
@@ -62,8 +69,7 @@
     email: String,
     password: String,
     phone: String,
-    address: String,
-    name: String
+    
 }
 ```
 
@@ -275,6 +281,7 @@
 /**
  * @method {POST}
  * @path {/accounts/avatar}
+ * @headers `access-token` `device-id`
  * @param {none} 
  * @body {x-www-form-data}
  * */
@@ -495,12 +502,15 @@
 ```js
 /**
  * @method {POST}
- * @path {/accounts/:userid:/verify/otp}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts/verify}
+ * @headers `access-token` `device-id`
+ * @param {none}
  * @body {x-www-form-urlencoded}
  * */
 {
-    code: Number,   // OTP to be verified
+ 
+    code:Number  // OTP to be verified
+       
 }
 ```
 
@@ -508,13 +518,18 @@
 
 | Status | Message |
 | --: | --- |
-| 400 | Unrecognized user-agent |
+| 403 | Requires `access-token` |
+| 403 | Requires `device-id` |
+| 500 | Couldn't sign in |
+| 404 | Couldn't find user |
+| 401 | Incorrect OTP |
+
 
 **Note**
 
-* This route always responds with **user-profile** pattern (if no error)
+* This route always responds with message **${user.phone} is now verified** pattern (if no error)
 
-> Example: `[GET] http://domain.com/accounts/608a27075ca1962a18eabd3a/verify/otp`
+> Example: `[POST] http://domain.com/accounts/verify`
 
 ***
 
