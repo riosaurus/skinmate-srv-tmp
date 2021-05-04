@@ -319,6 +319,7 @@
 /**
  * @method {POST}
  * @path {/familymember}
+ * @headers `access-token` `device-id`
  * @param {none} 
  * @body {x-www-form-urlencoded}
  * */
@@ -363,6 +364,7 @@
 /**
  * @method {GET}
  * @path {/familymember/all}
+ * @headers `access-token` `device-id`
  * @param {none} 
  * @body {none}
  * */
@@ -398,6 +400,7 @@
 /**
  * @method {DELETE}
  * @path {/familymember/:id}
+ * @headers `access-token` `device-id`
  * @param {:id:} 
  * @body {none}
  * */
@@ -434,6 +437,7 @@
  * @method {PATCH}
  * @path {/familymember/:id}
  * @param {:id:} 
+ * @headers `access-token` `device-id`
  * @body {x-www-form-urlencoded}
  * */
 {
