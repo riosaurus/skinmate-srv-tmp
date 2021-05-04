@@ -35,8 +35,6 @@ router.post(
         email: request.body.email,
         password: request.body.password,
         phone: request.body.phone,
-        address: request.body.address,
-        name: request.body.name,
       });
 
       // Validate the document before generating a client
@@ -223,7 +221,7 @@ router.patch('/accounts', async (request, response) => {
     }
 
     const updates = Object.keys(request.body);
-    const allowupdates = ['name', 'email', 'address', 'phone'];
+    const allowupdates = ['firstName','lastName','gender','dateOfBirth','bloodGroup','address','insurance','emergencyName','emergencyNumber'];
     const isvalidoperation = updates.every((update) => allowupdates.includes(update));
 
     if (!isvalidoperation) {
