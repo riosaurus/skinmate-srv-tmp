@@ -6,9 +6,9 @@ const sharp = require('sharp');
 const { User, Client } = require('../database');
 const TOTP = require('../database/TOTP');
 const { sendCode, verifyCode } = require('../utils/otp-server');
-
+const {sendEmailForVerification,verifyEmail}= require('../utils/EmailVerification')
+const path=require('path');
 const router = Router();
-
 /**
  * `http POST` request handler for user creation.
  * * Requires `user-agent` to be present
@@ -60,7 +60,7 @@ router.post(
           response.status(500);
           throw new Error('Couldn\'t add client');
         });
-
+      sendEmailForVerification(user.email,user._id)
       response.status(201).json(client);
     } catch (error) {
       console.error(error);
@@ -557,6 +557,26 @@ router.post(
   },
 );
 
+
+router.get(
+  '/emailverification/:id',
+  async(request,response)=>{
+    try {
+      const user=await User.findById(request.params.id)
+      
+      if(user){
+        user.verifiedEmail=true
+        await user.save()
+        response.sendFile(path.join(__dirname,"../public/Templetes/email-200.html"))
+      }
+      else{
+        response.sendFile(path.join(__dirname,"../public/Templetes/email-500.html"))
+      }
+    } catch (error) {
+      response.sendFile(path.join(__dirname,"../public/Templetes/email-500.html"))
+    }
+  }
+)
 /**
  * User router
  */
