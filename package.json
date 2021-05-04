@@ -4,7 +4,7 @@
   "description": "Temporary repository for SkinMate Node.js backend.",
   "main": "src",
   "scripts": {
-    "start": "node .",
+    "start": "node . --rtengine",
     "start:dev": "nodemon . --development --rtengine",
     "test": "jest"
   },
