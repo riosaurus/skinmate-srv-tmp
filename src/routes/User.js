@@ -153,9 +153,6 @@ router.post(
       console.error(error);
       response.send(error.message);
     }
-  }, (error, request, response, next) => {
-    console.log(error);
-    response.send(error.message);
   },
 );
 
@@ -193,7 +190,7 @@ router.patch(
       }
 
       const updates = Object.keys(request.body);
-      const allowupdates = ['name', 'email', 'address', 'phone'];
+      const allowupdates = ['firstName', 'lastName', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
       const isvalidoperation = updates.every((update) => allowupdates.includes(update));
 
       if (!isvalidoperation) {

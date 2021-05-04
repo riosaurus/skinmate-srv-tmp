@@ -28,7 +28,11 @@ function requireHeaders({ accessToken, deviceId, userAgent }) {
 }
 
 /**
- * Allows next operations only on communication medium verification
+ * Allows next operations only on communication medium verification.
+ * ***
+ * * Use [requireHeaders] middleware for `device-id` and `access-token` checking
+ * * Automatically verifies device registration.
+ * ***
  * @param {{phone: boolean, email: boolean}} params Comms to verify
  * @returns {RequestHandler} express middleware
  */

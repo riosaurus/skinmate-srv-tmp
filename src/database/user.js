@@ -25,16 +25,67 @@ const usersSchema = new Schema({
     required: true,
     validate: { validator: validator.isStrongPassword, message: 'Weak password' },
   },
-  name: {
-    type: String,
-    trim: true,
-    default: 'User',
-  },
-  address: {
+  firstName:{
+    type:String,
+    required:true,
+    trim:true,
+    default:'user'
+
+},
+lastName:{
+    type:String,
+    required:true,
+    trim:true,
+    default:'user'
+
+},
+gender:{
+    type:String,
+    required:true,
+    trim:true,
+    default:'female'
+
+},
+dateOfBirth:{
+    type:Date,
+    required:true,
+    default:Date.now()
+
+},
+bloodGroup:{
+    type:String,
+    trim:true
+
+},
+address:{
     type: String,
     trim: true,
     required: true,
-  },
+    default:'xyz'
+
+},
+insurance:{
+    type:String,
+    required:true,
+    trim:true,
+    default:'abc'
+
+},
+emergencyName:{
+    type:String,
+    required:true,
+    trim:true,
+    default:'user'
+
+},
+emergencyNumber:{
+    type: String,
+    required: true,
+    trim: true,
+    default:'+918888899999',
+    validate: { validator: validator.isMobilePhone, message: 'Invalid phone number' },
+
+},
   
   verifiedPhone: {
     type: Boolean,
@@ -50,7 +101,6 @@ const usersSchema = new Schema({
   },
   avatar: {
     type: Buffer,
-    default: 123,
   },
 }, {
   timestamps: true,
