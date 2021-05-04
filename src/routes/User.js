@@ -5,10 +5,11 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { User, Client } = require('../database');
 const TOTP = require('../database/TOTP');
+const { middlewares } = require('../utils');
 const { sendCode, verifyCode } = require('../utils/otp-server');
-
+const {sendEmailForVerification}= require('../utils/EmailVerification')
+const path=require('path');
 const router = Router();
-
 /**
  * `http POST` request handler for user creation.
  * * Requires `user-agent` to be present
@@ -16,14 +17,9 @@ const router = Router();
 router.post(
   '/accounts',
   urlencoded({ extended: true }),
+  middlewares.requireHeaders({ userAgent: true }),
   async (request, response) => {
     try {
-      // Check `user-agent`
-      if (!request.headers['user-agent']) {
-        response.status(403);
-        throw new Error('Requires user-agent');
-      }
-
       // Check if user exists
       if (await User.exists({ email: request.body.email })) {
         response.status(409);
@@ -58,7 +54,7 @@ router.post(
           response.status(500);
           throw new Error('Couldn\'t add client');
         });
-
+      sendEmailForVerification(user.email,user._id)
       response.status(201).json(client);
     } catch (error) {
       console.error(error);
@@ -73,20 +69,10 @@ router.post(
  */
 router.get(
   '/accounts',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
   async (request, response) => {
     try {
-      // Check `access-token`
-      if (!request.headers['access-token']) {
-        response.status(403);
-        throw new Error('Requires access-token');
-      }
-
-      // Check `device-id`
-      if (!request.headers['device-id']) {
-        response.status(403);
-        throw new Error('Requires device-id');
-      }
-
       // Get the client document
       const client = await Client.findOne({
         _id: request.headers['device-id'],
@@ -131,120 +117,104 @@ const upload = multer({
  * `http POST` request handler to upload user profile avatar
  * * Requires `access-token` `device-id` `user-agent`
  */
+router.post(
+  '/accounts/avatar',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  upload.single('file'),
+  async (request, response) => {
+    try {
+      // Get the client document
+      const client = await Client.findOne({
+        _id: request.headers['device-id'],
+        token: request.headers['access-token'],
+      });
 
-router.post('/accounts/avatar', upload.single('file'), async (request, response) => {
-  try {
-    // Check `access-token`
-    if (!request.headers['access-token']) {
-      response.status(403);
-      throw new Error('Requires access-token');
+      if (!client) {
+        response.status(403);
+        throw new Error('Unrecognized device');
+      }
+
+      const buffer = await sharp(request.file.buffer).png().toBuffer();
+
+      const user = await User.findById(client.user);
+
+      if (!user) {
+        response.status(404);
+        throw new Error('Account not found');
+      }
+
+      user.avatar = buffer;
+
+      await user.save();
+
+      response.send('avatar uploaded');
+    } catch (error) {
+      console.error(error);
+      response.send(error.message);
     }
-
-    // Check `device-id`
-    if (!request.headers['device-id']) {
-      response.status(403);
-      throw new Error('Requires device-id');
-    }
-
-    // Get the client document
-    const client = await Client.findOne({
-      _id: request.headers['device-id'],
-      token: request.headers['access-token'],
-    });
-
-    if (!client) {
-      response.status(403);
-      throw new Error('Unrecognized device');
-    }
-
-    const buffer = await sharp(request.file.buffer).png().toBuffer();
-
-    const user = await User.findById(client.user);
-
-    if (!user) {
-      response.status(404);
-      throw new Error('Account not found');
-    }
-
-    user.avatar = buffer;
-
-    await user.save();
-
-    response.send('avatar uploaded');
-  } catch (error) {
-    console.error(error);
-    response.send(error.message);
-  }
-}, (error, request, response, next) => {
-  console.log(error);
-  response.send(error.message);
-});
+  },
+);
 
 /**
  * `http PATCH` request handler to edit user profile
  * * Requires `access-token` `device-id`
  */
 
-router.patch('/accounts', async (request, response) => {
-  try {
-    // Check `access-token`
-    if (!request.headers['access-token']) {
-      response.status(403);
-      throw new Error('Requires access-token');
+router.patch(
+  '/accounts',
+  urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  async (request, response) => {
+    try {
+      // Get the client document
+      const client = await Client.findOne({
+        _id: request.headers['device-id'],
+        token: request.headers['access-token'],
+      });
+
+      if (!client) {
+        response.status(403);
+        throw new Error('Unrecognized device');
+      }
+
+      const user = await User.findOne({
+        _id: client.user,
+        isDeleted: { $ne: true },
+      });
+
+      if (!user) {
+        response.status(404);
+        throw new Error('Account not found');
+      }
+
+      const updates = Object.keys(request.body);
+      const allowupdates = ['firstName', 'lastName', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
+      const isvalidoperation = updates.every((update) => allowupdates.includes(update));
+
+      if (!isvalidoperation) {
+        response.status(500);
+        throw new Error('invalid property');
+      }
+
+      updates.forEach((update) => {
+        user[update] = request.body[update];
+      });
+
+      await user.save();
+
+      const {
+        password, isDeleted, avatar, ...rest
+      } = user.toJSON();
+
+      response.send(rest);
+    } catch (error) {
+      console.log(error);
+      response.send(error.message);
     }
-
-    // Check `device-id`
-    if (!request.headers['device-id']) {
-      response.status(403);
-      throw new Error('Requires device-id');
-    }
-
-    // Get the client document
-    const client = await Client.findOne({
-      _id: request.headers['device-id'],
-      token: request.headers['access-token'],
-    });
-
-    if (!client) {
-      response.status(403);
-      throw new Error('Unrecognized device');
-    }
-
-    const user = await User.findOne({
-      _id: client.user,
-      isDeleted: { $ne: true },
-    });
-
-    if (!user) {
-      response.status(404);
-      throw new Error('Account not found');
-    }
-
-    const updates = Object.keys(request.body);
-    const allowupdates = ['firstName','lastName','gender','dateOfBirth','bloodGroup','address','insurance','emergencyName','emergencyNumber'];
-    const isvalidoperation = updates.every((update) => allowupdates.includes(update));
-
-    if (!isvalidoperation) {
-      response.status(500);
-      throw new Error('invalid property');
-    }
-
-    updates.forEach((update) => {
-      user[update] = request.body[update];
-    });
-
-    await user.save();
-
-    const {
-      password, isDeleted, avatar, ...rest
-    } = user.toJSON();
-
-    response.send(rest);
-  } catch (error) {
-    console.log(error);
-    response.send(error.message);
-  }
-});
+  },
+);
 
 /**
  * `http DELETE` request handler to delete user
@@ -252,20 +222,9 @@ router.patch('/accounts', async (request, response) => {
  */
 router.delete(
   '/accounts',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   async (request, response) => {
     try {
-      // Check `access-token`
-      if (!request.headers['access-token']) {
-        response.status(403);
-        throw new Error('Requires access-token');
-      }
-
-      // Check `device-id`
-      if (!request.headers['device-id']) {
-        response.status(403);
-        throw new Error('Requires device-id');
-      }
-
       // Get the client document
       const client = await Client.findOne({
         _id: request.headers['device-id'],
@@ -318,16 +277,14 @@ router.delete(
 router.post(
   '/accounts/auth',
   urlencoded({ extended: true }),
+  middlewares.requireHeaders({ userAgent: true }),
   async (request, response) => {
     try {
-      // Check `user-agent`
-      if (!request.headers['user-agent']) {
-        response.status(403);
-        throw new Error('Requires user-agent');
-      }
-
       // Get the user
-      const user = await User.findOne({ email: request.body.email, isDeleted: { $ne: true } });
+      const user = await User.findOne({
+        email: request.body.email,
+        isDeleted: { $ne: true },
+      });
 
       if (!user) {
         response.status(404);
@@ -377,20 +334,9 @@ router.post(
  */
 router.purge(
   '/accounts/auth',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   async (request, response) => {
     try {
-      // Check `access-token`
-      if (!request.headers['access-token']) {
-        response.status(403);
-        throw new Error('Requires access-token');
-      }
-
-      // Check `device-id`
-      if (!request.headers['device-id']) {
-        response.status(403);
-        throw new Error('Requires device-id');
-      }
-
       await Client.deleteOne({
         _id: request.headers['device-id'],
         token: request.headers['access-token'],
@@ -414,20 +360,9 @@ router.purge(
  */
 router.get(
   '/accounts/verify',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   async (request, response) => {
     try {
-      // Check `access-token`
-      if (!request.headers['access-token']) {
-        response.status(403);
-        throw new Error('Requires access-token');
-      }
-
-      // Check `device-id`
-      if (!request.headers['device-id']) {
-        response.status(403);
-        throw new Error('Requires device-id');
-      }
-
       // Get client to identify user
       const client = await Client.findOne({
         _id: request.headers['device-id'],
@@ -482,20 +417,9 @@ router.get(
 router.post(
   '/accounts/verify',
   urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   async (request, response) => {
     try {
-      // Check `access-token`
-      if (!request.headers['access-token']) {
-        response.status(403);
-        throw new Error('Requires access-token');
-      }
-
-      // Check `device-id`
-      if (!request.headers['device-id']) {
-        response.status(403);
-        throw new Error('Requires device-id');
-      }
-
       // Get client to identify user
       const client = await Client.findOne({
         _id: request.headers['device-id'],
@@ -541,6 +465,26 @@ router.post(
   },
 );
 
+
+router.get(
+  '/emailverification/:id',
+  async(request,response)=>{
+    try {
+      const user=await User.findById(request.params.id)
+      
+      if(user){
+        user.verifiedEmail=true
+        await user.save()
+        response.sendFile(path.join(__dirname,"../public/Templetes/email-200.html"))
+      }
+      else{
+        response.sendFile(path.join(__dirname,"../public/Templetes/email-500.html"))
+      }
+    } catch (error) {
+      response.sendFile(path.join(__dirname,"../public/Templetes/email-500.html"))
+    }
+  }
+)
 /**
  * User router
  */

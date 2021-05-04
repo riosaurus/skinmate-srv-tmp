@@ -16,8 +16,8 @@ const usersSchema = new Schema({
   phone: {
     type: String,
     required: true,
-    trim: true,
     unique: true,
+    trim: true,
     validate: { validator: validator.isMobilePhone, message: 'Invalid phone number' },
   },
   password: {
@@ -25,68 +25,40 @@ const usersSchema = new Schema({
     required: true,
     validate: { validator: validator.isStrongPassword, message: 'Weak password' },
   },
-  firstName:{
-    type:String,
-    required:true,
-    trim:true,
-    default:'user'
-
-},
-lastName:{
-    type:String,
-    required:true,
-    trim:true,
-    default:'user'
-
-},
-gender:{
-    type:String,
-    required:true,
-    trim:true,
-    default:'female'
-
-},
-dateOfBirth:{
-    type:Date,
-    required:true,
-    default:Date.now()
-
-},
-bloodGroup:{
-    type:String,
-    trim:true
-
-},
-address:{
+  firstName: {
     type: String,
     trim: true,
-    required: true,
-    default:'xyz'
-
-},
-insurance:{
-    type:String,
-    required:true,
-    trim:true,
-    default:'abc'
-
-},
-emergencyName:{
-    type:String,
-    required:true,
-    trim:true,
-    default:'user'
-
-},
-emergencyNumber:{
+  },
+  lastName: {
     type: String,
-    required: true,
     trim: true,
-    default:'+918888899999',
+  },
+  gender: {
+    type: String,
+    trim: true,
+  },
+  dateOfBirth: Date,
+  bloodGroup: {
+    type: String,
+    trim: true,
+  },
+  address: {
+    type: String,
+    trim: true,
+  },
+  insurance: {
+    type: String,
+    trim: true,
+  },
+  emergencyName: {
+    type: String,
+    trim: true,
+  },
+  emergencyNumber: {
+    type: String,
+    trim: true,
     validate: { validator: validator.isMobilePhone, message: 'Invalid phone number' },
-
-},
-  
+  },
   verifiedPhone: {
     type: Boolean,
     default: false,
@@ -99,9 +71,7 @@ emergencyNumber:{
     type: Boolean,
     default: false,
   },
-  avatar: {
-    type: Buffer,
-  },
+  avatar: Buffer,
 }, {
   timestamps: true,
 });
@@ -123,12 +93,6 @@ usersSchema.pre('save', async function preSave() {
   }
 });
 
-// schema.methods.toJSON=async function(){
-//   let user=this
-//    let userObject=user.toObject()
-//    delete userObject.password
-//    return userObject
-// }
 /**
  * User model
  */
