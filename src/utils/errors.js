@@ -152,6 +152,14 @@ module.exports = {
   },
 
   /**
+   * `user-agent` not supplied error
+   */
+  IMAGE_READ_FAILED: {
+    code: 501,
+    error: new Error('Couldn\'t read image'),
+  },
+
+  /**
    * Validation error generator
    * @param {Error} error Error instance
    */

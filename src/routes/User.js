@@ -112,13 +112,16 @@ router.get(
 );
 
 const upload = multer({
-  limits: {
-    fileSize: 1000000,
-  },
-  fileFilter(request, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) return cb(new Error('pelase upload a jpeg or jpg or png'));
-    cb(null, true);
-    return null;
+  limits: { fileSize: 1000000 },
+  fileFilter(_, file, cb) {
+    let error = null;
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      error = new Error('Not a JPEG/PNG image');
+      // return cb(new Error('Not a JPEG/PNG image'));
+    }
+    // cb(null, true);
+    // return null;
+    return cb(error, !!error);
   },
 });
 
@@ -137,14 +140,20 @@ router.post(
       const client = await Client.findOne({
         _id: request.headers['device-id'],
         token: request.headers['access-token'],
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_CLIENT.code);
+        throw errors.FIND_CLIENT.error;
       });
 
-      if (!client) {
-        response.status(403);
-        throw new Error('Unrecognized device');
-      }
-
-      const buffer = await sharp(request.file.buffer).png().toBuffer();
+      const buffer = await sharp(request.file.buffer)
+        .png()
+        .toBuffer()
+        .catch((error) => {
+          console.log(error);
+          response.status(errors.IMAGE_READ_FAILED.code);
+          throw errors.IMAGE_READ_FAILED.error;
+        });
 
       const user = await User.findById(client.user);
 

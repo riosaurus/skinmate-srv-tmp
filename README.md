@@ -174,8 +174,8 @@
 ```js
 /**
  * @method {GET}
- * @path {/accounts/:userid:/verify/email}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts/verify/email}
+ * @param {none}
  * @body {none}
  * */
 { }
