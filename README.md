@@ -46,7 +46,7 @@
 // Fields marked with a * mark are to be implemented in forthcoming versions.
 ```
 
-### Creating a user
+### 1. Creating a user
 
 **Request structure:**
 
@@ -71,23 +71,155 @@
 
 | Status | Message |
 | --: | --- |
-| 400 | Requires user-agent |
-| 409 | Email already in use |
-| 412 | Validation failed (validation message) |
-| 403 | Device already in use |
-| 500 | Couldn't add client |
-| 500 | Couldn't create user: (error message) |
+| `401`  | Operation requires `access-token` |
+| `403`  | Operation requires `device-id` |
+| `403`  | Operation requires `user-agent` |
+| `409` | User already exists |
+| `406` | Validation failed: (error message) |
+| `500` | Couldn't create user |
+| `500` | Couldn\'t register client |
 
 **Note**
 
 * This route always responds with **client-access** pattern with status code `201 Created` (if no error).
 * This route doesn't require header hydration.
 
-> Example: `[POST] http://domain.com/accounts`
+> Example: `[POST] https://skinmate.herokuapp.com/accounts`
 
 ***
 
-### Fetching user
+
+### 2. Verifying user (Request OTP)
+
+**Request structure**
+
+```js
+/**
+ * @method {GET}
+ * @path {/accounts/verify/phone}
+ * @headers `access-token` `device-id`
+ * @param {none}
+ * @body {none}
+ * */
+{ }
+```
+
+**Possible errors**
+
+| Status | Message |
+| --: | --- |
+| 401 | Operation requires `access-token` |
+| 403 | Operation requires `device-id` |
+| 500 | Couldn\'t verify your identity |
+| 500 | Couldn't find user |
+| 500 | Couldn't generate OTP |
+| 500 | Couldn't send OTP |
+
+**Note**
+
+* This route sends a document to identify user for the requested OTP (if no error).
+* A OTP code will be sent to the associated phone number.
+* Both the `_id` and OTP received is used to proceed with verification.
+
+> Example: `[GET] https://skinmate.herokuapp.com/accounts/verify/phone`
+
+***
+
+### 3. Verifying user (Validate OTP)
+
+**Request structure**
+
+```js
+/**
+ * @method {POST}
+ * @path {/accounts/verify/phone}
+ * @headers `access-token` `device-id`
+ * @body {x-www-form-urlencoded}
+ * */
+{
+    requestId: string, // Obtained from verify OTP GET method (_id)
+    code: Number,   // OTP to be verified
+}
+```
+
+**Possible errors**
+
+| Status | Message |
+| --: | --- |
+| 401 | Operation requires `access-token` |
+| 403 | Operation requires `device-id` |
+| 500 | Couldn\'t verify your identity |
+| 500 | Couldn't find user |
+| 500 | Couldn\'t find OTP in registry |
+| 401 | Invalid OTP |
+
+**Note**
+
+* This route responds with *{phone_number} is now verified* message if OTP is send before the expiry window.
+
+> Example: `[POST] https://skinmate.herokuapp.com/accounts/verify/phone`
+
+***
+
+### 4. Verifying user (email)
+
+**Request structure**
+
+```js
+/**
+ * @method {GET}
+ * @path {/accounts/:userid:/verify/email}
+ * @param {:userid:} A unique user identifier of length 24 chars
+ * @body {none}
+ * */
+{ }
+```
+
+**Possible errors**
+
+| Status | Message |
+| --: | --- |
+| 400 | Unrecognized user-agent |
+
+**Note**
+
+* This route doesn't send any data with response (if no error)
+
+> Example: `[GET] https://skinmate.herokuapp.com/accounts/608a27075ca1962a18eabd3a/verify/email`
+
+***
+
+### 5. Verifying user (email)
+
+**Request structure**
+
+```js
+/**
+ * @method {POST}
+ * @path {/accounts/:userid:/verify/email}
+ * @param {:userid:} A unique user identifier of length 24 chars
+ * @body {x-www-form-urlencoded}
+ * */
+{
+    code: Number    // OTP to be verified
+}
+```
+
+**Possible errors**
+
+| Status | Message |
+| --: | --- |
+| 400 | Unrecognized user-agent |
+
+**Note**
+
+* This route always responds with **user-profile** pattern (if no error)
+
+> Example: `[GET] https://skinmate.herokuapp.com/accounts/608a27075ca1962a18eabd3a/verify/email`
+
+***
+
+### 6. Fetching user
 
 **Request structure**
 
@@ -115,11 +247,11 @@
 
 * This route always responds with **user-profile** pattern (if no error)
 
-> Example: `[GET] http://domain.com/accounts`
+> Example: `[GET] https://skinmate.herokuapp.com/accounts`
 
 ***
 
-### User Authentication (signin)
+### 7. User authentication (signin)
 
 **Request structure**
 
@@ -156,12 +288,12 @@
 * This route doesn't require `access-token` or `device_id`.
 * If `device-id` exists, pass it.
 
-> Example: `[POST] http://domain.com/accounts/auth`
+> Example: `[POST] https://skinmate.herokuapp.com/accounts/auth`
 
 
 ***
 
-### user authentication (signout)
+### 8. User authentication (signout)
 
 **Request structure**
 
@@ -189,13 +321,13 @@
 
 * This route always responds a message **You\'re signed out** (if no error)
 
-> Example: `[PURGE] http://domain.com/accounts/auth`
+> Example: `[PURGE] https://skinmate.herokuapp.com/accounts/auth`
 
 
 ***
 
 
-### user account deletion 
+### 9. User deletion 
 
 **Request structure**
 
@@ -225,12 +357,12 @@
 
 * This route always responds a message **Account deleted** (if no error)
 
-> Example: `[DELETE] http://domain.com/accounts`
+> Example: `[DELETE] https://skinmate.herokuapp.com/accounts`
 
 
 ***
 
-### User profile updation
+### 10. User updation
 
 **Request structure**
 
@@ -262,12 +394,12 @@
 
 * This route always responds with updated **user-profile** pattern (if no error)
 
-> Example: `[PATCH] http://domain.com/accounts`
+> Example: `[PATCH] https://skinmate.herokuapp.com/accounts`
 
 
 ***
 
-### User profile picture upload
+### 11. User picture upload
 
 **Request structure**
 
@@ -299,10 +431,13 @@
 
 *  This route always responds a message **avatar uploaded** (if no error)
 
-> Example: `[POST] http://domain.com/accounts/avatar`
+> Example: `[POST] https://skinmate.herokuapp.com/accounts/avatar`
 
 
 ***
+
+
+## Family Management
 
 ### creating a family member 
 
@@ -344,7 +479,7 @@
 
 * This route always responds with  **family member created** pattern (if no error)
 
-> Example: `[POST] http://domain.com/familymember`
+> Example: `[POST] https://skinmate.herokuapp.com/familymember`
 
 ***
 
@@ -379,7 +514,7 @@
 
 * This route always responds with  **family members of the user** pattern (if no error)
 
-> Example: `[GET] http://domain.com/familymember/all`
+> Example: `[GET] https://skinmate.herokuapp.com/familymember/all`
 
 ***
 
@@ -414,7 +549,7 @@
 
 * This route always responds with  message **family member deleted** pattern (if no error)
 
-> Example: `[DELETE] http://domain.com/familymember/:id`
+> Example: `[DELETE] https://skinmate.herokuapp.com/familymember/:id`
 
 ***
 
@@ -450,128 +585,6 @@
 
 * This route always responds with  **updated family member** pattern (if no error)
 
-> Example: `[PATCH] http://domain.com/familymember/:id`
-
-***
-
-### Verifying user (OTP)
-
-**Request structure**
-
-```js
-/**
- * @method {GET}
- * @path {/accounts/verify}
- * @headers `access-token` `device-id`
- * @param {none}
- * @body {none}
- * */
-{ }
-```
-
-**Possible errors**
-
-| Status | Message |
-| --: | --- |
-| 403 | Requires `access-token` |
-| 403 | Requires `device-id` |
-| 500 | Couldn't sign in |
-| 404 | Couldn't find user |
-| 500 | Couldn't register OTP |
-| 500 | Couldn't send OTP |
-
-* This route sends a document to identify user for the requested OTP (if no error).
-* A OTP code will be sent to the associated phone number.
-* Both the `_id` and OTP received is used to proceed with verification.
-
-> Example: `[GET] http://domain.com/accounts/verify`
-
-***
-
-### Verifying user (OTP)
-
-**Request structure**
-
-```js
-/**
- * @method {POST}
- * @path {/accounts/:userid:/verify/otp}
- * @param {:userid:} A unique user identifier of length 24 chars
- * @body {x-www-form-urlencoded}
- * */
-{
-    code: Number,   // OTP to be verified
-}
-```
-
-**Possible errors**
-
-| Status | Message |
-| --: | --- |
-| 400 | Unrecognized user-agent |
-
-**Note**
-
-* This route always responds with **user-profile** pattern (if no error)
-
-> Example: `[GET] http://domain.com/accounts/608a27075ca1962a18eabd3a/verify/otp`
-
-***
-
-### Verifying user (email)
-
-**Request structure**
-
-```js
-/**
- * @method {GET}
- * @path {/accounts/:userid:/verify/email}
- * @param {:userid:} A unique user identifier of length 24 chars
- * @body {none}
- * */
-{ }
-```
-
-**Possible errors**
-
-| Status | Message |
-| --: | --- |
-| 400 | Unrecognized user-agent |
-
-**Note**
-
-* This route doesn't send any data with response (if no error)
-
-> Example: `[GET] http://domain.com/accounts/608a27075ca1962a18eabd3a/verify/email`
-
-***
-
-### Verifying user (email)
-
-**Request structure**
-
-```js
-/**
- * @method {POST}
- * @path {/accounts/:userid:/verify/email}
- * @param {:userid:} A unique user identifier of length 24 chars
- * @body {x-www-form-urlencoded}
- * */
-{
-    code: Number    // OTP to be verified
-}
-```
-
-**Possible errors**
-
-| Status | Message |
-| --: | --- |
-| 400 | Unrecognized user-agent |
-
-**Note**
-
-* This route always responds with **user-profile** pattern (if no error)
-
-> Example: `[GET] http://domain.com/accounts/608a27075ca1962a18eabd3a/verify/email`
+> Example: `[PATCH] https://skinmate.herokuapp.com/familymember/:id`
 
 ***
