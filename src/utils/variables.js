@@ -24,20 +24,14 @@ module.exports = {
   mongoUri: () => process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/test',
 
   /**
-   * @default 'http://127.0.0.1:3001' (fallback value)
-   * @returns {url} api url
-   */
-  Url:()=> process.env.URL || 'http://127.0.0.1:3001',
-
-  /**
-   * @default "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" (fallback value)
+   * @default "" (fallback value)
    * @returns {String} send grid api key
    */
-   EmailAPIKey:()=> process.env.EMAIL_API_KEY || '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',
+  serviceEmailAPIKey: () => process.env.EMAIL_SERVICE_API_KEY || '',
 
-   /**
+  /**
    * @default 'skinmate.24x7@gmail.com' (fallback value)
-   * @returns {String} email adress for skinmate
+   * @returns {String}  service email
    */
-  EmailAddress:()=> process.env.EMAIL_ADDRESS || 'skinmate.24x7@gmail.com'
+  serviceEmail: () => process.env.SERVICE_EMAIL || 'skinmate.24x7@gmail.com',
 };
