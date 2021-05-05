@@ -122,6 +122,43 @@ router.post('/appointment/cancel',async(req,res)=>{
 
 
 
+router.post('/appointment/reschedule',async(req,res)=>{
+    try{
+        const appointment = await Appointment.findById(req.body.id)
+        const doctor = await Doctor.findById(appointment.doctorId)
+        const dtime = appointment.time
+        const ddate = appointment.date
+        await appointment.updateOne({
+            date : req.body.date,
+            time : req.body.time
+        },{new: true})
+        await appointment.save()
+        let index
+        for(let i=0;i<doctor.busySlots.length;i++){
+            if(doctor.busySlots[i].date.getTime() === ddate.getTime()){   
+                index = i
+                break
+            }   
+        } 
+        const array = doctor.busySlots[index].time.filter(tim => !dtime.includes(tim)) 
+        doctor.busySlots[index].time = array
+        doctor.busySlots[index].time = doctor.busySlots[index].time.concat(req.body.time)
+        await doctor.save()
+        res.send({
+            doctorName:doctor.name,
+            doctorEducation:doctor.qualification,
+            appointmentDate:appointment.date,
+            appointmentTime:appointment.time[0]
+        })
+
+    }
+    catch(e){
+        res.send(e)
+    }
+})
+
+
+
 module.exports = router
 
 
