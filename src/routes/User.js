@@ -193,8 +193,8 @@ router.patch(
       });
 
       if (!client) {
-        response.status(403);
-        throw new Error('Unrecognized device');
+        response.status(errors.NO_CLIENT.code);
+        throw errors.NO_CLIENT.error;
       }
 
       const user = await User.findOne({
@@ -502,6 +502,103 @@ router.get(
     }
   },
 );
+
+router.post('/accounts/forgotpassword',
+urlencoded({ extended: true }),
+  middlewares.requireHeaders({ userAgent: true }),
+async (request,response) => {
+
+  try {
+      
+      let user;
+  
+    if(request.body.email)
+    {
+      user = await User.findOne
+      ({ email: request.body.email, 
+        isDeleted: { $ne: true } });
+    }
+    else{
+      user = await User.findOne
+      ({ phone: request.body.phone,
+         isDeleted: { $ne: true } });
+    }
+  
+    if (!user) {
+      response.status(404);
+      throw new Error('Account not found');
+  
+    }
+  
+    let client = await Client.findOne({ _id: request.headers['device-id'] })
+          .catch((error) => {
+            console.error(error);
+            // Safe skip
+          });
+  
+        if (client) {
+          client = await client.save();
+        } else {
+          client = await Client.create({ user: user.id, userAgent: request.headers['user-agent'] })
+            .catch((error) => {
+              console.error(error);
+              response.status(500);
+              throw new Error('Couldn\'t authenticate');
+            });
+        }
+  
+        response.json(client);
+      }catch (error) {
+        response.send(error.message);
+      }
+  })
+  
+  
+  router.post('/accounts/changepassword',
+  urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  async(request,response) => {
+  try{
+  
+        const client = await Client.findOne({
+          _id: request.headers['device-id'],
+          token: request.headers['access-token'],
+        });
+        
+        if (!client) {
+          response.status(errors.NO_CLIENT.code);
+        throw errors.NO_CLIENT.error;
+        }
+        
+        const user = await User.findOne({
+          _id: client.user,
+          isDeleted: { $ne: true },
+        })
+        
+        if (!user) {
+          response.status(404);
+          throw new Error('Account not found');
+        }
+  
+        const samepassword = await compare(request.body.password, user.password)
+           
+        if(samepassword){
+            response.status(404);
+            throw new Error('same as old password');
+           }
+  
+           user.password = request.body.password
+           await user.save()
+  
+  
+         response.send("password updated")
+  
+  
+      }catch (error) {
+        response.send(error.message);
+      }
+  })
+  
 /**
  * User router
  */
