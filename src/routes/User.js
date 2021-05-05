@@ -432,7 +432,7 @@ router.get(
  * * Requires `requestId` `code` to be sent in the body.
  */
 router.post(
-  '/accounts/verify',
+  '/accounts/verify/phone',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   async (request, response) => {
