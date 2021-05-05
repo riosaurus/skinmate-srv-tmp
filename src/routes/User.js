@@ -475,6 +475,11 @@ router.post(
         throw errors.INVALID_OTP.error;
       }
 
+      // Remove totp document to prevent breach
+      totp.remove().catch((error) => {
+        console.error(error);
+      });
+
       user.verifiedPhone = true;
       await user.save();
 
@@ -590,6 +595,11 @@ router.post(
         response.status(errors.INVALID_OTP.code);
         throw errors.INVALID_OTP.error;
       }
+
+      // Remove totp document to prevent breach
+      totp.remove().catch((error) => {
+        console.error(error);
+      });
 
       user.verifiedEmail = true;
       await user.save();
