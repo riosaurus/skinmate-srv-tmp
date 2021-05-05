@@ -43,7 +43,7 @@
     address:String,
     insurance:String,
     emergencyName:String,
-    emergencyNumber:String
+    emergencyNumber:String,
     phoneVerified: boolean, // OTP verification status
     emailVerified: boolean, // Email verification status
     createdAt: Date,    // Date of account creation
