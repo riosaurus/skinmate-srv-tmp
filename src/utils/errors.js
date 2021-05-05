@@ -128,6 +128,14 @@ module.exports = {
   },
 
   /**
+   * User creation failure error
+   */
+  USER_UPDATE_FAILURE: {
+    code: 500,
+    error: new Error('Couldn\'t update user'),
+  },
+
+  /**
    * `access-token` not supplied error
    */
   NO_ACCESS_TOKEN: {
@@ -160,11 +168,36 @@ module.exports = {
   },
 
   /**
+   * `password` compare failure
+   */
+  PASSWORD_COMPARE_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t check password'),
+  },
+
+  /**
+   * `password` incorrect error
+   */
+  PASSWORD_INCORRECT: {
+    code: 401,
+    error: new Error('Incorrect password'),
+  },
+
+  /**
    * Validation error generator
    * @param {Error} error Error instance
    */
   VALIDATION_ERROR: (error) => ({
     code: 406,
     error: new Error(`Validation failed: ${error.message}`),
+  }),
+
+  /**
+   * Forbidden fields update error generator
+   * @param {Array<string>} fields Error instance
+   */
+  FORBIDDEN_UPDATE_ERROR: (fields) => ({
+    code: 406,
+    error: new Error(`Validation failed: ${fields.join(', ')}`),
   }),
 };

@@ -33,7 +33,9 @@ const argv = yargs(process.argv.slice(2))
   })
   .parse();
 
-config({ path: argv.development ? '.test.env' : '.env' });
+if (argv.development) {
+  config({ path: '.env' });
+}
 
 console.log('[+] connecting to mongodb');
 connect(constants.mongoUri(), {

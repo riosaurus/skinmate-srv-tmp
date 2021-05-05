@@ -79,12 +79,20 @@ function requireVerification({ phone, email }) {
       }
 
       // Check user verification status
-      const user = await User.findById(client.user)
+      const user = await User.findOne({
+        _id: client.user,
+        isDeleted: { $ne: true },
+      })
         .catch((error) => {
           console.error(error);
           response.status(errors.FIND_USER.code);
           throw errors.FIND_USER.error;
         });
+
+      if (!user) {
+        response.status(errors.NO_USER.code);
+        throw new Error(errors.NO_USER.error);
+      }
 
       if (phone && email && !user.verifiedPhone && !user.verifiedEmail) {
         response.status(errors.PHONE_EMAIL_UNVERIFIED.code);
