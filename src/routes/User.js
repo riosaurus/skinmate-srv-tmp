@@ -606,24 +606,24 @@ router.post(
   '/accounts/auth/forgotpassword',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
-  async (request,response) => {
+  async (request, response) => {
     try {
-      // Get the user document  
+      // Get the user document
       const user = await User.findOne({
-        email: request.body.email, 
+        email: request.body.email,
         phone: request.body.phone,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
         response.status(errors.FIND_USER.code);
         throw errors.FIND_USER.error;
       });
-  
+
       if (!user) {
         response.status(errors.NO_USER.code);
         throw errors.NO_USER.error;
       }
-  
+
       // Generate a TOTP document
       const totp = await TOTP.create({ user: user.id })
         .catch((error) => {
@@ -635,11 +635,11 @@ router.post(
       // Send OTP if email
       if (request.body.email) {
         await sendVerificationEmail(user.email, totp.secret)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.OTP_SEND_FAILED.code);
-          throw errors.OTP_SEND_FAILED.error;
-        });
+          .catch((error) => {
+            console.error(error);
+            response.status(errors.OTP_SEND_FAILED.code);
+            throw errors.OTP_SEND_FAILED.error;
+          });
       }
 
       // Send OTP if phone
@@ -651,61 +651,58 @@ router.post(
             throw errors.OTP_SEND_FAILED.error;
           });
       }
-  
+
       const { secret, ...rest } = totp.toJSON();
-        
+
       response.send(rest);
-    }catch (error) {
-        response.send(error.message);
+    } catch (error) {
+      response.send(error.message);
     }
   },
-);  
-  
+);
+
 router.post(
   '/accounts/changepassword',
   urlencoded({ extended: true }),
-  async(request,response) => {
-  try{
-  
-        const client = await Client.findOne({
-          _id: request.headers['device-id'],
-          token: request.headers['access-token'],
-        });
-        
-        if (!client) {
-          response.status(errors.NO_CLIENT.code);
+  async (request, response) => {
+    try {
+      const client = await Client.findOne({
+        _id: request.headers['device-id'],
+        token: request.headers['access-token'],
+      });
+
+      if (!client) {
+        response.status(errors.NO_CLIENT.code);
         throw errors.NO_CLIENT.error;
-        }
-        
-        const user = await User.findOne({
-          _id: client.user,
-          isDeleted: { $ne: true },
-        })
-        
-        if (!user) {
-          response.status(404);
-          throw new Error('Account not found');
-        }
-  
-        const samepassword = await compare(request.body.password, user.password)
-           
-        if(samepassword){
-            response.status(404);
-            throw new Error('same as old password');
-           }
-  
-           user.password = request.body.password
-           await user.save()
-  
-  
-         response.send("password updated")
-  
-  
-      }catch (error) {
-        response.send(error.message);
       }
-  })
-  
+
+      const user = await User.findOne({
+        _id: client.user,
+        isDeleted: { $ne: true },
+      });
+
+      if (!user) {
+        response.status(404);
+        throw new Error('Account not found');
+      }
+
+      const samepassword = await compare(request.body.password, user.password);
+
+      if (samepassword) {
+        response.status(404);
+        throw new Error('same as old password');
+      }
+
+      user.password = request.body.password;
+      await user.save();
+
+      response.send('password updated');
+    } catch (error) {
+      response.send(error.message);
+    }
+  },
+);
+
 /**
  * User router
  */
