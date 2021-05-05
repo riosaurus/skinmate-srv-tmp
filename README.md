@@ -33,10 +33,17 @@
 /* User profile response pattern */
 {
     _id: String,    // The 24-char userid
-    email: String,  // The user-agent of the client device
-    phone: String,  // The access_token
-    address: Date,  // Date of login
-    family*: Array,   // Array of family member details
+    email: String,  
+    phone: String,  
+    firstName:String,
+    lastName:String,
+    gender:String,
+    dateOfBirth:Date,
+    bloodGroup:String,
+    address:String,
+    insurance:String,
+    emergencyName:String,
+    emergencyNumber:String
     phoneVerified: boolean, // OTP verification status
     emailVerified: boolean, // Email verification status
     createdAt: Date,    // Date of account creation
@@ -62,8 +69,7 @@
     email: String,
     password: String,
     phone: String,
-    address: String,
-    name: String
+    
 }
 ```
 
@@ -407,6 +413,7 @@
 /**
  * @method {POST}
  * @path {/accounts/avatar}
+ * @headers `access-token` `device-id`
  * @param {none} 
  * @body {x-www-form-data}
  * */
@@ -447,6 +454,7 @@
 /**
  * @method {POST}
  * @path {/familymember}
+ * @headers `access-token` `device-id`
  * @param {none} 
  * @body {x-www-form-urlencoded}
  * */
@@ -491,6 +499,7 @@
 /**
  * @method {GET}
  * @path {/familymember/all}
+ * @headers `access-token` `device-id`
  * @param {none} 
  * @body {none}
  * */
@@ -526,6 +535,7 @@
 /**
  * @method {DELETE}
  * @path {/familymember/:id}
+ * @headers `access-token` `device-id`
  * @param {:id:} 
  * @body {none}
  * */
@@ -562,6 +572,7 @@
  * @method {PATCH}
  * @path {/familymember/:id}
  * @param {:id:} 
+ * @headers `access-token` `device-id`
  * @body {x-www-form-urlencoded}
  * */
 {
