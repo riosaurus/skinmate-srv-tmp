@@ -381,7 +381,15 @@
  * @body {x-www-form-urlencoded}
  * */
 { 
-    //feilds and values to be updated
+    firstName:String,
+    lastName:String,
+    gender:String,
+    dateOfBirth:Date,
+    bloodGroup:String,
+    address:String,
+    insurance:String,
+    emergencyName:String,
+    emergencyNumber:String
        
 }
 ```
@@ -576,7 +584,16 @@
  * @body {x-www-form-urlencoded}
  * */
 {
-     //feilds and values to be updated
+     firstName:String, 
+    lastName:String,
+    relationship:String,
+    gender:String,
+    dateOfBirth:Date,
+    bloodGroup:String,
+    address:String,
+    insurance:String,
+    emergencyName:String,
+    emergencyNumber:String
 }
 ```
 

@@ -509,7 +509,6 @@ urlencoded({ extended: true }),
 async (request,response) => {
 
   try {
-      
       let user;
   
     if(request.body.email)
@@ -527,7 +526,6 @@ async (request,response) => {
     if (!user) {
       response.status(404);
       throw new Error('Account not found');
-  
     }
   
     let client = await Client.findOne({ _id: request.headers['device-id'] })
@@ -559,7 +557,6 @@ async (request,response) => {
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   async(request,response) => {
   try{
-  
         const client = await Client.findOne({
           _id: request.headers['device-id'],
           token: request.headers['access-token'],
@@ -589,10 +586,8 @@ async (request,response) => {
   
            user.password = request.body.password
            await user.save()
-  
-  
-         response.send("password updated")
-  
+ 
+           response.send("password updated")
   
       }catch (error) {
         response.send(error.message);
