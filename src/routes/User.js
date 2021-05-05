@@ -3,13 +3,15 @@ const { compare } = require('bcryptjs');
 const { Router, urlencoded } = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
+const path = require('path');
 const { User, Client } = require('../database');
 const TOTP = require('../database/TOTP');
-const { middlewares } = require('../utils');
+const { middlewares, errors } = require('../utils');
 const { sendCode, verifyCode } = require('../utils/otp-server');
-const {sendEmailForVerification}= require('../utils/EmailVerification')
-const path=require('path');
+const { sendEmailForVerification } = require('../utils/EmailVerification');
+
 const router = Router();
+
 /**
  * `http POST` request handler for user creation.
  * * Requires `user-agent` to be present
@@ -22,8 +24,8 @@ router.post(
     try {
       // Check if user exists
       if (await User.exists({ email: request.body.email })) {
-        response.status(409);
-        throw new Error('Email already in use');
+        response.status(errors.USER_EXISTS.code);
+        throw errors.USER_EXISTS.error;
       }
 
       // Create a user document, extract and assign values to prevent injection attacks
@@ -37,27 +39,30 @@ router.post(
       await user.validate()
         .catch((error) => {
           console.error(error);
-          response.status(412);
-          throw new Error(`Invalid details: ${error.message}`);
+          const validationError = errors.VALIDATION_ERROR(error);
+          response.status(validationError.code);
+          throw validationError.error;
         });
 
       await user.save().catch((error) => {
         console.error(error);
-        response.status(500);
-        throw new Error(`Couldn't create user: ${error.message}`);
+        response.status(errors.USER_ADD_FAILURE.code);
+        throw errors.USER_ADD_FAILURE.error;
       });
 
       // On-register-direct-login approach
       const client = await Client.create({ user: user.id, userAgent: request.headers['user-agent'] })
         .catch((error) => {
           console.error(error);
-          response.status(500);
-          throw new Error('Couldn\'t add client');
+          response.status(errors.CLIENT_ADD_FAILURE.code);
+          throw errors.CLIENT_ADD_FAILURE.error;
         });
-      sendEmailForVerification(user.email,user._id)
+
+      // email verification trigger
+      sendEmailForVerification(user.email, user.id);
+
       response.status(201).json(client);
     } catch (error) {
-      console.error(error);
       response.send(error.message);
     }
   },
@@ -77,11 +82,15 @@ router.get(
       const client = await Client.findOne({
         _id: request.headers['device-id'],
         token: request.headers['access-token'],
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_CLIENT.code);
+        throw errors.FIND_CLIENT.error;
       });
 
       if (!client) {
-        response.status(403);
-        throw new Error('Unrecognized device');
+        response.status(errors.NO_CLIENT.code);
+        throw errors.NO_CLIENT.error;
       }
 
       // Get the user
@@ -103,13 +112,16 @@ router.get(
 );
 
 const upload = multer({
-  limits: {
-    fileSize: 1000000,
-  },
-  fileFilter(request, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) return cb(new Error('pelase upload a jpeg or jpg or png'));
-    cb(null, true);
-    return null;
+  limits: { fileSize: 1000000 },
+  fileFilter(_, file, cb) {
+    let error = null;
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      error = new Error('Not a JPEG/PNG image');
+      // return cb(new Error('Not a JPEG/PNG image'));
+    }
+    // cb(null, true);
+    // return null;
+    return cb(error, !!error);
   },
 });
 
@@ -128,14 +140,20 @@ router.post(
       const client = await Client.findOne({
         _id: request.headers['device-id'],
         token: request.headers['access-token'],
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_CLIENT.code);
+        throw errors.FIND_CLIENT.error;
       });
 
-      if (!client) {
-        response.status(403);
-        throw new Error('Unrecognized device');
-      }
-
-      const buffer = await sharp(request.file.buffer).png().toBuffer();
+      const buffer = await sharp(request.file.buffer)
+        .png()
+        .toBuffer()
+        .catch((error) => {
+          console.log(error);
+          response.status(errors.IMAGE_READ_FAILED.code);
+          throw errors.IMAGE_READ_FAILED.error;
+        });
 
       const user = await User.findById(client.user);
 
@@ -359,7 +377,7 @@ router.purge(
  * * Requires `access-token` `device-id` to be present
  */
 router.get(
-  '/accounts/verify',
+  '/accounts/verify/phone',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   async (request, response) => {
     try {
@@ -370,32 +388,32 @@ router.get(
       })
         .catch((error) => {
           console.error(error);
-          response.status(500);
-          throw new Error('Couldn\'t sign in');
+          response.status(errors.FIND_CLIENT.code);
+          throw errors.FIND_CLIENT.error;
         });
 
       // Get the user
       const user = await User.findById(client.user.toString())
         .catch((error) => {
           console.error(error);
-          response.status(404);
-          throw new Error('Couldn\'t find user');
+          response.status(errors.FIND_USER.code);
+          throw errors.FIND_USER.error;
         });
 
       // Generate a TOTP document
       const totp = await TOTP.create({ user: user.id })
         .catch((error) => {
           console.error(error);
-          response.status(500);
-          throw new Error('Couldn\'t register OTP');
+          response.status(errors.OTP_GENERATION_FAILED.code);
+          throw errors.OTP_GENERATION_FAILED.error;
         });
 
       // Send OTP to user.phone
       await sendCode(user.phone, totp.secret)
         .catch((error) => {
           console.error(error);
-          response.status(500);
-          throw new Error('Couldn\'t send OTP');
+          response.status(errors.OTP_SEND_FAILED.code);
+          throw errors.OTP_SEND_FAILED.error;
         });
 
       const { secret, ...rest } = totp.toJSON();
@@ -403,7 +421,6 @@ router.get(
       // Send secret to user
       response.json(rest);
     } catch (error) {
-      console.error(error);
       response.send(error.message);
     }
   },
@@ -427,30 +444,33 @@ router.post(
       })
         .catch((error) => {
           console.error(error);
-          response.status(500);
-          throw new Error('Couldn\'t sign you out');
+          response.status(errors.FIND_CLIENT.code);
+          throw errors.FIND_CLIENT.error;
         });
 
       // Get the user
-      const user = await User.findById(client.user.toString())
+      const user = await User.findById(client.user)
         .catch((error) => {
           console.error(error);
-          response.status(404);
-          throw new Error('Couldn\'t find user');
+          response.status(errors.FIND_USER.code);
+          throw errors.FIND_USER.error;
         });
 
       // Get the TOTP document
-      const totp = await TOTP.findOne({ _id: request.body.requestId, user: user.id })
+      const totp = await TOTP.findOne({
+        _id: request.body.requestId,
+        user: user.id,
+      })
         .catch((error) => {
           console.error(error);
-          response.status(500);
-          throw new Error('Couldn\'t register OTP');
+          response.status(errors.FIND_TOTP_FAILED.code);
+          throw errors.FIND_TOTP_FAILED.error;
         });
 
       // Verify OTP
       if (!verifyCode(totp.secret, request.body.code)) {
-        response.status(401);
-        throw new Error('Incorrect OTP');
+        response.status(errors.INVALID_OTP.code);
+        throw errors.INVALID_OTP.error;
       }
 
       user.verifiedPhone = true;
@@ -459,32 +479,29 @@ router.post(
       // Acknowledge on success
       response.send(`${user.phone} is now verified`);
     } catch (error) {
-      console.error(error);
       response.send(error.message);
     }
   },
 );
 
-
 router.get(
   '/emailverification/:id',
-  async(request,response)=>{
+  async (request, response) => {
     try {
-      const user=await User.findById(request.params.id)
-      
-      if(user){
-        user.verifiedEmail=true
-        await user.save()
-        response.sendFile(path.join(__dirname,"../public/Templetes/email-200.html"))
-      }
-      else{
-        response.sendFile(path.join(__dirname,"../public/Templetes/email-500.html"))
+      const user = await User.findById(request.params.id);
+
+      if (user) {
+        user.verifiedEmail = true;
+        await user.save();
+        response.sendFile(path.join(__dirname, '../public/Templetes/email-200.html'));
+      } else {
+        response.sendFile(path.join(__dirname, '../public/Templetes/email-500.html'));
       }
     } catch (error) {
-      response.sendFile(path.join(__dirname,"../public/Templetes/email-500.html"))
+      response.sendFile(path.join(__dirname, '../public/Templetes/email-500.html'));
     }
-  }
-)
+  },
+);
 /**
  * User router
  */
