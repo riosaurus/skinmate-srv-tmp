@@ -65,7 +65,7 @@
     address:String,
     insurance:String,
     emergencyName:String,
-    emergencyNumber:String
+    emergencyNumber:String,
     phoneVerified: boolean, // OTP verification status
     emailVerified: boolean, // Email verification status
     createdAt: Date,    // Date of account creation
@@ -615,7 +615,16 @@
  * @body {x-www-form-urlencoded}
  * */
 {
-     //feilds and values to be updated
+     firstName:String, 
+    lastName:String,
+    relationship:String,
+    gender:String,
+    dateOfBirth:Date,
+    bloodGroup:String,
+    address:String,
+    insurance:String,
+    emergencyName:String,
+    emergencyNumber:String
 }
 ```
 
