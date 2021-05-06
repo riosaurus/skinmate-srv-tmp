@@ -19,7 +19,7 @@ async function sendMail(to, subject, template, context) {
   const compiledTemplate = compile(hbsFile);
   const mjmlMarkup = compiledTemplate(context);
   const mjmlData = mjml(mjmlMarkup);
-  if (mjmlData.errors) {
+  if (mjmlData.errors.length > 0) {
     throw new Error('Error parsing email template');
   }
   return mailService.send({
