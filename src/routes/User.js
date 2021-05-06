@@ -5,10 +5,11 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { User, Client } = require('../database');
 const TOTP = require('../database/TOTP');
-const { middlewares, errors } = require('../utils');
+const {
+  middlewares, errors, emailTemplates, otp,
+} = require('../utils');
 const { sendCode, verifyCode } = require('../utils/otp-server');
 const { emailServer } = require('../utils');
-const { sendVerificationEmail } = require('../utils/email-server');
 
 const router = Router();
 
@@ -213,6 +214,15 @@ router.patch(
         user[update] = request.body[update];
       });
 
+      // Validate the document before updating
+      await user.validate()
+        .catch((error) => {
+          console.error(error);
+          const validationError = errors.VALIDATION_ERROR(error);
+          response.status(validationError.code);
+          throw validationError.error;
+        });
+
       await user.save().catch((error) => {
         console.error(error);
         response.status(errors.USER_UPDATE_FAILURE.code);
@@ -388,6 +398,11 @@ router.get(
           throw errors.FIND_CLIENT.error;
         });
 
+      if (!client) {
+        response.status(errors.NO_CLIENT.code);
+        throw errors.NO_CLIENT.error;
+      }
+
       // Get the user
       const user = await User.findById(client.user.toString())
         .catch((error) => {
@@ -395,6 +410,11 @@ router.get(
           response.status(errors.FIND_USER.code);
           throw errors.FIND_USER.error;
         });
+
+      if (!user) {
+        response.status(errors.NO_USER.code);
+        throw errors.NO_USER.error;
+      }
 
       // Generate a TOTP document
       const totp = await TOTP.create({ user: user.id })
@@ -528,8 +548,14 @@ router.get(
           throw errors.OTP_GENERATION_FAILED.error;
         });
 
+      // Generate email template
+      const mailBody = emailTemplates.VERIFICATION_MAIL(
+        'Please use the OTP below to verify and confirm your email address.',
+        otp.generateOTP(totp.secret),
+      );
+
       // Send OTP to user.email
-      await emailServer.sendVerificationEmail(user.email, totp.secret)
+      await emailServer.sendMail(user.email, 'SkinMate Email Verification', totp.secret, mailBody)
         .catch((error) => {
           console.error(error);
           response.status(errors.OTP_SEND_FAILED.code);
@@ -656,7 +682,14 @@ router.post(
 
       // Send OTP if email
       if (request.body.email) {
-        await sendVerificationEmail(user.email, totp.secret)
+        // Generate email template
+        const mailBody = emailTemplates.VERIFICATION_MAIL(
+          'Please use the OTP below to confirm and proceed with your password reset.',
+          otp.generateOTP(totp.secret),
+        );
+
+        // Send OTP to user.email
+        await emailServer.sendMail(user.email, 'SkinMate Password Reset', totp.secret, mailBody)
           .catch((error) => {
             console.error(error);
             response.status(errors.OTP_SEND_FAILED.code);

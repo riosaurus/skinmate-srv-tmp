@@ -206,6 +206,6 @@ module.exports = {
    */
   FORBIDDEN_UPDATE_ERROR: (fields) => ({
     code: 406,
-    error: new Error(`Validation failed: ${fields.join(', ')}`),
+    error: new Error(`Forbidden fields present: ${fields.join(', ')}`),
   }),
 };

@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose');
 const { genSalt, hash } = require('bcryptjs');
 const validator = require('validator');
+const customValidators = require('../utils/validators');
 
 /**
  * User schema
@@ -41,6 +42,7 @@ const usersSchema = new Schema({
   bloodGroup: {
     type: String,
     trim: true,
+    validate: { validator: customValidators.isValidBloodGroup, message: 'Unknown blood group' },
   },
   address: {
     type: String,
