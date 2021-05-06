@@ -11,14 +11,13 @@ const { urlencoded, request } = require('express')
 
 router.post(
     '/appointment/create',
-    urlencoded({extended:true}),
+    express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async (req,res)=>{
 
      
     try{
-     
           const client = await Client.findOne({
             _id: req.headers['device-id'],
             token: req.headers['access-token'],

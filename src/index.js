@@ -6,7 +6,7 @@ const yargs = require('yargs');
 const { connect } = require('mongoose');
 const { constants } = require('./utils');
 const {
-  UserRouter, DoctorRouter, FamilyRouter, ServiceRouter,
+  UserRouter, DoctorRouter, FamilyRouter, ServiceRouter,AppointmentRouter
 } = require('./routes');
 const { smsServer } = require('./utils');
 
@@ -16,6 +16,7 @@ App.use(UserRouter);
 App.use(DoctorRouter);
 App.use(FamilyRouter);
 App.use(ServiceRouter);
+App.use(AppointmentRouter)
 const server = createServer(App);
 
 const argv = yargs(process.argv.slice(2))
