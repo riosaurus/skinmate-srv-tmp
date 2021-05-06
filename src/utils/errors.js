@@ -56,6 +56,14 @@ module.exports = {
   },
 
   /**
+   * 
+   */
+  UNAVAILABLE_OTP: {
+    code: 404,
+    error: new Error('OTP isn\'t available'),
+  },
+
+  /**
    * Error on failure to fetch client access
    */
   FIND_CLIENT: {

@@ -463,6 +463,11 @@ router.post(
           throw errors.FIND_TOTP_FAILED.error;
         });
 
+      if (!totp) {
+        response.status(errors.UNAVAILABLE_OTP.code);
+        throw errors.UNAVAILABLE_OTP.error;
+      }
+
       // Verify OTP
       if (!verifyCode(totp.secret, request.body.code)) {
         response.status(errors.INVALID_OTP.code);
@@ -583,6 +588,11 @@ router.post(
           response.status(errors.FIND_TOTP_FAILED.code);
           throw errors.FIND_TOTP_FAILED.error;
         });
+
+      if (!totp) {
+        response.status(errors.UNAVAILABLE_OTP.code);
+        throw errors.UNAVAILABLE_OTP.error;
+      }
 
       // Verify OTP
       if (!verifyCode(totp.secret, request.body.code)) {
