@@ -3,10 +3,9 @@ const { compare } = require('bcryptjs');
 const { Router, urlencoded } = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
-const { User, Client } = require('../database');
-const TOTP = require('../database/TOTP');
+const { User, Client, TOTP } = require('../database');
 const {
-  middlewares, errors, emailTemplates, otp,
+  constants, middlewares, errors, emailTemplates, otp,
 } = require('../utils');
 const { sendCode, verifyCode } = require('../utils/otp-server');
 const { emailServer } = require('../utils');
@@ -548,19 +547,20 @@ router.get(
           throw errors.OTP_GENERATION_FAILED.error;
         });
 
-      // Generate email template
-      const mailBody = emailTemplates.VERIFICATION_MAIL(
-        'Please use the OTP below to verify and confirm your email address.',
-        otp.generateOTP(totp.secret),
-      );
-
       // Send OTP to user.email
-      await emailServer.sendMail(user.email, 'SkinMate Email Verification', mailBody)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.OTP_SEND_FAILED.code);
-          throw errors.OTP_SEND_FAILED.error;
-        });
+      await emailServer.sendMail(
+        user.email,
+        'SkinMate Email Verification',
+        constants.EMAIL_TEMPLATE_VERIFICATION,
+        {
+          MESSAGE: 'Please use the OTP below to verify and confirm your email address.',
+          VERIFICATION_CODE: otp.generateOTP(totp.secret),
+        },
+      ).catch((error) => {
+        console.error(error);
+        response.status(errors.OTP_SEND_FAILED.code);
+        throw errors.OTP_SEND_FAILED.error;
+      });
 
       const { secret, ...rest } = totp.toJSON();
 
@@ -682,19 +682,20 @@ router.post(
 
       // Send OTP if email
       if (request.body.email) {
-        // Generate email template
-        const mailBody = emailTemplates.VERIFICATION_MAIL(
-          'Please use the OTP below to confirm and proceed with your password reset.',
-          otp.generateOTP(totp.secret),
-        );
-
         // Send OTP to user.email
-        await emailServer.sendMail(user.email, 'SkinMate Password Reset', mailBody)
-          .catch((error) => {
-            console.error(error);
-            response.status(errors.OTP_SEND_FAILED.code);
-            throw errors.OTP_SEND_FAILED.error;
-          });
+        await emailServer.sendMail(
+          user.email,
+          'SkinMate Email Verification',
+          constants.EMAIL_TEMPLATE_VERIFICATION,
+          {
+            MESSAGE: 'Please use the OTP below to confirm and proceed with your password reset.',
+            VERIFICATION_CODE: otp.generateOTP(totp.secret),
+          },
+        ).catch((error) => {
+          console.error(error);
+          response.status(errors.OTP_SEND_FAILED.code);
+          throw errors.OTP_SEND_FAILED.error;
+        });
       }
 
       // Send OTP if phone
