@@ -79,22 +79,7 @@ middlewares.requireHeaders({ accessToken: true, deviceId: true }),
 async(request,response) => {
 
     try {
-<<<<<<< HEAD
-        // Check `access-token`
-        if (!request.headers['access-token']) {
-          response.status(403);
-          throw new Error('Requires access-token');
-        }
-   
-        // Check `device-id`
-        if (!request.headers['device-id']) {
-          response.status(403);
-          throw new Error('Requires device-id');
-        }
-  
-=======
       
->>>>>>> 1d3297a6f3c85c1d779c59c345c3dc6df82fe9db
         // Get the client document
         const client = await Client.findOne({
           _id: request.headers['device-id'],

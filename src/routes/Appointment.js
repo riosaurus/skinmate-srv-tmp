@@ -1,26 +1,32 @@
 const express = require('express')
 const router = new express.Router()
-const Users = require('../database/User')
-const Doctor = require('../database/Doctor')
-const Appointment = require('../database/Appointment')
-const { User, Client } = require('../database')
+const { User, Client,Appointment,Doctor } = require('../database')
+//const User = require('../database/User')
+//const Doctor = require('../database/Doctor')
+//const Appointment = require('../database/Appointment')
+
 const { middlewares, errors } = require('../utils')
+const { urlencoded, request } = require('express')
 
 
 router.post(
     '/appointment/create',
-    express.json(),
+    urlencoded({extended:true}),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
-    async(req,res)=>{
+    async (req,res)=>{
+
+     
     try{
+     
           const client = await Client.findOne({
-            _id: request.headers['device-id'],
-            token: request.headers['access-token'],
-          });
+            _id: req.headers['device-id'],
+            token: req.headers['access-token'],
+          })
+        
     
           if (!client) {
-            response.status(403);
+            res.status(403);
             throw new Error('Unrecognized device');
           }
     
@@ -30,9 +36,11 @@ router.post(
           });
     
           if (!user) {
-            response.status(404);
+            res.status(404);
             throw new Error('Account not found');
           }
+
+          console.log(user)
 
         const appointment = new Appointment({
             doctorId:req.body.doctorid,
@@ -84,12 +92,12 @@ router.patch(
     async(req,res)=>{
     try{
         const client = await Client.findOne({
-            _id: request.headers['device-id'],
-            token: request.headers['access-token'],
+            _id: req.headers['device-id'],
+            token: req.headers['access-token'],
           });
     
           if (!client) {
-            response.status(403);
+            res.status(403);
             throw new Error('Unrecognized device');
           }
     
@@ -99,7 +107,7 @@ router.patch(
           });
     
           if (!user) {
-            response.status(404);
+            res.status(404);
             throw new Error('Account not found');
           }
 
@@ -166,12 +174,12 @@ router.delete(
     async(req,res)=>{
     try{
         const client = await Client.findOne({
-            _id: request.headers['device-id'],
-            token: request.headers['access-token'],
+            _id: req.headers['device-id'],
+            token: req.headers['access-token'],
           });
     
           if (!client) {
-            response.status(403);
+            res.status(403);
             throw new Error('Unrecognized device');
           }
     
@@ -181,7 +189,7 @@ router.delete(
           });
     
           if (!user) {
-            response.status(404);
+            res.status(404);
             throw new Error('Account not found');
           }
 
@@ -223,7 +231,7 @@ router.delete(
 
 
 
-router.post(
+router.get(
     '/myappointments',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
@@ -231,12 +239,12 @@ router.post(
     async (req,res)=>{
     try{
         const client = await Client.findOne({
-            _id: request.headers['device-id'],
-            token: request.headers['access-token'],
+            _id: req.headers['device-id'],
+            token: req.headers['access-token'],
           });
     
           if (!client) {
-            response.status(403);
+            res.status(403);
             throw new Error('Unrecognized device');
           }
     
@@ -246,7 +254,7 @@ router.post(
           });
     
           if (!user) {
-            response.status(404);
+            res.status(404);
             throw new Error('Account not found');
           }
 
@@ -284,12 +292,12 @@ router.post('/appointment/confirm',
     async(req,res)=>{
     try{
         const client = await Client.findOne({
-            _id: request.headers['device-id'],
-            token: request.headers['access-token'],
+            _id: req.headers['device-id'],
+            token: req.headers['access-token'],
           });
     
           if (!client) {
-            response.status(403);
+            res.status(403);
             throw new Error('Unrecognized device');
           }
     
@@ -299,7 +307,7 @@ router.post('/appointment/confirm',
           });
     
           if (!user) {
-            response.status(404);
+            res.status(404);
             throw new Error('Account not found');
           }
 
