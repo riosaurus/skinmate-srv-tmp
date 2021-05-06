@@ -1,6 +1,8 @@
 const { Server: HttpServer } = require('http');
 const { Server } = require('socket.io');
 const speakeasy = require('speakeasy');
+const { readFileSync } = require('fs');
+const { compile } = require('handlebars');
 
 /**
  * OTP server instance holder
@@ -19,6 +21,7 @@ function setSocketServer(server) {
 }
 
 /**
+ * @deprecated
  * Generates OTP based on `secret` and emits socket event to `phone`
  * @param {string} phone Phone address to send OTP to
  * @param {string} secret Base64 secret key for OTP generation
@@ -41,18 +44,17 @@ function sendCode(phone, secret) {
 }
 
 /**
- * Verifies OTP `token` based on `secret`
- * @param {string} secret Base64 secret key
- * @param {string} token Phone address to send OTP to
- * @returns {boolean}
+ * Sends email.
+ * @param {string} to
+ * @param {string} subject
+ * @param {string} template path
+ * @param {{[key: string]: string}} context
  */
-function verifyCode(secret, token) {
-  return speakeasy.totp.verify({
-    secret,
-    encoding: 'base32',
-    token,
-    window: 10,
-  });
+async function sendSMS(phone, template, context) {
+  const hbsFile = readFileSync(template, { encoding: 'utf8' });
+  const compiledTemplate = compile(hbsFile);
+  const message = compiledTemplate(context);
+  sServer.emit('send sms', { phone, message });
 }
 
 sServer.on('connection', async (socket) => {
@@ -63,5 +65,5 @@ sServer.on('connection', async (socket) => {
 });
 
 module.exports = {
-  server: sServer, setSocketServer, sendCode, verifyCode,
+  server: sServer, setSocketServer, sendSMS, sendCode,
 };

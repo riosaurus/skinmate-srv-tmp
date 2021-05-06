@@ -45,4 +45,9 @@ module.exports = {
    * Verification email template path
    */
   EMAIL_TEMPLATE_VERIFICATION: 'assets/verification-email.hbs',
+
+  /**
+   * Verification SMA template path
+   */
+   SMS_TEMPLATE_VERIFICATION: 'assets/verification-sms.hbs',
 };

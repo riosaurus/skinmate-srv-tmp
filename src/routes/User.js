@@ -5,10 +5,8 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { User, Client, TOTP } = require('../database');
 const {
-  constants, middlewares, errors, emailTemplates, otp,
+  constants, middlewares, errors, otp, emailServer, smsServer,
 } = require('../utils');
-const { sendCode, verifyCode } = require('../utils/otp-server');
-const { emailServer } = require('../utils');
 
 const router = Router();
 
@@ -415,6 +413,11 @@ router.get(
         throw errors.NO_USER.error;
       }
 
+      if (user.verifiedPhone) {
+        response.status(errors.PHONE_ALREADY_VERIFIED.code);
+        throw errors.PHONE_ALREADY_VERIFIED.error;
+      }
+
       // Generate a TOTP document
       const totp = await TOTP.create({ user: user.id })
         .catch((error) => {
@@ -424,12 +427,18 @@ router.get(
         });
 
       // Send OTP to user.phone
-      await sendCode(user.phone, totp.secret)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.OTP_SEND_FAILED.code);
-          throw errors.OTP_SEND_FAILED.error;
-        });
+      await smsServer.sendSMS(
+        user.phone,
+        constants.SMS_TEMPLATE_VERIFICATION,
+        {
+          MESSAGE: 'Verify and confirm your contact number.',
+          VERIFICATION_CODE: otp.generateOTP(totp.secret),
+        },
+      ).catch((error) => {
+        console.error(error);
+        response.status(errors.OTP_SEND_FAILED.code);
+        throw errors.OTP_SEND_FAILED.error;
+      });
 
       const { secret, ...rest } = totp.toJSON();
 
@@ -488,7 +497,7 @@ router.post(
       }
 
       // Verify OTP
-      if (!verifyCode(totp.secret, request.body.code)) {
+      if (!otp.verifyOTP(totp.secret, request.body.code)) {
         response.status(errors.INVALID_OTP.code);
         throw errors.INVALID_OTP.error;
       }
@@ -531,6 +540,11 @@ router.get(
           throw errors.FIND_CLIENT.error;
         });
 
+      if (!client) {
+        response.status(errors.NO_CLIENT.code);
+        throw errors.NO_CLIENT.error;
+      }
+
       // Get the user
       const user = await User.findById(client.user.toString())
         .catch((error) => {
@@ -538,6 +552,16 @@ router.get(
           response.status(errors.FIND_USER.code);
           throw errors.FIND_USER.error;
         });
+
+      if (!user) {
+        response.status(errors.NO_USER.code);
+        throw errors.NO_USER.error;
+      }
+
+      if (user.verifiedEmail) {
+        response.status(errors.EMAIL_ALREADY_VERIFIED.code);
+        throw errors.EMAIL_ALREADY_VERIFIED.error;
+      }
 
       // Generate a TOTP document
       const totp = await TOTP.create({ user: user.id })
@@ -621,7 +645,7 @@ router.post(
       }
 
       // Verify OTP
-      if (!verifyCode(totp.secret, request.body.code)) {
+      if (!otp.verifyOTP(totp.secret, request.body.code)) {
         response.status(errors.INVALID_OTP.code);
         throw errors.INVALID_OTP.error;
       }
@@ -754,6 +778,7 @@ router.post(
       totp.remove().catch((error) => {
         console.error(error);
       });
+
       const client = await Client.findOne({
         _id: request.headers['device-id'],
         token: request.headers['access-token'],
