@@ -87,7 +87,7 @@ router.get('/familymember/all', async(request,response) => {
           response.status(403);
           throw new Error('Requires access-token');
         }
-  
+   
         // Check `device-id`
         if (!request.headers['device-id']) {
           response.status(403);

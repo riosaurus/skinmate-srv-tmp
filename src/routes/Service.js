@@ -22,7 +22,7 @@ router.get("/services", async (req, res) => {
     const service = await service.find({});
     res.send(service);
   } catch (e) {
-    res.status(500).send();
+    res.status(500).send("no services found");
   }
 });
 
@@ -44,7 +44,7 @@ router.get("/service/:id", async (req, res) => {
 });
 
 //Update the Service
-router.patch("/service/:id", auth, async (req, res) => {
+router.patch("/service/:id",async (req, res) => {
   try {
     const updates = Object.keys(req.body);
     const allowedUpdates = ["name", "description"];
