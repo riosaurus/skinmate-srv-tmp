@@ -36,6 +36,12 @@ module.exports = {
   serviceEmail: () => process.env.SERVICE_EMAIL || 'skinmate.24x7@gmail.com',
 
   /**
+   * @default 'skinmate' (fallback value)
+   * @returns {String}  service email
+   */
+   serviceName: () => process.env.SERVICE_NAME || 'SkinMate',
+
+  /**
    * Verification email template path
    */
   EMAIL_TEMPLATE_VERIFICATION: 'assets/verification-email.hbs',

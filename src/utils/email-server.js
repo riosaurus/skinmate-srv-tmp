@@ -3,7 +3,7 @@ const { readFileSync } = require('fs');
 const { compile } = require('handlebars');
 const mjml = require('mjml');
 const mailService = require('@sendgrid/mail');
-const { serviceEmailAPIKey, serviceEmail } = require('./variables');
+const { serviceEmailAPIKey, serviceEmail, serviceName } = require('./variables');
 
 mailService.setApiKey(serviceEmailAPIKey());
 
@@ -24,7 +24,10 @@ async function sendMail(to, subject, template, context) {
   }
   return mailService.send({
     to,
-    from: serviceEmail(),
+    from: {
+      name: serviceName(),
+      email: serviceEmail(),
+    },
     subject,
     html: mjmlData.html,
   });
