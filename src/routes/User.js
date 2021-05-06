@@ -459,6 +459,7 @@ router.post(
   '/accounts/verify/phone',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({}),
   async (request, response) => {
     try {
       // Get client to identify user
@@ -540,11 +541,6 @@ router.get(
           throw errors.FIND_CLIENT.error;
         });
 
-      if (!client) {
-        response.status(errors.NO_CLIENT.code);
-        throw errors.NO_CLIENT.error;
-      }
-
       // Get the user
       const user = await User.findById(client.user.toString())
         .catch((error) => {
@@ -552,11 +548,6 @@ router.get(
           response.status(errors.FIND_USER.code);
           throw errors.FIND_USER.error;
         });
-
-      if (!user) {
-        response.status(errors.NO_USER.code);
-        throw errors.NO_USER.error;
-      }
 
       if (user.verifiedEmail) {
         response.status(errors.EMAIL_ALREADY_VERIFIED.code);
