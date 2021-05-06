@@ -85,11 +85,6 @@ router.get(
         throw errors.FIND_CLIENT.error;
       });
 
-      if (!client) {
-        response.status(errors.NO_CLIENT.code);
-        throw errors.NO_CLIENT.error;
-      }
-
       // Get the user document
       const user = await User.findOne({
         _id: client.user,
@@ -99,11 +94,6 @@ router.get(
         response.status(errors.FIND_USER.code);
         throw errors.FIND_USER.error;
       });
-
-      if (!user) {
-        response.status(errors.NO_USER.code);
-        throw errors.NO_USER.error;
-      }
 
       const { password, isDeleted, ...rest } = user.toJSON();
 
@@ -298,7 +288,11 @@ router.post(
     try {
       // Get the user
       const user = await User.findOne({
-        email: request.body.email,
+        $or: [{
+          email: request.body.email,
+        }, {
+          phone: request.body.phone,
+        }],
         isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
@@ -612,6 +606,12 @@ router.post(
   },
 );
 
+/**
+ * `http POST` request handler for user requesting password change OTP.
+ * * Requires `access-token` `device-id` to be present in the headers.
+ * * Requires `requestId` `code` to be sent in the body.
+ * * Requires `user.phone` to be verified
+ */
 router.post(
   '/accounts/auth/forgotpassword',
   urlencoded({ extended: true }),
@@ -620,8 +620,10 @@ router.post(
     try {
       // Get the user document
       const user = await User.findOne({
-        email: request.body.email,
-        phone: request.body.phone,
+        $or: [
+          { email: request.body.email },
+          { phone: request.body.phone },
+        ],
         isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
@@ -671,6 +673,12 @@ router.post(
   },
 );
 
+/**
+ * `http POST` request handler for user email verification.
+ * * Requires `access-token` `device-id` to be present in the headers.
+ * * Requires `requestId` `code` to be sent in the body.
+ * * Requires `user.phone` to be verified
+ */
 router.post(
   '/accounts/changepassword',
   urlencoded({ extended: true }),
