@@ -79,7 +79,7 @@ const usersSchema = new Schema({
 usersSchema.virtual('appointments', {
   ref: 'Appointment',
   localField: '_id',
-  foreignField: 'appointmentOwner',
+  foreignField: 'userId',
 });
 
 /**
