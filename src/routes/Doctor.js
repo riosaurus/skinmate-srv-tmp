@@ -1,8 +1,9 @@
-const { Router, response, request } = require("express");
+const { Router} = require("express");
 const Doctor = require("../database/Doctor");
 const multer  = require('multer')
 const sharp = require('sharp')
 const router=Router()
+
 
 //doctor creation
 /** 
@@ -23,11 +24,27 @@ router.post(
       response.status(201).send(doctor)
       } 
       catch(error){
+        
         response.status(500).send(error)
        }
      }
 )
-
+router.get(
+  '/doctor/all/list',
+  async(request,response)=>{
+   try {
+    let doctor=await Doctor.find()
+    if(doctor){
+     response.status(200).send(doctor)
+    }
+    else{
+    response.status(404).send({message:"documents not found"})
+    }
+   } catch (error) {
+    response.status(500).send(error)
+   }
+  }
+)
 //find doctor by Id
 /**
  * @param {String} doctor_id
@@ -52,32 +69,13 @@ router.get(
   }
 )
 
-//list all doctors
-/**
- * @param {void}
- * @returns {document}
- */
 
-router.get(
-  '/doctor/all',
-  async(request,response)=>{
-    
-    let doctor=await Doctor.find({})
-    
-    if(doctor){
-       response.status(200).send(doctor)
-    }
-    else{
-      response.status(404).send({message:"no doctor found"})
-    }
-  }
-)
 router.patch(
   '/doctor/update/:id',
   async(request,response)=>{
      try {
       const updates=Object.keys(request.body)
-      const allowed_flieds=['name','email','qualification']
+      const allowed_flieds=['name','email','qualification','phone']
       let doctor=await Doctor.findById(request.params.id)
       updates.forEach(update=>{
         if(allowed_flieds.includes(update)){
@@ -145,7 +143,7 @@ router.delete(
 
 const upload = multer({
   limits:{
-    fileSize:1000000,
+    fileSize:3000000,
   },
   fileFilter(request,file,cb)
   {
@@ -166,6 +164,8 @@ router.post(
   await doctor.save()
   response.send()
 },(error,request,response,next) => {
+  console.log(error)
   response.status(400).send({error})
 })
+
 module.exports=router
