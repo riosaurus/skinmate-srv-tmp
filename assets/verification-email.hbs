@@ -1,11 +1,4 @@
-module.exports = {
-  /**
-   * Verification mail generator (OTP based)
-   * @param {string} verificationCode OTP code
-   * @param {string} verificationMessage Message of this verification mail
-   * @returns {string} HTML template
-   */
-  VERIFICATION_MAIL: (verificationMessage, verificationCode) => `<mjml>
+<mjml>
   <mj-body background-color="#fafbfc">
     <mj-section padding-bottom="20px" padding-top="20px">
       <mj-column vertical-align="middle" width="100%">
@@ -22,7 +15,4 @@ module.exports = {
       </mj-column>
     </mj-section>
   </mj-body>
- </mjml>`
-    .replace('{{MESSAGE}}', verificationMessage)
-    .replace('{{VERIFICATION_CODE}}', verificationCode),
-};
+ </mjml>

@@ -1,23 +1,25 @@
 module.exports = {
-  /**
-   * Unverified email error
-   */
+
   EMAIL_UNVERIFIED: {
     code: 401,
     error: new Error('Email not verified'),
   },
 
-  /**
-   * Error on failure to fetch client access
-   */
+  EMAIL_ALREADY_VERIFIED: {
+    code: 409,
+    error: new Error('Email already verified'),
+  },
+
   PHONE_UNVERIFIED: {
     code: 401,
     error: new Error('Phone number not verified'),
   },
 
-  /**
-   * Error on failure to fetch client access
-   */
+  PHONE_ALREADY_VERIFIED: {
+    code: 409,
+    error: new Error('Phone already verified'),
+  },
+
   PHONE_EMAIL_UNVERIFIED: {
     code: 401,
     error: new Error('Phone and email not verified'),
@@ -56,7 +58,7 @@ module.exports = {
   },
 
   /**
-   * 
+   *
    */
   UNAVAILABLE_OTP: {
     code: 404,

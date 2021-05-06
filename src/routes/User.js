@@ -3,13 +3,10 @@ const { compare } = require('bcryptjs');
 const { Router, urlencoded } = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
-const { User, Client } = require('../database');
-const TOTP = require('../database/TOTP');
+const { User, Client, TOTP } = require('../database');
 const {
-  middlewares, errors, emailTemplates, otp,
+  constants, middlewares, errors, otp, emailServer, smsServer,
 } = require('../utils');
-const { sendCode, verifyCode } = require('../utils/otp-server');
-const { emailServer } = require('../utils');
 
 const router = Router();
 
@@ -200,7 +197,7 @@ router.patch(
       });
 
       const updates = Object.keys(request.body);
-      const allowupdates = ['firstName', 'lastName', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
+      const allowupdates = ['firstName', 'lastName', 'password', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
       const isvalidoperation = updates.every((update) => allowupdates.includes(update));
 
       if (!isvalidoperation) {
@@ -416,6 +413,11 @@ router.get(
         throw errors.NO_USER.error;
       }
 
+      if (user.verifiedPhone) {
+        response.status(errors.PHONE_ALREADY_VERIFIED.code);
+        throw errors.PHONE_ALREADY_VERIFIED.error;
+      }
+
       // Generate a TOTP document
       const totp = await TOTP.create({ user: user.id })
         .catch((error) => {
@@ -425,12 +427,18 @@ router.get(
         });
 
       // Send OTP to user.phone
-      await sendCode(user.phone, totp.secret)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.OTP_SEND_FAILED.code);
-          throw errors.OTP_SEND_FAILED.error;
-        });
+      await smsServer.sendSMS(
+        user.phone,
+        constants.SMS_TEMPLATE_VERIFICATION,
+        {
+          MESSAGE: 'Verify and confirm your contact number.',
+          VERIFICATION_CODE: otp.generateOTP(totp.secret),
+        },
+      ).catch((error) => {
+        console.error(error);
+        response.status(errors.OTP_SEND_FAILED.code);
+        throw errors.OTP_SEND_FAILED.error;
+      });
 
       const { secret, ...rest } = totp.toJSON();
 
@@ -489,7 +497,7 @@ router.post(
       }
 
       // Verify OTP
-      if (!verifyCode(totp.secret, request.body.code)) {
+      if (!otp.verifyOTP(totp.secret, request.body.code)) {
         response.status(errors.INVALID_OTP.code);
         throw errors.INVALID_OTP.error;
       }
@@ -532,6 +540,11 @@ router.get(
           throw errors.FIND_CLIENT.error;
         });
 
+      if (!client) {
+        response.status(errors.NO_CLIENT.code);
+        throw errors.NO_CLIENT.error;
+      }
+
       // Get the user
       const user = await User.findById(client.user.toString())
         .catch((error) => {
@@ -539,6 +552,16 @@ router.get(
           response.status(errors.FIND_USER.code);
           throw errors.FIND_USER.error;
         });
+
+      if (!user) {
+        response.status(errors.NO_USER.code);
+        throw errors.NO_USER.error;
+      }
+
+      if (user.verifiedEmail) {
+        response.status(errors.EMAIL_ALREADY_VERIFIED.code);
+        throw errors.EMAIL_ALREADY_VERIFIED.error;
+      }
 
       // Generate a TOTP document
       const totp = await TOTP.create({ user: user.id })
@@ -548,19 +571,20 @@ router.get(
           throw errors.OTP_GENERATION_FAILED.error;
         });
 
-      // Generate email template
-      const mailBody = emailTemplates.VERIFICATION_MAIL(
-        'Please use the OTP below to verify and confirm your email address.',
-        otp.generateOTP(totp.secret),
-      );
-
       // Send OTP to user.email
-      await emailServer.sendMail(user.email, 'SkinMate Email Verification', totp.secret, mailBody)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.OTP_SEND_FAILED.code);
-          throw errors.OTP_SEND_FAILED.error;
-        });
+      await emailServer.sendMail(
+        user.email,
+        'SkinMate Email Verification',
+        constants.EMAIL_TEMPLATE_VERIFICATION,
+        {
+          MESSAGE: 'Please use the OTP below to verify and confirm your email address.',
+          VERIFICATION_CODE: otp.generateOTP(totp.secret),
+        },
+      ).catch((error) => {
+        console.error(error);
+        response.status(errors.OTP_SEND_FAILED.code);
+        throw errors.OTP_SEND_FAILED.error;
+      });
 
       const { secret, ...rest } = totp.toJSON();
 
@@ -621,7 +645,7 @@ router.post(
       }
 
       // Verify OTP
-      if (!verifyCode(totp.secret, request.body.code)) {
+      if (!otp.verifyOTP(totp.secret, request.body.code)) {
         response.status(errors.INVALID_OTP.code);
         throw errors.INVALID_OTP.error;
       }
@@ -682,19 +706,20 @@ router.post(
 
       // Send OTP if email
       if (request.body.email) {
-        // Generate email template
-        const mailBody = emailTemplates.VERIFICATION_MAIL(
-          'Please use the OTP below to confirm and proceed with your password reset.',
-          otp.generateOTP(totp.secret),
-        );
-
         // Send OTP to user.email
-        await emailServer.sendMail(user.email, 'SkinMate Password Reset', totp.secret, mailBody)
-          .catch((error) => {
-            console.error(error);
-            response.status(errors.OTP_SEND_FAILED.code);
-            throw errors.OTP_SEND_FAILED.error;
-          });
+        await emailServer.sendMail(
+          user.email,
+          'SkinMate Email Verification',
+          constants.EMAIL_TEMPLATE_VERIFICATION,
+          {
+            MESSAGE: 'Please use the OTP below to confirm and proceed with your password reset.',
+            VERIFICATION_CODE: otp.generateOTP(totp.secret),
+          },
+        ).catch((error) => {
+          console.error(error);
+          response.status(errors.OTP_SEND_FAILED.code);
+          throw errors.OTP_SEND_FAILED.error;
+        });
       }
 
       // Send OTP if phone
@@ -727,6 +752,33 @@ router.post(
   urlencoded({ extended: true }),
   async (request, response) => {
     try {
+      // Get the TOTP document
+      const totp = await TOTP.findOne({
+        _id: request.body.requestId,
+        user: user.id,
+      })
+        .catch((error) => {
+          console.error(error);
+          response.status(errors.FIND_TOTP_FAILED.code);
+          throw errors.FIND_TOTP_FAILED.error;
+        });
+
+      if (!totp) {
+        response.status(errors.UNAVAILABLE_OTP.code);
+        throw errors.UNAVAILABLE_OTP.error;
+      }
+
+      // Verify OTP
+      if (!verifyCode(totp.secret, request.body.code)) {
+        response.status(errors.INVALID_OTP.code);
+        throw errors.INVALID_OTP.error;
+      }
+
+      // Remove totp document to prevent breach
+      totp.remove().catch((error) => {
+        console.error(error);
+      });
+
       const client = await Client.findOne({
         _id: request.headers['device-id'],
         token: request.headers['access-token'],
