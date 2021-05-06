@@ -9,7 +9,7 @@ const { middlewares, errors } = require('../utils')
 
 router.post(
     '/appointment/create',
-    urlencoded({ extended: true }),
+    express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
@@ -78,7 +78,7 @@ catch(e){
 
 router.patch(
     '/appointment/reschedule',
-    urlencoded({ extended: true }),
+    express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
@@ -160,7 +160,7 @@ router.patch(
 
 router.delete(
     '/appointment/cancel',
-    urlencoded({ extended: true }),
+    express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
@@ -225,7 +225,7 @@ router.delete(
 
 router.post(
     '/myappointments',
-    urlencoded({ extended: true }),
+    express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async (req,res)=>{
@@ -278,7 +278,7 @@ router.post(
 
 
 router.post('/appointment/confirm',
-    urlencoded({ extended: true }),
+    express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
