@@ -8,6 +8,7 @@ mailService.setApiKey(serviceEmailAPIKey());
  * Sends email.
  * @param {String} to
  * @param {String} subject
+ * @param {String} html
  */
 async function sendMail(to, subject, html) {
   return mailService.send({

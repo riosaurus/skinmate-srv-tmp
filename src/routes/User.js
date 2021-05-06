@@ -200,7 +200,7 @@ router.patch(
       });
 
       const updates = Object.keys(request.body);
-      const allowupdates = ['firstName', 'lastName', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
+      const allowupdates = ['firstName', 'lastName', 'password', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
       const isvalidoperation = updates.every((update) => allowupdates.includes(update));
 
       if (!isvalidoperation) {
@@ -555,7 +555,7 @@ router.get(
       );
 
       // Send OTP to user.email
-      await emailServer.sendMail(user.email, 'SkinMate Email Verification', totp.secret, mailBody)
+      await emailServer.sendMail(user.email, 'SkinMate Email Verification', mailBody)
         .catch((error) => {
           console.error(error);
           response.status(errors.OTP_SEND_FAILED.code);
@@ -689,7 +689,7 @@ router.post(
         );
 
         // Send OTP to user.email
-        await emailServer.sendMail(user.email, 'SkinMate Password Reset', totp.secret, mailBody)
+        await emailServer.sendMail(user.email, 'SkinMate Password Reset', mailBody)
           .catch((error) => {
             console.error(error);
             response.status(errors.OTP_SEND_FAILED.code);
@@ -727,6 +727,32 @@ router.post(
   urlencoded({ extended: true }),
   async (request, response) => {
     try {
+      // Get the TOTP document
+      const totp = await TOTP.findOne({
+        _id: request.body.requestId,
+        user: user.id,
+      })
+        .catch((error) => {
+          console.error(error);
+          response.status(errors.FIND_TOTP_FAILED.code);
+          throw errors.FIND_TOTP_FAILED.error;
+        });
+
+      if (!totp) {
+        response.status(errors.UNAVAILABLE_OTP.code);
+        throw errors.UNAVAILABLE_OTP.error;
+      }
+
+      // Verify OTP
+      if (!verifyCode(totp.secret, request.body.code)) {
+        response.status(errors.INVALID_OTP.code);
+        throw errors.INVALID_OTP.error;
+      }
+
+      // Remove totp document to prevent breach
+      totp.remove().catch((error) => {
+        console.error(error);
+      });
       const client = await Client.findOne({
         _id: request.headers['device-id'],
         token: request.headers['access-token'],
