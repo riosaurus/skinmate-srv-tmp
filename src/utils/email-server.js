@@ -9,13 +9,13 @@ mailService.setApiKey(serviceEmailAPIKey());
 
 /**
  * Sends email.
- * @param {String} to
- * @param {String} subject
- * @param {String} template path
+ * @param {string} to
+ * @param {string} subject
+ * @param {string} template path
  * @param {{[key: string]: string}} context
  */
 async function sendMail(to, subject, template, context) {
-  const hbsFile = readFileSync(`${__dirname}/assets/${template}`, { encoding: 'utf8' });
+  const hbsFile = readFileSync(template, { encoding: 'utf8' });
   const compiledTemplate = compile(hbsFile);
   const mjmlMarkup = compiledTemplate(context);
   const mjmlData = mjml(mjmlMarkup);
