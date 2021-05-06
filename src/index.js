@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const { createServer } = require('http');
 const express = require('express');
 const { config } = require('dotenv');
@@ -32,45 +33,37 @@ const argv = yargs(process.argv.slice(2))
   })
   .parse();
 
-config({ path: argv.development ? '.test.env' : '.env' });
+if (argv.development) {
+  config({ path: '.env' });
+}
 
-process.stdout.write('[+] connecting to mongodb');
+console.log('[+] connecting to mongodb');
 connect(constants.mongoUri(), {
   useCreateIndex: true,
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
   .then((connection) => {
-    process.stdout.clearLine(-1);
-    process.stdout.cursorTo(0);
-    process.stdout.write(`[*] mongodb v.${connection.version} online\n`);
+    console.log(`[*] mongodb v.${connection.version} online\n`);
 
-    process.stdout.write('[+] setting up listener');
+    console.log('[+] setting up listener');
     server.listen(constants.port(), () => {
-      process.stdout.clearLine(-1);
-      process.stdout.cursorTo(0);
-      process.stdout.write(`[*] listening on PORT ${constants.port()}\n`);
+      console.log(`[*] listening on PORT ${constants.port()}\n`);
 
       if (argv.rtengine) {
-        process.stdout.write('[+] setting up socket listener');
+        console.log('[+] setting up socket listener');
         otpServer.setSocketServer(server);
-        process.stdout.clearLine(-1);
-        process.stdout.cursorTo(0);
-        process.stdout.write('[*] socket listener is up\n');
+        console.log('[*] socket listener is up\n');
       }
 
       // if (argv.dashboard) {
-      //     process.stdout.write("[+] firing up default browser");
+      //     console.log("[+] firing up default browser");
       //     open(`http://127.0.0.1:${Environment.PORT()}/dashboard`, {
       //         wait: false
       //     }).then(() => {
-      //         process.stdout.clearLine(-1);
-      //         process.stdout.cursorTo(0);
-      //         process.stdout.write(`[*] dashboard is up\n`);
+      //         console.log(`[*] dashboard is up\n`);
       //     }).catch(error => {
-      //         process.stdout.clearLine(-1);
-      //         process.stdout.cursorTo(0);
-      //         process.stdout.write(`[x] failed to open dashboard\n`);
+      //         console.log(`[x] failed to open dashboard\n`);
       //         console.error(error);
       //     });
       // }

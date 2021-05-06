@@ -1,27 +1,21 @@
 const { Router, urlencoded, response, request } = require('express');
 const { User, Client,Family } = require('../database');
+const { middlewares } = require('../utils')
 const { route } = require('./User');
 
 const router = Router();
 
 /**
  * `http POST` request handler for family member creation.
- * * Requires `user-agent `device-id` to be present
+ * * Requires `access-token `device-id` to be present
  */
-router.post('/familymember',async (request,response) => {
+router.post('/familymember',
+urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+async (request,response) => {
     try {
-        // Check `access-token`
-        if (!request.headers['access-token']) {
-          response.status(403);
-          throw new Error('Requires access-token');
-        }
-
-        // Check `device-id`
-        if (!request.headers['device-id']) {
-          response.status(403);
-          throw new Error('Requires device-id');
-        }
-  
+        
         // Get the client document
         const client = await Client.findOne({
           _id: request.headers['device-id'],
@@ -76,12 +70,13 @@ response.status(201).send(family);
 
 /**
  * `http GET` request handler to fetch all family members.
- * * Requires `user-agent `device-id` to be present
+ * * Requires `access-token `device-id` to be present
  */
 
 router.get('/familymember/all', async(request,response) => {
 
     try {
+<<<<<<< HEAD
         // Check `access-token`
         if (!request.headers['access-token']) {
           response.status(403);
@@ -94,6 +89,9 @@ router.get('/familymember/all', async(request,response) => {
           throw new Error('Requires device-id');
         }
   
+=======
+      
+>>>>>>> 1d3297a6f3c85c1d779c59c345c3dc6df82fe9db
         // Get the client document
         const client = await Client.findOne({
           _id: request.headers['device-id'],
@@ -137,22 +135,11 @@ router.get('/familymember/all', async(request,response) => {
 
 /**
  * `http DELETE` request handler to delete a family member.
- * * Requires `user-agent `device-id` to be present
+ * * Requires `access-token `device-id` to be present
  */
 router.delete('/familymember/:id',async (request,response) => {
     try {
-        // Check `access-token`
-        if (!request.headers['access-token']) {
-          response.status(403);
-          throw new Error('Requires access-token');
-        }
-  
-        // Check `device-id`
-        if (!request.headers['device-id']) {
-          response.status(403);
-          throw new Error('Requires device-id');
-        }
-  
+        
         // Get the client document
         const client = await Client.findOne({
           _id: request.headers['device-id'],
@@ -195,23 +182,16 @@ router.delete('/familymember/:id',async (request,response) => {
 
 /**
  * `http PATCH` request handler to edit/update a family member.
- * * Requires `user-agent `device-id` to be present
+ * * Requires `access-token `device-id` to be present
  */
-router.patch("/familymember/:id",async (request,response) => {
+router.patch("/familymember/:id",
+urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+async (request,response) => {
 
     try {
-        // Check `access-token`
-        if (!request.headers['access-token']) {
-          response.status(403);
-          throw new Error('Requires access-token');
-        }
-  
-        // Check `device-id`
-        if (!request.headers['device-id']) {
-          response.status(403);
-          throw new Error('Requires device-id');
-        }
-  
+        
         // Get the client document
         const client = await Client.findOne({
           _id: request.headers['device-id'],
