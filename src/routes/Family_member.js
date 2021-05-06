@@ -73,7 +73,10 @@ response.status(201).send(family);
  * * Requires `access-token `device-id` to be present
  */
 
-router.get('/familymember/all', async(request,response) => {
+router.get('/familymember/all', 
+middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true }),
+async(request,response) => {
 
     try {
       
@@ -122,7 +125,10 @@ router.get('/familymember/all', async(request,response) => {
  * `http DELETE` request handler to delete a family member.
  * * Requires `access-token `device-id` to be present
  */
-router.delete('/familymember/:id',async (request,response) => {
+router.delete('/familymember/:id',
+middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true}),
+async (request,response) => {
     try {
         
         // Get the client document
@@ -172,7 +178,7 @@ router.delete('/familymember/:id',async (request,response) => {
 router.patch("/familymember/:id",
 urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ phone: true, email: true }),
+  middlewares.requireVerification({ phone: true }),
 async (request,response) => {
 
     try {
