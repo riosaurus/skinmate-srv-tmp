@@ -38,5 +38,5 @@ module.exports = {
   /**
    * Verification email template path
    */
-  EMAIL_TEMPLATE_VERIFICATION: '/assets/verification-email.hbs',
+  EMAIL_TEMPLATE_VERIFICATION: `${__dirname}../assets/verification-email.hbs`,
 };
