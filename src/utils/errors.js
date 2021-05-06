@@ -56,6 +56,14 @@ module.exports = {
   },
 
   /**
+   * 
+   */
+  UNAVAILABLE_OTP: {
+    code: 404,
+    error: new Error('OTP isn\'t available'),
+  },
+
+  /**
    * Error on failure to fetch client access
    */
   FIND_CLIENT: {
@@ -198,6 +206,6 @@ module.exports = {
    */
   FORBIDDEN_UPDATE_ERROR: (fields) => ({
     code: 406,
-    error: new Error(`Validation failed: ${fields.join(', ')}`),
+    error: new Error(`Forbidden fields present: ${fields.join(', ')}`),
   }),
 };

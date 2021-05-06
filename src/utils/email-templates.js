@@ -1,0 +1,28 @@
+module.exports = {
+  /**
+   * Verification mail generator (OTP based)
+   * @param {string} verificationCode OTP code
+   * @param {string} verificationMessage Message of this verification mail
+   * @returns {string} HTML template
+   */
+  VERIFICATION_MAIL: (verificationMessage, verificationCode) => `<mjml>
+  <mj-body background-color="#fafbfc">
+    <mj-section padding-bottom="20px" padding-top="20px">
+      <mj-column vertical-align="middle" width="100%">
+        <mj-text align="center" font-size="30px" color="#77bb77">SkinMate</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#fff" padding-bottom="20px" padding-top="20px">
+      <mj-column vertical-align="middle" width="100%">
+        <mj-text align="center" font-size="24px" font-weight="lighter" font-family="open Sans Helvetica, Arial, sans-serif" padding-left="25px" padding-right="25px"><span>Hello,</span></mj-text>
+        <mj-text align="center" font-size="16px" font-family="open Sans Helvetica, Arial, sans-serif" padding-left="25px" padding-right="25px">{{MESSAGE}}</mj-text>
+        <mj-text align="center" font-size="24px" background-color="#20c997" font-weight="bold" font-family="open Sans Helvetica, Arial, sans-serif">{{VERIFICATION_CODE}}</mj-text>
+        <mj-text align="center" font-size="16px" font-family="open Sans Helvetica, Arial, sans-serif" padding-left="25px" padding-right="16px">If you didn't request this, you can ignore this email or let us know.</mj-text>
+        <mj-text align="center" font-size="16px" font-family="open Sans Helvetica, Arial, sans-serif" padding-left="25px" padding-right="25px">SkinMate</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+ </mjml>`
+    .replace('{{MESSAGE}}', verificationMessage)
+    .replace('{{VERIFICATION_CODE}}', verificationCode),
+};

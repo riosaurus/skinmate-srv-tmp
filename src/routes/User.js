@@ -5,10 +5,11 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { User, Client } = require('../database');
 const TOTP = require('../database/TOTP');
-const { middlewares, errors } = require('../utils');
+const {
+  middlewares, errors, emailTemplates, otp,
+} = require('../utils');
 const { sendCode, verifyCode } = require('../utils/otp-server');
 const { emailServer } = require('../utils');
-const { sendVerificationEmail } = require('../utils/email-server');
 
 const router = Router();
 
@@ -85,11 +86,6 @@ router.get(
         throw errors.FIND_CLIENT.error;
       });
 
-      if (!client) {
-        response.status(errors.NO_CLIENT.code);
-        throw errors.NO_CLIENT.error;
-      }
-
       // Get the user document
       const user = await User.findOne({
         _id: client.user,
@@ -99,11 +95,6 @@ router.get(
         response.status(errors.FIND_USER.code);
         throw errors.FIND_USER.error;
       });
-
-      if (!user) {
-        response.status(errors.NO_USER.code);
-        throw errors.NO_USER.error;
-      }
 
       const { password, isDeleted, ...rest } = user.toJSON();
 
@@ -223,6 +214,15 @@ router.patch(
         user[update] = request.body[update];
       });
 
+      // Validate the document before updating
+      await user.validate()
+        .catch((error) => {
+          console.error(error);
+          const validationError = errors.VALIDATION_ERROR(error);
+          response.status(validationError.code);
+          throw validationError.error;
+        });
+
       await user.save().catch((error) => {
         console.error(error);
         response.status(errors.USER_UPDATE_FAILURE.code);
@@ -298,7 +298,11 @@ router.post(
     try {
       // Get the user
       const user = await User.findOne({
-        email: request.body.email,
+        $or: [{
+          email: request.body.email,
+        }, {
+          phone: request.body.phone,
+        }],
         isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
@@ -394,6 +398,11 @@ router.get(
           throw errors.FIND_CLIENT.error;
         });
 
+      if (!client) {
+        response.status(errors.NO_CLIENT.code);
+        throw errors.NO_CLIENT.error;
+      }
+
       // Get the user
       const user = await User.findById(client.user.toString())
         .catch((error) => {
@@ -401,6 +410,11 @@ router.get(
           response.status(errors.FIND_USER.code);
           throw errors.FIND_USER.error;
         });
+
+      if (!user) {
+        response.status(errors.NO_USER.code);
+        throw errors.NO_USER.error;
+      }
 
       // Generate a TOTP document
       const totp = await TOTP.create({ user: user.id })
@@ -469,11 +483,21 @@ router.post(
           throw errors.FIND_TOTP_FAILED.error;
         });
 
+      if (!totp) {
+        response.status(errors.UNAVAILABLE_OTP.code);
+        throw errors.UNAVAILABLE_OTP.error;
+      }
+
       // Verify OTP
       if (!verifyCode(totp.secret, request.body.code)) {
         response.status(errors.INVALID_OTP.code);
         throw errors.INVALID_OTP.error;
       }
+
+      // Remove totp document to prevent breach
+      totp.remove().catch((error) => {
+        console.error(error);
+      });
 
       user.verifiedPhone = true;
       await user.save();
@@ -524,8 +548,14 @@ router.get(
           throw errors.OTP_GENERATION_FAILED.error;
         });
 
+      // Generate email template
+      const mailBody = emailTemplates.VERIFICATION_MAIL(
+        'Please use the OTP below to verify and confirm your email address.',
+        otp.generateOTP(totp.secret),
+      );
+
       // Send OTP to user.email
-      await emailServer.sendVerificationEmail(user.email, totp.secret)
+      await emailServer.sendMail(user.email, 'SkinMate Email Verification', totp.secret, mailBody)
         .catch((error) => {
           console.error(error);
           response.status(errors.OTP_SEND_FAILED.code);
@@ -585,11 +615,21 @@ router.post(
           throw errors.FIND_TOTP_FAILED.error;
         });
 
+      if (!totp) {
+        response.status(errors.UNAVAILABLE_OTP.code);
+        throw errors.UNAVAILABLE_OTP.error;
+      }
+
       // Verify OTP
       if (!verifyCode(totp.secret, request.body.code)) {
         response.status(errors.INVALID_OTP.code);
         throw errors.INVALID_OTP.error;
       }
+
+      // Remove totp document to prevent breach
+      totp.remove().catch((error) => {
+        console.error(error);
+      });
 
       user.verifiedEmail = true;
       await user.save();
@@ -602,28 +642,36 @@ router.post(
   },
 );
 
+/**
+ * `http POST` request handler for user requesting password change OTP.
+ * * Requires `access-token` `device-id` to be present in the headers.
+ * * Requires `requestId` `code` to be sent in the body.
+ * * Requires `user.phone` to be verified
+ */
 router.post(
   '/accounts/auth/forgotpassword',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
-  async (request,response) => {
+  async (request, response) => {
     try {
-      // Get the user document  
+      // Get the user document
       const user = await User.findOne({
-        email: request.body.email, 
-        phone: request.body.phone,
-        isDeleted: { $ne: true }
+        $or: [
+          { email: request.body.email },
+          { phone: request.body.phone },
+        ],
+        isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
         response.status(errors.FIND_USER.code);
         throw errors.FIND_USER.error;
       });
-  
+
       if (!user) {
         response.status(errors.NO_USER.code);
         throw errors.NO_USER.error;
       }
-  
+
       // Generate a TOTP document
       const totp = await TOTP.create({ user: user.id })
         .catch((error) => {
@@ -634,12 +682,19 @@ router.post(
 
       // Send OTP if email
       if (request.body.email) {
-        await sendVerificationEmail(user.email, totp.secret)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.OTP_SEND_FAILED.code);
-          throw errors.OTP_SEND_FAILED.error;
-        });
+        // Generate email template
+        const mailBody = emailTemplates.VERIFICATION_MAIL(
+          'Please use the OTP below to confirm and proceed with your password reset.',
+          otp.generateOTP(totp.secret),
+        );
+
+        // Send OTP to user.email
+        await emailServer.sendMail(user.email, 'SkinMate Password Reset', totp.secret, mailBody)
+          .catch((error) => {
+            console.error(error);
+            response.status(errors.OTP_SEND_FAILED.code);
+            throw errors.OTP_SEND_FAILED.error;
+          });
       }
 
       // Send OTP if phone
@@ -651,58 +706,64 @@ router.post(
             throw errors.OTP_SEND_FAILED.error;
           });
       }
-  
+
       const { secret, ...rest } = totp.toJSON();
-        
+
       response.send(rest);
-    }catch (error) {
-        response.send(error.message);
+    } catch (error) {
+      response.send(error.message);
     }
   },
-);  
-  
+);
+
+/**
+ * `http POST` request handler for user email verification.
+ * * Requires `access-token` `device-id` to be present in the headers.
+ * * Requires `requestId` `code` to be sent in the body.
+ * * Requires `user.phone` to be verified
+ */
 router.post(
   '/accounts/changepassword',
   urlencoded({ extended: true }),
-  async(request,response) => {
-  try{
-        const client = await Client.findOne({
-          _id: request.headers['device-id'],
-          token: request.headers['access-token'],
-        });
-        
-        if (!client) {
-          response.status(errors.NO_CLIENT.code);
+  async (request, response) => {
+    try {
+      const client = await Client.findOne({
+        _id: request.headers['device-id'],
+        token: request.headers['access-token'],
+      });
+
+      if (!client) {
+        response.status(errors.NO_CLIENT.code);
         throw errors.NO_CLIENT.error;
-        }
-        
-        const user = await User.findOne({
-          _id: client.user,
-          isDeleted: { $ne: true },
-        })
-        
-        if (!user) {
-          response.status(404);
-          throw new Error('Account not found');
-        }
-  
-        const samepassword = await compare(request.body.password, user.password)
-           
-        if(samepassword){
-            response.status(404);
-            throw new Error('same as old password');
-           }
-  
-           user.password = request.body.password
-           await user.save()
- 
-           response.send("password updated")
-  
-      }catch (error) {
-        response.send(error.message);
       }
-  })
-  
+
+      const user = await User.findOne({
+        _id: client.user,
+        isDeleted: { $ne: true },
+      });
+
+      if (!user) {
+        response.status(404);
+        throw new Error('Account not found');
+      }
+
+      const samepassword = await compare(request.body.password, user.password);
+
+      if (samepassword) {
+        response.status(404);
+        throw new Error('same as old password');
+      }
+
+      user.password = request.body.password;
+      await user.save();
+
+      response.send('password updated');
+    } catch (error) {
+      response.send(error.message);
+    }
+  },
+);
+
 /**
  * User router
  */

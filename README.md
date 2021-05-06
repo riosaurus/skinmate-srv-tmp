@@ -1,12 +1,34 @@
 # REST API structure
 
-> ## Disclaimer
-> * This is a common intruction for all of the routes documented below other than *signin* and *user registration* route.
-> 
-> * Always hydrate request headers with Client details obtained after user creation or authentication.
-> 
-> * Hydrate `access-token` with the provided access token.
-> * Hydrate `device-id`  with the provided deviceid.
+## Table of contents
+
+- [REST API structure](#rest-api-structure)
+  - [Table of contents](#table-of-contents)
+  - [Disclaimer](#disclaimer)
+  - [Accounts Management](#accounts-management)
+    - [1. Creating a user](#1-creating-a-user)
+    - [2. Request verification (phone)](#2-request-verification-phone)
+    - [3. Verification (phone)](#3-verification-phone)
+    - [4. Request verification (email)](#4-request-verification-email)
+    - [5. Verification (email)](#5-verification-email)
+    - [6. Fetching user](#6-fetching-user)
+    - [7. User updation](#7-user-updation)
+    - [8. User authentication (signin)](#8-user-authentication-signin)
+    - [9. User authentication (signout)](#9-user-authentication-signout)
+    - [10. User deletion](#10-user-deletion)
+    - [11. User picture upload](#11-user-picture-upload)
+  - [Family Management](#family-management)
+    - [creating a family member](#creating-a-family-member)
+    - [fetch all family members](#fetch-all-family-members)
+    - [delete a family member](#delete-a-family-member)
+    - [edit/update a family member](#editupdate-a-family-member)
+
+## Disclaimer
+
+* This is a common instruction for all of the routes documented below other than *signin* and *user registration* route. 
+* Always hydrate request headers with Client details obtained after user creation or authentication. 
+* Hydrate `access-token` with the provided access token.
+* Hydrate `device-id`  with the provided deviceid.
 
 ## Accounts Management
 
@@ -95,7 +117,7 @@
 ***
 
 
-### 2. Verifying user (Request OTP)
+### 2. Request verification (phone)
 
 **Request structure**
 
@@ -131,7 +153,7 @@
 
 ***
 
-### 3. Verifying user (Validate OTP)
+### 3. Verification (phone)
 
 **Request structure**
 
@@ -167,7 +189,7 @@
 
 ***
 
-### 4. Verifying user (email)
+### 4. Request verification (email)
 
 **Request structure**
 
@@ -195,7 +217,7 @@
 
 ***
 
-### 5. Verifying user (email)
+### 5. Verification (email)
 
 **Request structure**
 
@@ -244,20 +266,74 @@
 
 | Status | Message |
 | --: | --- |
-| 403 | Requires access-token |
-| 403 | Requires device-id |
-| 403 | Unrecognized device |
-| 404 | Account not found   |
+| 401 | Operation requires access-token |
+| 403 | Operation requires device-id |
+| 500 | Couldn't verify your identity |
+| 500 | Couldn't find user |
+| 401 | Unauthorized client |
+| 401 | Phone and email not verified |
+| 401 | Phone number not verified |
+| 401 | Email not verified |
 
 **Note**
 
+* Only verified users can access this route.
 * This route always responds with **user-profile** pattern (if no error)
 
 > Example: `[GET] https://skinmate.herokuapp.com/accounts`
 
 ***
 
-### 7. User authentication (signin)
+### 7. User updation
+
+**Request structure**
+
+```js
+/**
+ * @method {PATCH}
+ * @path {/accounts}
+ * @headers `access-token` `device-id`
+ * @param {none} 
+ * @body {x-www-form-urlencoded}
+ * */
+{ 
+    firstName: String,
+    lastName: String,
+    gender: String, // "male", "female", "others"
+    dateOfBirth: Date,
+    bloodGroup: String,
+    address: String,
+    insurance: String,
+    emergencyName: String,
+    emergencyNumber: String
+}
+```
+
+**Possible errors**
+
+| Status | Message |
+| --: | --- |
+| 401 | Operation requires access-token |
+| 403 | Operation requires device-id |
+| 403 | Requires access-token |
+| 500 | Couldn't verify your identity |
+| 500 | Couldn't find user |
+| 401 | Unauthorized client |
+| 401 | Phone number not verified |
+| 406 | Validation failed: (forbidden fields) |
+| 500 | Couldn't update user |
+
+**Note**
+
+* Expects phone number to be priorly verified.
+* This route always responds with updated **user-profile** pattern. (if no error)
+
+> Example: `[PATCH] https://skinmate.herokuapp.com/accounts`
+
+
+***
+
+### 8. User authentication (signin)
 
 **Request structure**
 
@@ -299,7 +375,7 @@
 
 ***
 
-### 8. User authentication (signout)
+### 9. User authentication (signout)
 
 **Request structure**
 
@@ -333,7 +409,7 @@
 ***
 
 
-### 9. User deletion 
+### 10. User deletion 
 
 **Request structure**
 
@@ -364,51 +440,6 @@
 * This route always responds a message **Account deleted** (if no error)
 
 > Example: `[DELETE] https://skinmate.herokuapp.com/accounts`
-
-
-***
-
-### 10. User updation
-
-**Request structure**
-
-```js
-/**
- * @method {PATCH}
- * @path {/accounts}
- * @headers `access-token` `device-id`
- * @param {none} 
- * @body {x-www-form-urlencoded}
- * */
-{ 
-    firstName:String,
-    lastName:String,
-    gender:String,
-    dateOfBirth:Date,
-    bloodGroup:String,
-    address:String,
-    insurance:String,
-    emergencyName:String,
-    emergencyNumber:String
-       
-}
-```
-
-**Possible errors**
-
-| Status | Message |
-| --: | --- |
-| 403 | Requires access-token |
-| 403 | Requires device-id |
-| 403 | Unrecognized device |
-| 404 | Account not found |
-| 500 | invalid property |
-
-**Note**
-
-* This route always responds with updated **user-profile** pattern (if no error)
-
-> Example: `[PATCH] https://skinmate.herokuapp.com/accounts`
 
 
 ***
