@@ -4,11 +4,10 @@ const express = require('express');
 const { config } = require('dotenv');
 const yargs = require('yargs');
 const { connect } = require('mongoose');
-const { constants } = require('./utils');
+const { constants, smsServer } = require('./utils');
 const {
-  UserRouter, DoctorRouter, FamilyRouter, ServiceRouter,AppointmentRouter
+  UserRouter, DoctorRouter, FamilyRouter, ServiceRouter, AppointmentRouter,
 } = require('./routes');
-const { smsServer } = require('./utils');
 
 const App = express();
 App.use(express.json());
@@ -16,7 +15,7 @@ App.use(UserRouter);
 App.use(DoctorRouter);
 App.use(FamilyRouter);
 App.use(ServiceRouter);
-App.use(AppointmentRouter)
+App.use(AppointmentRouter);
 const server = createServer(App);
 
 const argv = yargs(process.argv.slice(2))
