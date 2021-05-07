@@ -10,7 +10,7 @@ const serviceSchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    doctor: {
+    doctorId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "Doctor",
