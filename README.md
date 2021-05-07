@@ -5,18 +5,24 @@
 - [REST API structure](#rest-api-structure)
   - [Table of contents](#table-of-contents)
   - [Disclaimer](#disclaimer)
+  - [Common Response Patterns](#common-response-patterns)
+    - [1. Client Access Document Pattern](#1-client-access-document-pattern)
+    - [2. User Profile Document Pattern](#2-user-profile-document-pattern)
+    - [3. OTP Request Document Pattern](#3-otp-request-document-pattern)
   - [Accounts Management](#accounts-management)
     - [1. Creating a user](#1-creating-a-user)
-    - [2. Request verification (phone)](#2-request-verification-phone)
-    - [3. Verification (phone)](#3-verification-phone)
-    - [4. Request verification (email)](#4-request-verification-email)
-    - [5. Verification (email)](#5-verification-email)
+    - [2. Request OTP verification (phone)](#2-request-otp-verification-phone)
+    - [3. OTP Verification (phone)](#3-otp-verification-phone)
+    - [4. Request OTP verification (email)](#4-request-otp-verification-email)
+    - [5. OTP Verification (email)](#5-otp-verification-email)
     - [6. Fetching user](#6-fetching-user)
     - [7. User updation](#7-user-updation)
     - [8. User authentication (signin)](#8-user-authentication-signin)
     - [9. User authentication (signout)](#9-user-authentication-signout)
-    - [10. User deletion](#10-user-deletion)
-    - [11. User picture upload](#11-user-picture-upload)
+    - [10. Request OTP signin (Forgot password)](#10-request-otp-signin-forgot-password)
+    - [11. OTP signin (Forgot password)](#11-otp-signin-forgot-password)
+    - [12. User deletion](#12-user-deletion)
+    - [13. User picture upload](#13-user-picture-upload)
   - [Family Management](#family-management)
     - [creating a family member](#creating-a-family-member)
     - [fetch all family members](#fetch-all-family-members)
@@ -30,15 +36,10 @@
 * Hydrate `access-token` with the provided access token.
 * Hydrate `device-id`  with the provided deviceid.
 
-## Accounts Management
+## Common Response Patterns
 
-* Accounts service is provided through the `/accounts` route.
-* The responses from this route has only 2 common patterns.
-  * *Client access* pattern has the data to identify the device (access_token)
-  * *User profile* pattern will be the user profile.
-
+### 1. Client Access Document Pattern
 ```js
-/* Client access response pattern */
 {
     _id: String,    // The 24-char device-id
     user: String,   // The 24-char userid
@@ -48,11 +49,11 @@
     updatedAt?: Date,    // Same as createdAt
     __v?: Number,   // Document version
 }
-// Fields marked with a ? mark aren't important for other requests to be fed.
+// Fields marked with a ? mark aren't important.
 ```
 
+### 2. User Profile Document Pattern
 ```js
-/* User profile response pattern */
 {
     _id: String,    // The 24-char userid
     email: String,  
@@ -72,8 +73,27 @@
     updatedAt: Date,    // Date of last account updation
     __v?: Number,   // Document version
 }
-// Fields marked with a * mark are to be implemented in forthcoming versions.
+// Fields marked with a ? mark aren't important.
 ```
+
+### 3. OTP Request Document Pattern
+```js
+{
+    _id: String,    // The 24-char requestId
+    user: String,   // The 24-char userId
+    createdAt: Date,    // Date of account creation
+    updatedAt: Date,    // Date of last account updation
+    __v?: Number,   // Document version
+}
+// Fields marked with a ? mark aren't important.
+```
+
+## Accounts Management
+
+* Accounts service is provided through the `/accounts` route.
+* The responses from this route has only 2 common patterns.
+  * *Client access* pattern has the data to identify the device (access_token)
+  * *User profile* pattern will be the user profile.
 
 ### 1. Creating a user
 
@@ -90,8 +110,7 @@
 {
     email: String,
     password: String,
-    phone: String,
-    
+    phone: String,   
 }
 ```
 
@@ -109,7 +128,7 @@
 
 **Note**
 
-* This route always responds with **client-access** pattern with status code `201 Created` (if no error).
+* This route always responds with [CAD](#1-client-access-document-pattern) along with a status code `201 Created` (if no errors).
 * This route doesn't require header hydration.
 
 > Example: `[POST] https://skinmate.herokuapp.com/accounts`
@@ -117,7 +136,7 @@
 ***
 
 
-### 2. Request verification (phone)
+### 2. Request OTP verification (phone)
 
 **Request structure**
 
@@ -145,7 +164,7 @@
 
 **Note**
 
-* This route sends a document to identify user for the requested OTP (if no error).
+* This route responds with [OTPRD](#3-otp-request-document-pattern) to identify user for the requested OTP (if no error).
 * A OTP code will be sent to the associated phone number.
 * Both the `_id` and OTP received is used to proceed with verification.
 
@@ -153,7 +172,7 @@
 
 ***
 
-### 3. Verification (phone)
+### 3. OTP Verification (phone)
 
 **Request structure**
 
@@ -183,13 +202,13 @@
 
 **Note**
 
-* This route responds with *{phone_number} is now verified* message if OTP is send before the expiry window.
+* This route responds with *"{phone_number} is now verified"* message if OTP is send before the expiry window.
 
 > Example: `[POST] https://skinmate.herokuapp.com/accounts/verify/phone`
 
 ***
 
-### 4. Request verification (email)
+### 4. Request OTP verification (email)
 
 **Request structure**
 
@@ -207,28 +226,35 @@
 
 | Status | Message |
 | --: | --- |
-| 400 | Unrecognized user-agent |
+| 401 | Operation requires `access-token` |
+| 403 | Operation requires `device-id` |
+| 500 | Couldn\'t verify your identity |
+| 500 | Couldn't find user |
+| 500 | Couldn't generate OTP |
+| 500 | Couldn't send OTP |
 
 **Note**
 
-* This route doesn't send any data with response (if no error)
+* This route responds with [OTPRD](#3-otp-request-document-pattern) to identify user for the requested OTP (if no error).
+* A OTP code will be sent to the associated email address.
+* Both the `_id` and OTP received is used to proceed with verification.
 
-> Example: `[GET] https://skinmate.herokuapp.com/accounts/608a27075ca1962a18eabd3a/verify/email`
+> Example: `[GET] https://skinmate.herokuapp.com/accounts/verify/email`
 
 ***
 
-### 5. Verification (email)
+### 5. OTP Verification (email)
 
 **Request structure**
 
 ```js
 /**
  * @method {POST}
- * @path {/accounts/:userid:/verify/email}
- * @param {:userid:} A unique user identifier of length 24 chars
+ * @path {/accounts/verify/email}
  * @body {x-www-form-urlencoded}
  * */
 {
+    requestId: String, // The 24-char requestId
     code: Number    // OTP to be verified
 }
 ```
@@ -237,13 +263,18 @@
 
 | Status | Message |
 | --: | --- |
-| 400 | Unrecognized user-agent |
+| 401 | Operation requires `access-token` |
+| 403 | Operation requires `device-id` |
+| 500 | Couldn\'t verify your identity |
+| 500 | Couldn't find user |
+| 500 | Couldn\'t find OTP in registry |
+| 401 | Invalid OTP |
 
 **Note**
 
-* This route always responds with **user-profile** pattern (if no error)
+* This route responds with *"{email} is now verified"* message if OTP is send before the expiry window.
 
-> Example: `[GET] https://skinmate.herokuapp.com/accounts/608a27075ca1962a18eabd3a/verify/email`
+> Example: `[POST] https://skinmate.herokuapp.com/accounts/verify/email`
 
 ***
 
@@ -278,7 +309,7 @@
 **Note**
 
 * Only verified users can access this route.
-* This route always responds with **user-profile** pattern (if no error)
+* This route always responds with [UPD](#2-user-profile-document-pattern) pattern (if no error)
 
 > Example: `[GET] https://skinmate.herokuapp.com/accounts`
 
@@ -326,7 +357,7 @@
 **Note**
 
 * Expects phone number to be priorly verified.
-* This route always responds with updated **user-profile** pattern. (if no error)
+* This route always responds with [UPD](#2-user-profile-document-pattern) pattern (if no error)
 
 > Example: `[PATCH] https://skinmate.herokuapp.com/accounts`
 
@@ -366,9 +397,9 @@
 
 **Note**
 
-* This route always responds with **client-access** pattern (if no error).
+* This route always responds with [CAD](#1-client-access-document-pattern) (if no errors).
 * This route doesn't require `access-token` or `device_id`.
-* If `device-id` exists, pass it.
+* If `device-id` exists, pass it to remove any orphaned client access documents.
 
 > Example: `[POST] https://skinmate.herokuapp.com/accounts/auth`
 
@@ -409,7 +440,82 @@
 ***
 
 
-### 10. User deletion 
+
+### 10. Request OTP signin (Forgot password)
+
+**Request structure**
+
+```js
+/**
+ * @method {POST}
+ * @path {/accounts/auth/request-otp-signin}
+ * @headers `user-agent`
+ * @body {x-www-form-urlencoded}
+ * */
+{
+    email: String, // or
+    phone: String
+}
+```
+
+**Possible errors**
+
+| Status | Message |
+| --: | --- |
+| 403 | Operation requires user-agent |
+| 500 | Couldn\'t find user |
+| 404 | User doesn\'t exist |
+| 500 | Couldn\'t generate OTP |
+| 500 | Couldn\'t send OTP |
+
+**Note**
+
+* This route always responds with [OTPRD](#3-otp-request-document-pattern) (if no error)
+* Sends OTP to phone or email based on the request body given.
+
+> Example: `[POST] https://skinmate.herokuapp.com/accounts/auth/request-otp-signin`
+
+
+***
+
+### 11. OTP signin (Forgot password)
+
+**Request structure**
+
+```js
+/**
+ * @method {POST}
+ * @path {/accounts/auth/otp-signin}
+ * @headers `user-agent`
+ * @body {x-www-form-urlencoded}
+ * */
+{
+    requestId: String, // or
+    code: String
+}
+```
+
+**Possible errors**
+
+| Status | Message |
+| --: | --- |
+| 403 | Operation requires user-agent |
+| 500 | Couldn't find OTP in registry |
+| 404 | OTP isn't available |
+| 401 | Invalid OTP |
+| 500 | Couldn't register client |
+
+**Note**
+
+* This route always responds with [CAD](#1-client-access-document-pattern) (if no errors)
+* This request is same as email-password signin. Use the *Client Access Token* to login and update the password.
+* Use [User Update](#7-user-updation) route to update the password.
+
+> Example: `[POST] https://skinmate.herokuapp.com/accounts/auth/otp-signin`
+
+***
+
+### 12. User deletion 
 
 **Request structure**
 
@@ -437,14 +543,14 @@
 
 **Note**
 
-* This route always responds a message **Account deleted** (if no error)
+* This route always responds a message *"Account deleted"* (if no errors)
 
 > Example: `[DELETE] https://skinmate.herokuapp.com/accounts`
 
 
 ***
 
-### 11. User picture upload
+### 13. User picture upload
 
 **Request structure**
 
