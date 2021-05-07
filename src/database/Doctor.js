@@ -34,7 +34,13 @@ const schema = new Schema({
         type:String
     }]
 }     
-]
+] 
+});
+
+schema.virtual('service', {
+  ref: 'Service',
+  localField: '_id',
+  foreignField: 'doctorId',
 });
 
 module.exports =model('Doctor', schema)
