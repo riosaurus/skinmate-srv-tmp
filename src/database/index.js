@@ -4,7 +4,8 @@ const Doctor = require('./Doctor');
 const User = require('./user');
 const Family = require('./Family_member');
 const TOTP = require('./TOTP');
+const Service = require('./Service');
 
 module.exports = {
-  Appointment, Client, Doctor, User, Family, TOTP,
+  Appointment, Client, Doctor, User, Family, TOTP, Service,
 };

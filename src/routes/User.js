@@ -44,16 +44,16 @@ router.post(
 
       await user.save().catch((error) => {
         console.error(error);
-        response.status(errors.USER_ADD_FAILURE.code);
-        throw errors.USER_ADD_FAILURE.error;
+        response.status(errors.SAVE_USER_FAILED.code);
+        throw errors.SAVE_USER_FAILED.error;
       });
 
       // On-register-direct-login approach
       const client = await Client.create({ user: user.id, userAgent: request.headers['user-agent'] })
         .catch((error) => {
           console.error(error);
-          response.status(errors.CLIENT_ADD_FAILURE.code);
-          throw errors.CLIENT_ADD_FAILURE.error;
+          response.status(errors.SAVE_CLIENT_FAILED.code);
+          throw errors.SAVE_CLIENT_FAILED.error;
         });
 
       response.status(201).json(client);
@@ -73,24 +73,14 @@ router.get(
   middlewares.requireVerification({ phone: true, email: true }),
   async (request, response) => {
     try {
-      // Get the client document
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      }).catch((error) => {
-        console.error(error);
-        response.status(errors.FIND_CLIENT.code);
-        throw errors.FIND_CLIENT.error;
-      });
-
       // Get the user document
       const user = await User.findOne({
-        _id: client.user,
+        _id: request.params.userId,
         isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
-        response.status(errors.FIND_USER.code);
-        throw errors.FIND_USER.error;
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
       });
 
       const { password, isDeleted, ...rest } = user.toJSON();
@@ -128,15 +118,13 @@ router.post(
   upload.single('file'),
   async (request, response) => {
     try {
-      // Get the client document
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      }).catch((error) => {
-        console.error(error);
-        response.status(errors.FIND_CLIENT.code);
-        throw errors.FIND_CLIENT.error;
-      });
+      // Get the use document
+      const user = await User.findById(request.params.userId)
+        .catch((error) => {
+          console.error(error);
+          response.status(errors.FIND_USER_FAILED.code);
+          throw errors.FIND_USER_FAILED.error;
+        });
 
       const buffer = await sharp(request.file.buffer)
         .png()
@@ -147,20 +135,12 @@ router.post(
           throw errors.IMAGE_READ_FAILED.error;
         });
 
-      const user = await User.findById(client.user);
-
-      if (!user) {
-        response.status(404);
-        throw new Error('Account not found');
-      }
-
       user.avatar = buffer;
 
       await user.save();
 
       response.send('avatar uploaded');
     } catch (error) {
-      console.error(error);
       response.send(error.message);
     }
   },
@@ -177,32 +157,23 @@ router.patch(
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
     try {
-      // Get the client document
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      }).catch((error) => {
-        console.error(error);
-        response.status(errors.FIND_CLIENT.code);
-        throw errors.FIND_CLIENT.error;
-      });
-
+      // Get the user document
       const user = await User.findOne({
-        _id: client.user,
+        _id: request.params.userId,
         isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
-        response.status(errors.FIND_USER.code);
-        throw errors.FIND_USER.error;
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
       });
 
       const updates = Object.keys(request.body);
-      const allowupdates = ['firstName', 'lastName', 'password', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
-      const isvalidoperation = updates.every((update) => allowupdates.includes(update));
+      const allowedUpdates = ['firstName', 'lastName', 'password', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
+      const isvalidoperation = updates.every((update) => allowedUpdates.includes(update));
 
       if (!isvalidoperation) {
         const { code, error } = errors.FORBIDDEN_UPDATE_ERROR(updates
-          .filter((key) => !allowupdates.includes(key)));
+          .filter((key) => !allowedUpdates.includes(key)));
         response.status(code);
         throw error;
       }
@@ -230,7 +201,7 @@ router.patch(
         password, isDeleted, avatar, ...rest
       } = user.toJSON();
 
-      response.send(rest);
+      response.json(rest);
     } catch (error) {
       console.log(error);
       response.send(error.message);
@@ -248,24 +219,14 @@ router.delete(
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
     try {
-      // Get the client document
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      }).catch((error) => {
-        console.error(error);
-        response.status(errors.FIND_CLIENT.code);
-        throw errors.FIND_CLIENT.error;
-      });
-
       // Get the user
       const user = await User.findOne({
-        _id: client.user,
+        _id: request.params.userId,
         isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
-        response.status(errors.FIND_USER.code);
-        throw errors.FIND_USER.error;
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
       });
 
       await user.update({ isDeleted: true })
@@ -303,13 +264,13 @@ router.post(
         isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
-        response.status(errors.FIND_USER.code);
-        throw errors.FIND_USER.error;
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
       });
 
       if (!user) {
-        response.status(errors.NO_USER.code);
-        throw errors.NO_USER.error;
+        response.status(errors.NULL_USER.code);
+        throw errors.NULL_USER.error;
       }
 
       // Check password
@@ -337,8 +298,8 @@ router.post(
         client = await Client.create({ user: user.id, userAgent: request.headers['user-agent'] })
           .catch((error) => {
             console.error(error);
-            response.status(errors.CLIENT_ADD_FAILURE.code);
-            throw errors.CLIENT_ADD_FAILURE.error;
+            response.status(errors.SAVE_CLIENT_FAILED.code);
+            throw errors.SAVE_CLIENT_FAILED.error;
           });
       }
 
@@ -386,23 +347,12 @@ router.get(
   middlewares.requireVerification({}),
   async (request, response) => {
     try {
-      // Get client to identify user
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      })
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_CLIENT.code);
-          throw errors.FIND_CLIENT.error;
-        });
-
       // Get the user
-      const user = await User.findById(client.user.toString())
+      const user = await User.findById(request.params.userId)
         .catch((error) => {
           console.error(error);
-          response.status(errors.FIND_USER.code);
-          throw errors.FIND_USER.error;
+          response.status(errors.FIND_USER_FAILED.code);
+          throw errors.FIND_USER_FAILED.error;
         });
 
       if (user.verifiedPhone) {
@@ -415,7 +365,7 @@ router.get(
         .catch((error) => {
           console.error(error);
           response.status(errors.OTP_GENERATION_FAILED.code);
-          throw errors.OTP_GENERATION_FAILED.error;
+          throw errors.SAVE_TOTP_FAILED.error;
         });
 
       // Send OTP to user.phone
@@ -454,35 +404,23 @@ router.post(
   middlewares.requireVerification({}),
   async (request, response) => {
     try {
-      // Get client to identify user
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      })
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_CLIENT.code);
-          throw errors.FIND_CLIENT.error;
-        });
-
       // Get the user
-      const user = await User.findById(client.user)
+      const user = await User.findById(request.params.userId)
         .catch((error) => {
           console.error(error);
-          response.status(errors.FIND_USER.code);
-          throw errors.FIND_USER.error;
+          response.status(errors.FIND_USER_FAILED.code);
+          throw errors.FIND_USER_FAILED.error;
         });
 
       // Get the TOTP document
       const totp = await TOTP.findOne({
         _id: request.body.requestId,
         user: user.id,
-      })
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_TOTP_FAILED.code);
-          throw errors.FIND_TOTP_FAILED.error;
-        });
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_TOTP_FAILED.code);
+        throw errors.FIND_TOTP_FAILED.error;
+      });
 
       if (!totp) {
         response.status(errors.UNAVAILABLE_OTP.code);
@@ -522,23 +460,12 @@ router.get(
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
     try {
-      // Get client to identify user
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      })
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_CLIENT.code);
-          throw errors.FIND_CLIENT.error;
-        });
-
       // Get the user
-      const user = await User.findById(client.user.toString())
+      const user = await User.findById(request.params.userId)
         .catch((error) => {
           console.error(error);
-          response.status(errors.FIND_USER.code);
-          throw errors.FIND_USER.error;
+          response.status(errors.FIND_USER_FAILED.code);
+          throw errors.FIND_USER_FAILED.error;
         });
 
       if (user.verifiedEmail) {
@@ -592,35 +519,23 @@ router.post(
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
     try {
-      // Get client to identify user
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      })
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_CLIENT.code);
-          throw errors.FIND_CLIENT.error;
-        });
-
       // Get the user
-      const user = await User.findById(client.user)
+      const user = await User.findById(request.params.userId)
         .catch((error) => {
           console.error(error);
-          response.status(errors.FIND_USER.code);
-          throw errors.FIND_USER.error;
+          response.status(errors.FIND_USER_FAILED.code);
+          throw errors.FIND_USER_FAILED.error;
         });
 
       // Get the TOTP document
       const totp = await TOTP.findOne({
         _id: request.body.requestId,
         user: user.id,
-      })
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_TOTP_FAILED.code);
-          throw errors.FIND_TOTP_FAILED.error;
-        });
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_TOTP_FAILED.code);
+        throw errors.FIND_TOTP_FAILED.error;
+      });
 
       if (!totp) {
         response.status(errors.UNAVAILABLE_OTP.code);
@@ -670,13 +585,13 @@ router.post(
         isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
-        response.status(errors.FIND_USER.code);
-        throw errors.FIND_USER.error;
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
       });
 
       if (!user) {
-        response.status(errors.NO_USER.code);
-        throw errors.NO_USER.error;
+        response.status(errors.NULL_USER.code);
+        throw errors.NULL_USER.error;
       }
 
       // Generate a TOTP document
@@ -695,8 +610,7 @@ router.post(
           'SkinMate Password Reset OTP',
           constants.EMAIL_TEMPLATE_VERIFICATION,
           {
-            MESSAGE: 'Please use the OTP below to confirm and proceed with your password reset.\
-            This OTP allows you to login and update your password.',
+            MESSAGE: 'Please use the OTP below to confirm and proceed with your password reset. This OTP allows you to login and update your password.',
             VERIFICATION_CODE: otp.generateOTP(totp.secret),
           },
         ).catch((error) => {
@@ -767,8 +681,8 @@ router.post(
         userAgent: request.headers['user-agent'],
       }).catch((error) => {
         console.error(error);
-        response.status(errors.CLIENT_ADD_FAILURE.code);
-        throw errors.CLIENT_ADD_FAILURE.error;
+        response.status(errors.SAVE_CLIENT_FAILED.code);
+        throw errors.SAVE_CLIENT_FAILED.error;
       });
 
       // Remove totp document to prevent breach
