@@ -1,28 +1,38 @@
-# REST API structure
+# SkinMate Backend
+
+![](https://badgen.net/badge/release/v.0.2/)
+
+![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express.js-404D59?style=for-the-badge)
+![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
+![Heroku](https://img.shields.io/badge/Heroku-430098?style=for-the-badge&logo=heroku&logoColor=white)
 
 ## Table of contents
 
-- [REST API structure](#rest-api-structure)
+- [SkinMate Backend](#skinmate-backend)
   - [Table of contents](#table-of-contents)
   - [Disclaimer](#disclaimer)
   - [Common Response Patterns](#common-response-patterns)
-    - [1. Client Access Document Pattern](#1-client-access-document-pattern)
-    - [2. User Profile Document Pattern](#2-user-profile-document-pattern)
-    - [3. OTP Request Document Pattern](#3-otp-request-document-pattern)
-  - [Accounts Management](#accounts-management)
-    - [1. Creating a user](#1-creating-a-user)
-    - [2. Request OTP verification (phone)](#2-request-otp-verification-phone)
-    - [3. OTP Verification (phone)](#3-otp-verification-phone)
-    - [4. Request OTP verification (email)](#4-request-otp-verification-email)
-    - [5. OTP Verification (email)](#5-otp-verification-email)
-    - [6. Fetching user](#6-fetching-user)
-    - [7. User updation](#7-user-updation)
-    - [8. User authentication (signin)](#8-user-authentication-signin)
-    - [9. User authentication (signout)](#9-user-authentication-signout)
-    - [10. Request OTP signin (Forgot password)](#10-request-otp-signin-forgot-password)
-    - [11. OTP signin (Forgot password)](#11-otp-signin-forgot-password)
-    - [12. User deletion](#12-user-deletion)
-    - [13. User picture upload](#13-user-picture-upload)
+    - [Client Access Document Pattern](#client-access-document-pattern)
+    - [User Profile Document Pattern](#user-profile-document-pattern)
+    - [OTP Request Document Pattern](#otp-request-document-pattern)
+    - [Service Document Pattern](#service-document-pattern)
+  - [Accounts](#accounts)
+    - [Creating a user](#creating-a-user)
+    - [Request OTP verification (phone)](#request-otp-verification-phone)
+    - [OTP Verification (phone)](#otp-verification-phone)
+    - [Request OTP verification (email)](#request-otp-verification-email)
+    - [OTP Verification (email)](#otp-verification-email)
+    - [Fetching user](#fetching-user)
+    - [User updation](#user-updation)
+    - [User authentication (signin)](#user-authentication-signin)
+    - [User authentication (signout)](#user-authentication-signout)
+    - [Request OTP signin (Forgot password)](#request-otp-signin-forgot-password)
+    - [OTP signin (Forgot password)](#otp-signin-forgot-password)
+    - [User deletion](#user-deletion)
+    - [User picture upload](#user-picture-upload)
+  - [Services](#services)
+    - [Creating a service](#creating-a-service)
   - [Family Management](#family-management)
     - [creating a family member](#creating-a-family-member)
     - [fetch all family members](#fetch-all-family-members)
@@ -38,13 +48,13 @@
 
 ## Common Response Patterns
 
-### 1. Client Access Document Pattern
+### Client Access Document Pattern
 ```js
 {
     _id: String,    // The 24-char device-id
-    user: String,   // The 24-char userid
+    user: String,   // The 24-char user-id
     userAgent?: String,   // The user-agent of the client device
-    token: String,  // The access_token
+    token: String,  // The access-token
     createdAt: Date,    // Date of login
     updatedAt?: Date,    // Same as createdAt
     __v?: Number,   // Document version
@@ -52,23 +62,24 @@
 // Fields marked with a ? mark aren't important.
 ```
 
-### 2. User Profile Document Pattern
+### User Profile Document Pattern
 ```js
 {
-    _id: String,    // The 24-char userid
+    _id: String,    // The 24-char user-id
     email: String,  
     phone: String,  
-    firstName:String,
-    lastName:String,
-    gender:String,
-    dateOfBirth:Date,
-    bloodGroup:String,
-    address:String,
-    insurance:String,
-    emergencyName:String,
-    emergencyNumber:String,
-    phoneVerified: boolean, // OTP verification status
-    emailVerified: boolean, // Email verification status
+    firstName: String,
+    lastName: String,
+    gender: String,
+    dateOfBirth: Date,
+    bloodGroup: String,
+    address: String,
+    insurance: String,
+    emergencyName: String,
+    emergencyNumber: String,
+    elevatedAccess: Boolean
+    phoneVerified: Boolean, // OTP verification status
+    emailVerified: Boolean, // Email verification status
     createdAt: Date,    // Date of account creation
     updatedAt: Date,    // Date of last account updation
     __v?: Number,   // Document version
@@ -76,26 +87,38 @@
 // Fields marked with a ? mark aren't important.
 ```
 
-### 3. OTP Request Document Pattern
+### OTP Request Document Pattern
 ```js
 {
     _id: String,    // The 24-char requestId
-    user: String,   // The 24-char userId
+    user: String,   // The 24-char user-id
     createdAt: Date,    // Date of account creation
-    updatedAt: Date,    // Date of last account updation
+    updatedAt?: Date,
     __v?: Number,   // Document version
 }
 // Fields marked with a ? mark aren't important.
 ```
 
-## Accounts Management
+### Service Document Pattern
+```js
+{
+    _id: String,    // The 24-char serviceId
+    name: String,   // Service id
+    description: String,    // Service description
+    createdAt: Date,    // Date of account creation
+    updatedAt: Date,    // Date of last update
+    __v?: Number,   // Document version
+}
+```
+
+## Accounts
 
 * Accounts service is provided through the `/accounts` route.
 * The responses from this route has only 2 common patterns.
   * *Client access* pattern has the data to identify the device (access_token)
   * *User profile* pattern will be the user profile.
 
-### 1. Creating a user
+### Creating a user
 
 **Request structure:**
 
@@ -104,7 +127,6 @@
  * @method {POST}
  * @path {/accounts}
  * @headers `user-agent`
- * @param {none}
  * @body {x-www-form-urlencoded}
  * */
 {
@@ -136,7 +158,7 @@
 ***
 
 
-### 2. Request OTP verification (phone)
+### Request OTP verification (phone)
 
 **Request structure**
 
@@ -145,10 +167,7 @@
  * @method {GET}
  * @path {/accounts/verify/phone}
  * @headers `access-token` `device-id`
- * @param {none}
- * @body {none}
  * */
-{ }
 ```
 
 **Possible errors**
@@ -172,7 +191,7 @@
 
 ***
 
-### 3. OTP Verification (phone)
+### OTP Verification (phone)
 
 **Request structure**
 
@@ -208,7 +227,7 @@
 
 ***
 
-### 4. Request OTP verification (email)
+### Request OTP verification (email)
 
 **Request structure**
 
@@ -216,10 +235,7 @@
 /**
  * @method {GET}
  * @path {/accounts/verify/email}
- * @param {none}
- * @body {none}
  * */
-{ }
 ```
 
 **Possible errors**
@@ -243,7 +259,7 @@
 
 ***
 
-### 5. OTP Verification (email)
+### OTP Verification (email)
 
 **Request structure**
 
@@ -278,7 +294,7 @@
 
 ***
 
-### 6. Fetching user
+### Fetching user
 
 **Request structure**
 
@@ -287,10 +303,7 @@
  * @method {GET}
  * @path {/accounts}
  * @headers `access-token` `device-id`
- * @param {none}
- * @body {none}
  * */
-{ }
 ```
 
 **Possible errors**
@@ -315,7 +328,7 @@
 
 ***
 
-### 7. User updation
+### User updation
 
 **Request structure**
 
@@ -324,7 +337,6 @@
  * @method {PATCH}
  * @path {/accounts}
  * @headers `access-token` `device-id`
- * @param {none} 
  * @body {x-www-form-urlencoded}
  * */
 { 
@@ -364,7 +376,7 @@
 
 ***
 
-### 8. User authentication (signin)
+### User authentication (signin)
 
 **Request structure**
 
@@ -373,7 +385,6 @@
  * @method {POST}
  * @path {/accounts/auth}
  * @headers `user-agent`
- * @param {none}
  * @body {x-www-form-urlencoded}
  * */
 {
@@ -406,7 +417,7 @@
 
 ***
 
-### 9. User authentication (signout)
+### User authentication (signout)
 
 **Request structure**
 
@@ -415,10 +426,7 @@
  * @method {PURGE}
  * @path {/accounts/auth}
  * @headers `access-token` `device-id`
- * @param {none} 
- * @body {none}
  * */
-{ }
 ```
 
 **Possible errors**
@@ -441,7 +449,7 @@
 
 
 
-### 10. Request OTP signin (Forgot password)
+### Request OTP signin (Forgot password)
 
 **Request structure**
 
@@ -478,7 +486,7 @@
 
 ***
 
-### 11. OTP signin (Forgot password)
+### OTP signin (Forgot password)
 
 **Request structure**
 
@@ -515,7 +523,7 @@
 
 ***
 
-### 12. User deletion 
+### User deletion 
 
 **Request structure**
 
@@ -524,10 +532,7 @@
  * @method {DELETE}
  * @path {/accounts}
  * @headers `access-token` `device-id`
- * @param {none} 
- * @body {none}
  * */
-{ }
 ```
 
 **Possible errors**
@@ -550,7 +555,7 @@
 
 ***
 
-### 13. User picture upload
+### User picture upload
 
 **Request structure**
 
@@ -559,7 +564,6 @@
  * @method {POST}
  * @path {/accounts/avatar}
  * @headers `access-token` `device-id`
- * @param {none} 
  * @body {x-www-form-data}
  * */
 { 
@@ -589,6 +593,51 @@
 ***
 
 
+## Services
+
+* Service of services is provided through the `/services` route.
+* All operations under `/services` has a single response pattern [Service Document Pattern](#4-service-document-pattern)
+
+### Creating a service
+
+**Request structure:**
+
+```js
+/**
+ * @adminOnlyRoute
+ * @method {POST}
+ * @path {/services}
+ * @headers `access-token` `device-id`
+ * @body {x-www-form-urlencoded}
+ * */
+{
+    name: String,
+    description: String,
+    staff: [String],   // [doctor-id]
+}
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `401`  | Operation requires `access-token` |
+| `403`  | Operation requires `device-id` |
+| `403`  | Operation requires `user-agent` |
+| `409` | User already exists |
+| `406` | Validation failed: (error message) |
+| `500` | Couldn't add service |
+| `500` | Couldn\'t register client |
+
+**Note**
+
+* This route always responds with [CAD](#1-client-access-document-pattern) along with a status code `201 Created` (if no errors).
+* This route doesn't require header hydration.
+
+> Example: `[POST] https://skinmate.herokuapp.com/accounts`
+
+***
+
 ## Family Management
 
 ### creating a family member 
@@ -600,7 +649,6 @@
  * @method {POST}
  * @path {/familymember}
  * @headers `access-token` `device-id`
- * @param {none} 
  * @body {x-www-form-urlencoded}
  * */
 { 
