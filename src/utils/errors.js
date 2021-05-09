@@ -268,7 +268,7 @@ module.exports = {
    * Forbidden fields update error generator
    * @param {Array<string>} fields Error instance
    */
-  FORBIDDEN_UPDATE_ERROR: (fields) => ({
+  FORBIDDEN_FIELDS_ERROR: (fields) => ({
     code: 406,
     error: new Error(`Forbidden fields present: ${fields.join(', ')}`),
   }),
@@ -303,6 +303,6 @@ module.exports = {
    */
   VALIDATION_ERROR: (error) => ({
     code: 406,
-    error: new Error(`Validation failed: ${error.message}`),
+    error,
   }),
 };

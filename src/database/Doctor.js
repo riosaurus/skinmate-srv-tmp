@@ -2,7 +2,7 @@ const { Schema, model } = require('mongoose');
 const validator = require('validator');
 
 const schema = new Schema({
-  name:{
+  name: {
     type: String,
     required: true,
     trim: true,
@@ -26,15 +26,10 @@ const schema = new Schema({
     type: String,
     required: true,
   },
-  busySlots:[{
-    date:{
-        type:Date,
-    },
-    time:[{
-        type:String
-    }]
-}     
-] 
+  busySlots: [{
+    date: Date,
+    time: [String],
+  }],
 });
 
 schema.virtual('service', {
@@ -43,4 +38,4 @@ schema.virtual('service', {
   foreignField: 'doctorId',
 });
 
-module.exports =model('Doctor', schema)
+module.exports = model('Doctor', schema);

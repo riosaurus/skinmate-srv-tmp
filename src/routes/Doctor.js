@@ -1,171 +1,212 @@
-const { Router} = require("express");
-const Doctor = require("../database/Doctor");
-const multer  = require('multer')
-const sharp = require('sharp')
-const router=Router()
+/* eslint-disable no-console */
+const { Router, urlencoded } = require('express');
+const multer = require('multer');
+const sharp = require('sharp');
+const { middlewares, errors } = require('../utils');
+const { Doctor } = require('../database');
 
+const router = Router();
 
-//doctor creation
-/** 
-* @param {Object} *Body Object 
-* @returns {Promise<Document | null>} *Document
-*/ 
-router.post(
-  '/doctor/create',
-  async(request,response)=>{
-     try{
-      let doctor=Doctor({
-        name:request.body.name,
-        email:request.body.email,
-        phone:request.body.phone,
-        qualification:request.body.qualification
-        })
-      await doctor.save()
-      response.status(201).send(doctor)
-      } 
-      catch(error){
-        
-        response.status(500).send(error)
-       }
-     }
-)
-router.get(
-  '/doctor/all/list',
-  async(request,response)=>{
-   try {
-    let doctor=await Doctor.find()
-    if(doctor){
-     response.status(200).send(doctor)
-    }
-    else{
-    response.status(404).send({message:"documents not found"})
-    }
-   } catch (error) {
-    response.status(500).send(error)
-   }
-  }
-)
-//find doctor by Id
 /**
- * @param {String} doctor_id
- * @returns {Promise<Document | null>} *if doctor exist returns document otherwise null
+ * @adminOnly
+ * `http POST` route for doctor creation
  */
-
-router.get(
-  '/doctor/:id',
-  async(request,response)=>{
+router.post(
+  '/doctors',
+  urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ admin: true }),
+  async (request, response) => {
     try {
-      let document=await Doctor.findById(request.params.id)
-      if(document){
-        response.status(200).send(document)
-      }
-      else{
-        response.status(404).send("no document found")
-      }
+      // Create a doctor document
+      const doctor = new Doctor({
+        name: request.body.name,
+        email: request.body.email,
+        phone: request.body.phone,
+        qualification: request.body.qualification,
+      });
+
+      // Validate for custom error handling
+      await doctor.validate().catch((error) => {
+        console.error(error);
+        const validationError = errors.VALIDATION_ERROR(error);
+        response.status(validationError.code);
+        throw validationError.error;
+      });
+
+      // Save the document
+      const document = await doctor.save().catch((error) => {
+        console.error(error);
+        response.status(errors.SAVE_DOCTOR_FAILED.code);
+        throw errors.SAVE_DOCTOR_FAILED.error;
+      });
+
+      response.json(document);
     } catch (error) {
-      console.log(error)
-      response.status(500).send(error)
+      response.send(error.message);
     }
-  }
-)
+  },
+);
 
+/**
+ * @public
+ */
+router.get(
+  '/doctors',
+  async (request, response) => {
+    try {
+      const queries = Object.keys(request.query);
+      const queryable = ['name', 'email', 'phone', 'avatar', 'qualification'];
+      const isValidOperation = queries.every((query) => queryable.includes(query));
 
+      if (!isValidOperation) {
+        const { code, error } = errors.FORBIDDEN_FIELDS_ERROR(queries
+          .filter((key) => !queryable.includes(key)));
+        response.status(code);
+        throw error;
+      }
+
+      // Find all or query matching doctors
+      const doctors = await Doctor.find(request.query).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_DOCTOR_FAILED.code);
+        throw errors.FIND_DOCTOR_FAILED.error;
+      });
+
+      response.json(doctors);
+    } catch (error) {
+      response.send(error.message);
+    }
+  },
+);
+
+/**
+ * @public
+ */
+router.get(
+  '/doctors/:id',
+  async (request, response) => {
+    try {
+      // Get the doctor document
+      const doctor = await Doctor.findById(request.params.id)
+        .catch((error) => {
+          console.error(error);
+          response.status(errors.FIND_DOCTOR_FAILED.code);
+          throw errors.FIND_DOCTOR_FAILED.error;
+        });
+
+      if (!doctor) {
+        response.status(errors.NULL_DOCTOR.code);
+        throw errors.NULL_DOCTOR.error;
+      }
+
+      response.json(doctor);
+    } catch (error) {
+      response.send(error.message);
+    }
+  },
+);
+
+/**
+ * @adminOnly
+ */
 router.patch(
-  '/doctor/update/:id',
-  async(request,response)=>{
-     try {
-      const updates=Object.keys(request.body)
-      const allowed_flieds=['name','email','qualification','phone']
-      let doctor=await Doctor.findById(request.params.id)
-      updates.forEach(update=>{
-        if(allowed_flieds.includes(update)){
-          doctor[update]=request.body[update]
-        }
-      })
-      await doctor.save()
-      response.status(200).send(doctor)
-     } catch (error) {
-       response.status(500).send(error)
-     } 
-  }
-)
+  '/doctors/:id',
+  urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ admin: true }),
+  async (request, response) => {
+    try {
+      const updates = Object.keys(request.body);
+      const updatable = ['name', 'email', 'qualification', 'phone'];
+      const isValidOperation = updates.every((update) => updatable.includes(update));
 
+      if (!isValidOperation) {
+        const { code, error } = errors.FORBIDDEN_FIELDS_ERROR(updates
+          .filter((key) => !updatable.includes(key)));
+        response.status(code);
+        throw error;
+      }
+
+      // Get the doctor document
+      const doctor = await Doctor.findById(request.params.id).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_DOCTOR_FAILED.code);
+        throw errors.FIND_DOCTOR_FAILED.error;
+      });
+
+      updates.forEach((update) => {
+        doctor[update] = request.body[update];
+      });
+
+      // Validate for custom error handling
+      await doctor.validate().catch((error) => {
+        console.error(error);
+        const validationError = errors.VALIDATION_ERROR(error);
+        response.status(validationError.code);
+        throw validationError.error;
+      });
+
+      await doctor.save().catch((error) => {
+        console.error(error);
+        response.status(errors.UPDATE_DOCTOR_FAILED.code);
+        throw errors.UPDATE_DOCTOR_FAILED.error;
+      });
+
+      response.json(doctor);
+    } catch (error) {
+      response.send(error.message);
+    }
+  },
+);
+
+/**
+ * @adminOnly
+ */
 router.delete(
-  '/doctor/delete/:id',
-  async(request,response)=>{
-     try {
-       let doctor=await Doctor.findById(request.params.id)
-       if(doctor){
-        await doctor.remove()
-        response.status(200).send(doctor)
-       }
-       else{
-         response.status(404).send("Not found")
-       }
-       
-     } catch (error) {
-       response.status(500).send(error)
-     }
-  }
-)
-// router.get(
-//   '/accounts/:userid',
-//   middlewares.inflate({
-//     strict: true, token: true, userAgent: true, deviceId: true,
-//   }),
-//   async (request, response) => {
-//     try {
-//       // Get the client document
-//       const client = await Client.findOne({
-//         _id: request.params.deviceId,
-//         user: request.params.userid,
-//         token: request.params.token,
-//         userAgent: request.params.userAgent,
-//       });
+  '/doctors/:id',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ admin: true }),
+  async (request, response) => {
+    try {
+      // Direct delete
+      await Doctor.deleteOne({
+        _id: request.params.id,
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.DELETE_DOCTOR_FAILED.code);
+        throw errors.DELETE_DOCTOR_FAILED.error;
+      });
 
-//       // Check if client belongs to user
-//       if (client.user.toString() !== request.params.userid) {
-//         response.status(403);
-//         throw new Error('Device isn\'t registered with user');
-//       }
-
-//       // Get the user
-//       const user = await User.findById(request.params.userid);
-
-//       // Send user data
-//       response.json(user);
-//     } catch (error) {
-//       console.error(error);
-//       response.send(error.message);
-//     }
-//   },
-// );
+      response.send('Doctor deleted');
+    } catch (error) {
+      response.send(error.message);
+    }
+  },
+);
 
 const upload = multer({
-  limits:{
-    fileSize:3000000,
+  limits: { fileSize: 3000000 },
+  fileFilter(_request, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error('Please upload a jpeg or jpg or png'));
+    }
+    return cb(null, true);
   },
-  fileFilter(request,file,cb)
-  {
-    if(!file.originalname.match(/\.(jpg|jpeg|png)$/)) 
-    return cb(new Error('pelase upload a jpeg or jpg or png'))
-
-    cb(null,true)
-  }
-})
-
+});
 
 router.post(
-  '/doctor/:id/avatar',upload.single('file'),
-  async (request,response) => {
-  const buffer = await sharp(request.file.buffer).png().toBuffer()
-  const doctor = await Doctor.findById(request.params.id)
-  doctor.avatar = buffer
-  await doctor.save()
-  response.send()
-},(error,request,response,next) => {
-  console.log(error)
-  response.status(400).send({error})
-})
+  '/doctor/:id/avatar', upload.single('file'),
+  async (request, response) => {
+    const buffer = await sharp(request.file.buffer).png().toBuffer();
+    const doctor = await Doctor.findById(request.params.id);
+    doctor.avatar = buffer;
+    await doctor.save();
+    response.send();
+  }, (error, request, response, next) => {
+    console.log(error);
+    response.status(400).send({ error });
+  },
+);
 
-module.exports=router
+module.exports = router;
