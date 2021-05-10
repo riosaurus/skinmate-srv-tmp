@@ -15,10 +15,14 @@ router.get(
 
   async(request,response)=>{
 
-    let param=request.params.loc
-    let f_location=Locations
-    .filter(location=>location.name.toString().toLowerCase().includes(param.toString().toLowerCase()))
-    response.status(200).send(f_location)
+    try {
+      let param=request.params.loc
+      let f_location=Locations
+      .filter(location=>location.name.toString().toLowerCase().includes(param.toString().toLowerCase()))
+      response.status(200).send(f_location)
+    } catch (error) {
+      response.status(500).send(error)
+    }
 
   })
 

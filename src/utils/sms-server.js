@@ -21,29 +21,6 @@ function setSocketServer(server) {
 }
 
 /**
- * @deprecated
- * Generates OTP based on `secret` and emits socket event to `phone`
- * @param {string} phone Phone address to send OTP to
- * @param {string} secret Base64 secret key for OTP generation
- * @returns {Promise<void>}
- */
-function sendCode(phone, secret) {
-  return new Promise((resolve, reject) => {
-    try {
-      const otp = speakeasy.totp({
-        secret,
-        encoding: 'base32',
-        digits: 6,
-      });
-      sServer.emit('send otp', { phone, code: otp });
-      resolve();
-    } catch (error) {
-      reject(new Error('Couldn\'t send OTP'));
-    }
-  });
-}
-
-/**
  * Sends email.
  * @param {string} to
  * @param {string} subject

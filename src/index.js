@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 const { createServer } = require('http');
 const express = require('express');
 const { config } = require('dotenv');
@@ -10,32 +9,39 @@ const {
 } = require('./routes');
 
 const App = express();
-App.use(express.json());
 App.use(UserRouter);
 App.use(DoctorRouter);
 App.use(FamilyRouter);
 App.use(ServiceRouter);
 App.use(AppointmentRouter);
-App.use(LocationRouter)
-const server = createServer(App);
 
 const argv = yargs(process.argv.slice(2))
   .options({
+    /**
+     * --development option sets up environment values for testing
+     */
     development: {
       describe: 'Run in development environment',
       boolean: true,
     },
+    /**
+     * --rtengine opens up a socket server for SM SMSB Android client to connect (experimental)
+     */
     rtengine: {
       describe: 'Enable realtime analytics & services',
       boolean: true,
     },
+    /**
+     * --dashboard sets up a dashboard to be served
+     */
     // dashboard:  {
-    //     describe: "Open dashboard in browser",
+    //     describe: "Enable server dashboard",
     //     boolean: true
     // }
   })
   .parse();
 
+// Inject test values into runtime environment
 if (argv.development) {
   config({ path: '.env' });
 }
@@ -49,6 +55,7 @@ connect(constants.mongoUri(), {
   process.stdout.write(`: mongodb v.${connection.version} online\n`);
 
   process.stdout.write('- setting up listener');
+  const server = createServer(App);
   server.listen(constants.port(), () => {
     process.stdout.write(`: listening on PORT ${constants.port()}\n`);
 
@@ -57,17 +64,5 @@ connect(constants.mongoUri(), {
       smsServer.setSocketServer(server);
       process.stdout.write(': socket listener is up\n');
     }
-
-    // if (argv.dashboard) {
-    //     process.stdout.write("- firing up default browser\n");
-    //     open(`http://127.0.0.1:${Environment.PORT()}/dashboard`, {
-    //         wait: false
-    //     }).then(() => {
-    //         process.stdout.write(`: dashboard is up\n`);
-    //     }).catch(error => {
-    //         process.stdout.write(`[x] failed to open dashboard\n`);
-    //         console.error(error);
-    //     });
-    // }
   });
 });
