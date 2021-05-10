@@ -39,7 +39,6 @@ router.post(
             throw new Error('Account not found');
           }
 
-          console.log(user)
 
         const appointment = new Appointment({
             doctorId:req.body.doctorid,
