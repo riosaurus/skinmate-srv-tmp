@@ -66,3 +66,5 @@ connect(constants.mongoUri(), {
     }
   });
 });
+
+module.exports=App;
