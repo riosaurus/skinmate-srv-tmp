@@ -2,7 +2,7 @@ const Appointment = require('./Appointment');
 const Client = require('./Client');
 const Doctor = require('./Doctor');
 const User = require('./user');
-const Family = require('./Family_member');
+const Family = require('./Family');
 const TOTP = require('./TOTP');
 const Service = require('./Service');
 
