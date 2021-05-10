@@ -154,8 +154,8 @@ router.patch(
         res.status(200).send({
             doctorName:doctor.name,
             doctorEducation:doctor.qualification,
-            appointmentDate:appointment.date,
-            appointmentTime:appointment.time[0]
+            appointmentDate:req.body.date,
+            appointmentTime:req.body.time[0]
         })
 
     }
