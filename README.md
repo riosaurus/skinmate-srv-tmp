@@ -46,11 +46,11 @@
     - [delete a family member](#delete-a-family-member)
     - [edit/update a family member](#editupdate-a-family-member)
   - [Appointment](#appointment)
-    - [creating an appointment](#creating-an-appointment)
-    - [reschedule an appointment](#reschedule-an-appointment)
-    - [cancel an appointment](#cancel-an-appointment)
-    - [list the user appointments](#list-the-user-appointments)
-    - [confirm an appointment](#confirm-an-appointment)
+    - [Creating an appointment](#creating-an-appointment)
+    - [Reschedule an appointment](#reschedule-an-appointment)
+    - [Cancel an appointment](#cancel-an-appointment)
+    - [List the user appointments](#list-the-user-appointments)
+    - [Confirm an appointment](#confirm-an-appointment)
 
 ## Disclaimer
 - Always hydrate request headers with vital properties obtained from [Client Access Document](#client-access-document-pattern).
@@ -880,7 +880,7 @@
 **Note**
 
 - This is a **admin only** route.
-- This route always responds with Appointment Creation Pattern(#service-document-pattern) along with a status code `201 Created`.
+- This route always responds with [Appointment Creation Pattern](#Appointment Creation Pattern) along with a status code `201 Created`.
 
 > Example: `[POST] https://skinmate.herokuapp.com/appointment/create`
 
