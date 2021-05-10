@@ -1,71 +1,67 @@
-/* eslint-disable no-console */
 const { createServer } = require('http');
 const express = require('express');
 const { config } = require('dotenv');
 const yargs = require('yargs');
 const { connect } = require('mongoose');
-const { constants } = require('./utils');
-const { UserRouter, DoctorRouter, FamilyRouter } = require('./routes');
-const { otpServer } = require('./utils');
+const { constants, smsServer } = require('./utils');
+const {
+  UserRouter, DoctorRouter, FamilyRouter, ServiceRouter,
+} = require('./routes');
 
 const App = express();
-App.use(express.json());
 App.use(UserRouter);
 App.use(DoctorRouter);
 App.use(FamilyRouter);
-
-const server = createServer(App);
+App.use(ServiceRouter);
 
 const argv = yargs(process.argv.slice(2))
   .options({
+    /**
+     * --development option sets up environment values for testing
+     */
     development: {
       describe: 'Run in development environment',
       boolean: true,
     },
+    /**
+     * --rtengine opens up a socket server for SM SMSB Android client to connect (experimental)
+     */
     rtengine: {
       describe: 'Enable realtime analytics & services',
       boolean: true,
     },
+    /**
+     * --dashboard sets up a dashboard to be served
+     */
     // dashboard:  {
-    //     describe: "Open dashboard in browser",
+    //     describe: "Enable server dashboard",
     //     boolean: true
     // }
   })
   .parse();
 
+// Inject test values into runtime environment
 if (argv.development) {
   config({ path: '.env' });
 }
 
-console.log('[+] connecting to mongodb');
+process.stdout.write('- Connecting to mongodb');
 connect(constants.mongoUri(), {
   useCreateIndex: true,
   useNewUrlParser: true,
   useUnifiedTopology: true,
-})
-  .then((connection) => {
-    console.log(`[*] mongodb v.${connection.version} online\n`);
+}).then((connection) => {
+  process.stdout.write(`: mongodb v.${connection.version} online\n`);
 
-    console.log('[+] setting up listener');
-    server.listen(constants.port(), () => {
-      console.log(`[*] listening on PORT ${constants.port()}\n`);
+  process.stdout.write('- setting up listener');
+  const server = createServer(App);
+  server.listen(constants.port(), () => {
+    process.stdout.write(`: listening on PORT ${constants.port()}\n`);
 
-      if (argv.rtengine) {
-        console.log('[+] setting up socket listener');
-        otpServer.setSocketServer(server);
-        console.log('[*] socket listener is up\n');
-      }
-
-      // if (argv.dashboard) {
-      //     console.log("[+] firing up default browser");
-      //     open(`http://127.0.0.1:${Environment.PORT()}/dashboard`, {
-      //         wait: false
-      //     }).then(() => {
-      //         console.log(`[*] dashboard is up\n`);
-      //     }).catch(error => {
-      //         console.log(`[x] failed to open dashboard\n`);
-      //         console.error(error);
-      //     });
-      // }
-    });
+    if (argv.rtengine) {
+      process.stdout.write('- setting up socket listener');
+      smsServer.setSocketServer(server);
+      process.stdout.write(': socket listener is up\n');
+    }
   });
+});

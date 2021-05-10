@@ -1,171 +1,277 @@
 module.exports = {
-  /**
-   * Unverified email error
-   */
+
+  /* Comms errors */
   EMAIL_UNVERIFIED: {
-    code: 401,
+    code: 403,
     error: new Error('Email not verified'),
   },
 
-  /**
-   * Error on failure to fetch client access
-   */
   PHONE_UNVERIFIED: {
-    code: 401,
+    code: 403,
     error: new Error('Phone number not verified'),
   },
 
-  /**
-   * Error on failure to fetch client access
-   */
   PHONE_EMAIL_UNVERIFIED: {
-    code: 401,
+    code: 403,
     error: new Error('Phone and email not verified'),
   },
 
-  /**
-   * Error on invalid OTP
-   */
+  EMAIL_ALREADY_VERIFIED: {
+    code: 409,
+    error: new Error('Email already verified'),
+  },
+
+  PHONE_ALREADY_VERIFIED: {
+    code: 409,
+    error: new Error('Phone already verified'),
+  },
+
+  NO_ELEVATED_ACCESS: {
+    code: 401,
+    error: new Error('Operation requires elevated privileges'),
+  },
+
+  /* OTP errors */
   INVALID_OTP: {
     code: 401,
     error: new Error('Invalid OTP'),
   },
 
-  /**
-   * Error on OTP generation
-   */
   OTP_GENERATION_FAILED: {
     code: 500,
     error: new Error('Couldn\'t generate OTP'),
   },
 
-  /**
-   * Error on OTP generation
-   */
   OTP_SEND_FAILED: {
     code: 500,
     error: new Error('Couldn\'t send OTP'),
   },
 
-  /**
-   * Error on OTP generation
-   */
-  FIND_TOTP_FAILED: {
-    code: 500,
-    error: new Error('Couldn\'t find OTP in registry'),
-  },
-
-  /**
-   * 
-   */
   UNAVAILABLE_OTP: {
     code: 404,
     error: new Error('OTP isn\'t available'),
   },
 
-  /**
-   * Error on failure to fetch client access
-   */
-  FIND_CLIENT: {
+  /* Document fetch fail errors */
+  FIND_TOTP_FAILED: {
     code: 500,
-    error: new Error('Couldn\'t verify your identity'),
+    error: new Error('Couldn\'t find OTP in registry'),
   },
 
-  /**
-   * Error on failure to fetch client access
-   */
-  NO_CLIENT: {
-    code: 401,
-    error: new Error('Unauthorized client'),
+  FIND_CLIENT_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t find device'),
   },
 
-  /**
-   * Error on failure to fetch client access
-   */
-  CLIENT_ADD_FAILURE: {
+  FIND_USER_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t find user'),
+  },
+
+  FIND_DOCTOR_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t find doctor'),
+  },
+
+  FIND_APPOINTMENT_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t find appointment'),
+  },
+
+  FIND_SERVICE_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t find service'),
+  },
+
+  FIND_FAMILY_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t find member'),
+  },
+
+  /* Document save errors */
+  SAVE_CLIENT_FAILED: {
     code: 500,
     error: new Error('Couldn\'t register client'),
   },
 
-  /**
-   * Error on failure to create client access
-   */
+  SAVE_USER_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t add user'),
+  },
+
+  SAVE_TOTP_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t register OTP in registry'),
+  },
+
+  SAVE_DOCTOR_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t add doctor'),
+  },
+
+  SAVE_APPOINTMENT_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t save appointment'),
+  },
+
+  SAVE_SERVICE_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t add service'),
+  },
+
+  SAVE_FAMILY_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t add member'),
+  },
+
+  /* Document update errors */
+  UPDATE_CLIENT_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t update client'),
+  },
+
+  UPDATE_USER_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t update user'),
+  },
+
+  UPDATE_TOTP_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t update OTP registry'),
+  },
+
+  UPDATE_DOCTOR_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t update doctor'),
+  },
+
+  UPDATE_APPOINTMENT_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t update appointment'),
+  },
+
+  UPDATE_SERVICE_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t update service'),
+  },
+
+  UPDATE_FAMILY_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t update member'),
+  },
+
+  /* Document remove errors */
+  DELETE_CLIENT_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t delete client'),
+  },
+
+  DELETE_USER_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t delete user'),
+  },
+
+  DELETE_TOTP_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t delete OTP from registry'),
+  },
+
+  DELETE_DOCTOR_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t delete doctor'),
+  },
+
+  DELETE_APPOINTMENT_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t delete appointment'),
+  },
+
+  DELETE_SERVICE_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t delete service'),
+  },
+
+  DELETE_FAMILY_FAILED: {
+    code: 500,
+    error: new Error('Couldn\'t delete member'),
+  },
+
+  /* Null Document errors */
+  NULL_CLIENT: {
+    code: 401,
+    error: new Error('Unauthorized client'),
+  },
+
+  NULL_USER: {
+    code: 404,
+    error: new Error('User doesn\'t exist'),
+  },
+
+  NULL_TOTP: {
+    code: 403,
+    error: new Error('No such OTP requested'),
+  },
+
+  NULL_DOCTOR: {
+    code: 404,
+    error: new Error('Doctor doesn\'t exist'),
+  },
+
+  NULL_APPOINTMENT: {
+    code: 404,
+    error: new Error('Appointment isn\'t available'),
+  },
+
+  NULL_SERVICE: {
+    code: 404,
+    error: new Error('No such service'),
+  },
+
+  NULL_FAMILY: {
+    code: 404,
+    error: new Error('Member isn\'t available'),
+  },
+
+  /* Null properties errors */
+  NULL_ACCESS_TOKEN: {
+    code: 401,
+    error: new Error('Operation requires \'access-token\''),
+  },
+
+  NULL_DEVICE_ID: {
+    code: 403,
+    error: new Error('Operation requires \'device-id\''),
+  },
+
+  NULL_USER_AGENT: {
+    code: 403,
+    error: new Error('Operation requires \'user-agent\''),
+  },
+
+  /* Conflicts */
   SIGN_IN: {
     code: 500,
     error: new Error('Couldn\'t sign you in'),
   },
 
-  /**
-   * Error on failure to remove client access
-   */
   SIGN_OUT: {
     code: 500,
     error: new Error('Couldn\'t sign you out'),
   },
 
-  /**
-   * Error on retrieving user
-   */
-  FIND_USER: {
-    code: 500,
-    error: new Error('Couldn\'t find user'),
-  },
-
-  /**
-   * Error on retrieving user
-   */
-  NO_USER: {
-    code: 404,
-    error: new Error('User doesn\'t exist'),
-  },
-
-  /**
-   * User already exists
-   */
   USER_EXISTS: {
     code: 409,
     error: new Error('User already exists'),
   },
 
   /**
-   * User creation failure error
+   * Forbidden fields update error generator
+   * @param {Array<string>} fields Error instance
    */
-  USER_ADD_FAILURE: {
-    code: 500,
-    error: new Error('Couldn\'t create user'),
-  },
-
-  /**
-   * User creation failure error
-   */
-  USER_UPDATE_FAILURE: {
-    code: 500,
-    error: new Error('Couldn\'t update user'),
-  },
-
-  /**
-   * `access-token` not supplied error
-   */
-  NO_ACCESS_TOKEN: {
-    code: 401,
-    error: new Error('Operation requires \'access-token\''),
-  },
-
-  /**
-   * `device-id` not supplied error
-   */
-  NO_DEVICE_ID: {
-    code: 403,
-    error: new Error('Operation requires \'device-id\''),
-  },
-
-  /**
-   * `user-agent` not supplied error
-   */
-  NO_USER_AGENT: {
-    code: 403,
-    error: new Error('Operation requires \'user-agent\''),
-  },
+  FORBIDDEN_UPDATE_ERROR: (fields) => ({
+    code: 406,
+    error: new Error(`Forbidden fields present: ${fields.join(', ')}`),
+  }),
 
   /**
    * `user-agent` not supplied error
@@ -198,14 +304,5 @@ module.exports = {
   VALIDATION_ERROR: (error) => ({
     code: 406,
     error: new Error(`Validation failed: ${error.message}`),
-  }),
-
-  /**
-   * Forbidden fields update error generator
-   * @param {Array<string>} fields Error instance
-   */
-  FORBIDDEN_UPDATE_ERROR: (fields) => ({
-    code: 406,
-    error: new Error(`Validation failed: ${fields.join(', ')}`),
   }),
 };

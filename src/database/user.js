@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose');
 const { genSalt, hash } = require('bcryptjs');
 const validator = require('validator');
+const customValidators = require('../utils/validators');
 
 /**
  * User schema
@@ -41,6 +42,7 @@ const usersSchema = new Schema({
   bloodGroup: {
     type: String,
     trim: true,
+    validate: { validator: customValidators.isValidBloodGroup, message: 'Unknown blood group' },
   },
   address: {
     type: String,
@@ -67,6 +69,10 @@ const usersSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  elevatedAccess: {
+    type: Boolean,
+    default: false,
+  },
   isDeleted: {
     type: Boolean,
     default: false,
@@ -79,7 +85,7 @@ const usersSchema = new Schema({
 usersSchema.virtual('appointments', {
   ref: 'Appointment',
   localField: '_id',
-  foreignField: 'appointmentOwner',
+  foreignField: 'userId',
 });
 
 /**
