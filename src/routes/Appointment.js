@@ -70,7 +70,7 @@ router.post(
             })
         }
         await doctor.save()
-        res.send({
+        res.status(201).send({
             type:"Medical",
             date:req.body.date,
             time:req.body.time[0],
@@ -78,13 +78,13 @@ router.post(
             })
 }
 catch(e){
-    res.send(e)
+    res.status(500).send(e)
 }
 })
 
 
 router.patch(
-    '/appointment/reschedule',
+    '/appointment/reschedule/:id',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
@@ -111,9 +111,9 @@ router.patch(
           }
 
 
-        const appointment = await Appointment.findById(req.body.appointmentid)
+        const appointment = await Appointment.findById(req.params.id)
         if(!appointment){
-            res.status(403)
+            res.status(404)
             throw new Error('Appointment could not be found')
         }
         const doctor = await Doctor.findById(appointment.doctorId)
@@ -151,7 +151,7 @@ router.patch(
             })
         }
         await doctor.save()
-        res.send({
+        res.status(200).send({
             doctorName:doctor.name,
             doctorEducation:doctor.qualification,
             appointmentDate:appointment.date,
@@ -160,13 +160,13 @@ router.patch(
 
     }
     catch(e){
-        res.send(e)
+        res.status(500).send(e)
     }
 })
 
 
 router.delete(
-    '/appointment/cancel',
+    '/appointment/cancel/:id',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
@@ -193,9 +193,9 @@ router.delete(
           }
 
 
-        const appointment = await Appointment.findById(req.body.appointmentid)
+        const appointment = await Appointment.findById(req.params.id)
         if(!appointment){
-            res.status(403)
+            res.status(404)
             throw new Error('Appointment could not be found')
         }
         const doctor = await Doctor.findById(appointment.doctorId)
@@ -215,7 +215,7 @@ router.delete(
             doctor.busySlots.splice(index,1)
         }
         await doctor.save()
-        res.send({
+        res.status(200).send({
             doctorName:doctor.name,
             doctorEducation:doctor.qualification,
             appointmentDate:ddate,
@@ -224,7 +224,7 @@ router.delete(
         })
     }     
     catch(e){
-        res.send(e)
+        res.status(500).send(e)
     }
 })
 
@@ -261,7 +261,7 @@ router.get(
         // const user = await Users.findById({_id:req.body.userid})
         await user.populate('appointments').execPopulate()
         if(user.appointments.length===0){
-            res.send("No Appointments to show")
+            res.status(200).send("No Appointments to show")
         }
         var array = []
         for(let i = 0;i<user.appointments.length;i++){
@@ -275,16 +275,16 @@ router.get(
             }
             array = array.concat(obj)
         }
-        res.send(array)
+        res.status(200).send(array)
     }
     catch(e){
-        res.send(e)
+        res.status(500).send(e)
     }
 })
 
 
 
-router.post('/appointment/confirm',
+router.post('/appointment/confirm/:id',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
@@ -310,13 +310,13 @@ router.post('/appointment/confirm',
             throw new Error('Account not found');
           }
 
-        const appointment = await Appointment.findById({_id:req.body.appointmentid})
+        const appointment = await Appointment.findById(req.params.id)
         if(!appointment){
             res.status(403)
             throw new Error('Appointment could not be found')
         }
         const doctor = await Doctor.findById({_id:appointment.doctorId})
-        res.send({
+        res.status(200).send({
             doctorName:doctor.name,
             doctorEducation:doctor.qualification,
             appointmentDate:appointment.date,
@@ -325,7 +325,7 @@ router.post('/appointment/confirm',
         })
     }
     catch(e){
-        res.send(e)
+        res.status(500).send(e)
     }
 })
 
