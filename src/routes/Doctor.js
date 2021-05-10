@@ -154,7 +154,7 @@ router.patch(
       });
 
       response.json(doctor);
-    } catch (error) {
+    } catch (error) { 
       response.send(error.message);
     }
   },

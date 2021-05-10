@@ -752,7 +752,7 @@
 | `401`  | Operation requires `access-token` |
 | `403`  | Operation requires `device-id` |
 | `403`  | Operation requires `user-agent` |
-| 401 | Operation requires elevated privileges |
+| `401` | Operation requires elevated privileges |
 | `406` | Validation failed: (error message) |
 | `500` | Couldn't add doctor |
 
