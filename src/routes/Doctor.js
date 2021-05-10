@@ -55,10 +55,12 @@ router.get(
   '/doctors',
   async (request, response) => {
     try {
+      //Checks for keys(queryable) in the database
       const queries = Object.keys(request.query);
       const queryable = ['name', 'email', 'phone', 'avatar', 'qualification'];
       const isValidOperation = queries.every((query) => queryable.includes(query));
-
+      
+      // Checks for the valid-Operations
       if (!isValidOperation) {
         const { code, error } = errors.FORBIDDEN_FIELDS_ERROR(queries
           .filter((key) => !queryable.includes(key)));
@@ -117,10 +119,12 @@ router.patch(
   middlewares.requireVerification({ admin: true }),
   async (request, response) => {
     try {
+      //Checks for keys(updatable) in the database
       const updates = Object.keys(request.body);
       const updatable = ['name', 'email', 'qualification', 'phone'];
       const isValidOperation = updates.every((update) => updatable.includes(update));
 
+      // Checks for the valid-Operations
       if (!isValidOperation) {
         const { code, error } = errors.FORBIDDEN_FIELDS_ERROR(updates
           .filter((key) => !updatable.includes(key)));
@@ -154,7 +158,7 @@ router.patch(
       });
 
       response.json(doctor);
-    } catch (error) {
+    } catch (error) { 
       response.send(error.message);
     }
   },
@@ -169,7 +173,7 @@ router.delete(
   middlewares.requireVerification({ admin: true }),
   async (request, response) => {
     try {
-      // Direct delete
+      // Delete based on _id
       await Doctor.deleteOne({
         _id: request.params.id,
       }).catch((error) => {
@@ -197,6 +201,8 @@ const upload = multer({
 
 router.post(
   '/doctor/:id/avatar', upload.single('file'),
+  
+  //Use buffer for avatar upload
   async (request, response) => {
     const buffer = await sharp(request.file.buffer).png().toBuffer();
     const doctor = await Doctor.findById(request.params.id);
