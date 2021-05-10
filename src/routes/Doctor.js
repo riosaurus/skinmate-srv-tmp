@@ -3,12 +3,12 @@ const Doctor = require("../database/Doctor");
 const multer  = require('multer')
 const sharp = require('sharp')
 const router=Router()
+const {middlewares} =require('../utils')
 
-
-//doctor creation
 /** 
-* @param {Object} *Body Object 
-* @returns {Promise<Document | null>} *Document
+ * creating doctor
+* @param {Object} *request body
+* @returns {document}  *Document
 */ 
 router.post(
   '/doctor/create',
@@ -23,14 +23,22 @@ router.post(
       await doctor.save()
       response.status(201).send(doctor)
       } 
-      catch(error){
-        
+      catch(error){ 
         response.status(500).send(error)
        }
      }
 )
+
+/**
+ * get all doctor details 
+ * @param {none} *no parameter needed
+ * @returns {Array} *array of doctors information
+ * @default [] *empty array
+ */
 router.get(
   '/doctor/all/list',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true }),
   async(request,response)=>{
    try {
     let doctor=await Doctor.find()
@@ -47,12 +55,14 @@ router.get(
 )
 //find doctor by Id
 /**
- * @param {String} doctor_id
- * @returns {Promise<Document | null>} *if doctor exist returns document otherwise null
+ * @param {String} id
+ * @returns {Promise<Document|null>} *if doctor exist returns document otherwise null
  */
 
 router.get(
   '/doctor/:id',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true }),
   async(request,response)=>{
     try {
       let document=await Doctor.findById(request.params.id)
@@ -69,7 +79,11 @@ router.get(
   }
 )
 
-
+/**
+ * updating doctor information
+ * @param {String} id
+ * @returns {Promise<Document|null>} *if doctor exist returns document otherwise null 
+ */
 router.patch(
   '/doctor/update/:id',
   async(request,response)=>{
@@ -90,6 +104,12 @@ router.patch(
   }
 )
 
+
+/**
+ * deleting doctor document
+ * @param {String} id
+ * @returns {Promise<Document|null>} *if doctor exist returns document otherwise null 
+ */
 router.delete(
   '/doctor/delete/:id',
   async(request,response)=>{
@@ -108,38 +128,8 @@ router.delete(
      }
   }
 )
-// router.get(
-//   '/accounts/:userid',
-//   middlewares.inflate({
-//     strict: true, token: true, userAgent: true, deviceId: true,
-//   }),
-//   async (request, response) => {
-//     try {
-//       // Get the client document
-//       const client = await Client.findOne({
-//         _id: request.params.deviceId,
-//         user: request.params.userid,
-//         token: request.params.token,
-//         userAgent: request.params.userAgent,
-//       });
 
-//       // Check if client belongs to user
-//       if (client.user.toString() !== request.params.userid) {
-//         response.status(403);
-//         throw new Error('Device isn\'t registered with user');
-//       }
-
-//       // Get the user
-//       const user = await User.findById(request.params.userid);
-
-//       // Send user data
-//       response.json(user);
-//     } catch (error) {
-//       console.error(error);
-//       response.send(error.message);
-//     }
-//   },
-// );
+//setup for profile picture uploding for doctor collection
 
 const upload = multer({
   limits:{
@@ -154,6 +144,11 @@ const upload = multer({
   }
 })
 
+/**
+ * uploading profile picture for doctor 
+ * @param {file} file *image file
+ * @param {id} id  *doctor id 
+ */
 
 router.post(
   '/doctor/:id/avatar',upload.single('file'),
@@ -167,5 +162,6 @@ router.post(
   console.log(error)
   response.status(400).send({error})
 })
+
 
 module.exports=router
