@@ -42,5 +42,5 @@ sServer.on('connection', async (socket) => {
 });
 
 module.exports = {
-  server: sServer, setSocketServer, sendSMS, sendCode,
+  server: sServer, setSocketServer, sendSMS,
 };

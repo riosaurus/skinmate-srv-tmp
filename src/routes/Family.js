@@ -16,33 +16,10 @@ router.post(
   middlewares.requireVerification({ phone: true, email: true }),
   async (request, response) => {
     try {
-      // Get the client document
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      }).catch((error) => {
-        console.error(error);
-        response.status(500);
-        throw new Error('Couldn\'t validate access');
-      });
-
-      if (!client) {
-        response.status(403);
-        throw new Error('Unrecognized device');
-      }
-
-      const user = await User.findOne({
-        _id: client.user,
-        isDeleted: { $ne: true },
-      });
-
-      if (!user) {
-        response.status(404);
-        throw new Error('Account not found');
-      }
-
+    
+      
       const family = new Family({
-        user: user._id,
+        user: request.params.userId,
         firstName: request.body.firstName,
         lastName: request.body.lastName,
         relationship: request.body.relationship,
@@ -75,32 +52,8 @@ router.get('/familymember/all',
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
     try {
-      // Get the client document
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      }).catch((error) => {
-        console.error(error);
-        response.status(500);
-        throw new Error('Couldn\'t validate access');
-      });
-
-      if (!client) {
-        response.status(403);
-        throw new Error('Unrecognized device');
-      }
-
-      const user = await User.findOne({
-        _id: client.user,
-        isDeleted: { $ne: true },
-      });
-
-      if (!user) {
-        response.status(404);
-        throw new Error('Account not found');
-      }
-
-      const familymembers = await Family.find({ user: user._id });
+     
+      const familymembers = await Family.find({ user: request.params.userId });
 
       if (!familymembers) {
         response.status(404);
@@ -122,32 +75,8 @@ router.delete('/familymember/:id',
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
     try {
-      // Get the client document
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      }).catch((error) => {
-        console.error(error);
-        response.status(500);
-        throw new Error('Couldn\'t validate access');
-      });
-
-      if (!client) {
-        response.status(403);
-        throw new Error('Unrecognized device');
-      }
-
-      const user = await User.findOne({
-        _id: client.user,
-        isDeleted: { $ne: true },
-      });
-
-      if (!user) {
-        response.status(404);
-        throw new Error('Account not found');
-      }
-
-      const familymember = await Family.findOneAndDelete({ _id: request.params.id, user: user._id });
+      
+      const familymember = await Family.findOneAndDelete({ _id: request.params.id, user: request.params.userId });
 
       if (!familymember) {
         response.status(404);
@@ -170,32 +99,8 @@ router.patch('/familymember/:id',
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
     try {
-      // Get the client document
-      const client = await Client.findOne({
-        _id: request.headers['device-id'],
-        token: request.headers['access-token'],
-      }).catch((error) => {
-        console.error(error);
-        response.status(500);
-        throw new Error('Couldn\'t validate access');
-      });
-
-      if (!client) {
-        response.status(403);
-        throw new Error('Unrecognized device');
-      }
-
-      const user = await User.findOne({
-        _id: client.user,
-        isDeleted: { $ne: true },
-      });
-
-      if (!user) {
-        response.status(404);
-        throw new Error('Account not found');
-      }
-
-      const family = await Family.findOne({ _id: request.params.id, user: user._id })
+    
+      const family = await Family.findOne({ _id: request.params.id, user: request.params.userId })
         .catch((error) => {
           console.error(error);
           response.status(500);
