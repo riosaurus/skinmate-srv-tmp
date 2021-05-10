@@ -1,27 +1,25 @@
-const mongoose = require("mongoose");
+const { Schema, model } = require('mongoose');
 
-const serviceSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-    },
-    doctor: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: "Doctor",
-    },
-    //for unit Services or Sub-Services
+/**
+ * Service model
+ */
+const serviceSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  description: String,
+  staff: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Doctor',
+  }],
+  sub: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Service',
+  }],
+}, {
+  timestamps: true,
+});
 
-const Service = mongoose.model("Service", serviceSchema);
-
-module.exports = Service;
+module.exports = model('Service', serviceSchema);
