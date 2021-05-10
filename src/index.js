@@ -5,7 +5,7 @@ const yargs = require('yargs');
 const { connect } = require('mongoose');
 const { constants, smsServer } = require('./utils');
 const {
-  UserRouter, DoctorRouter, FamilyRouter, ServiceRouter, AppointmentRouter,
+  UserRouter, DoctorRouter, FamilyRouter, ServiceRouter, AppointmentRouter, LocationRouter,
 } = require('./routes');
 
 const App = express();

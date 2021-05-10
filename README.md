@@ -45,6 +45,7 @@
     - [fetch all family members](#fetch-all-family-members)
     - [delete a family member](#delete-a-family-member)
     - [edit/update a family member](#editupdate-a-family-member)
+  - [Appointment](#appointment)
 
 ## Disclaimer
 - Always hydrate request headers with vital properties obtained from [Client Access Document](#client-access-document-pattern).
