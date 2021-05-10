@@ -5,7 +5,7 @@ const yargs = require('yargs');
 const { connect } = require('mongoose');
 const { constants, smsServer } = require('./utils');
 const {
-  UserRouter, DoctorRouter, FamilyRouter, ServiceRouter,
+  UserRouter, DoctorRouter, FamilyRouter, ServiceRouter, AppointmentRouter,
 } = require('./routes');
 
 const App = express();
@@ -13,6 +13,7 @@ App.use(UserRouter);
 App.use(DoctorRouter);
 App.use(FamilyRouter);
 App.use(ServiceRouter);
+App.use(AppointmentRouter);
 
 const argv = yargs(process.argv.slice(2))
   .options({

@@ -157,6 +157,17 @@ router.patch(
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
     try {
+      const updates = Object.keys(request.body);
+      const updatable = ['firstName', 'lastName', 'password', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
+      const isValidOperation = updates.every((update) => updatable.includes(update));
+
+      if (!isValidOperation) {
+        const { code, error } = errors.FORBIDDEN_FIELDS_ERROR(updates
+          .filter((key) => !updatable.includes(key)));
+        response.status(code);
+        throw error;
+      }
+
       // Get the user document
       const user = await User.findOne({
         _id: request.params.userId,
@@ -167,34 +178,22 @@ router.patch(
         throw errors.FIND_USER_FAILED.error;
       });
 
-      const updates = Object.keys(request.body);
-      const allowedUpdates = ['firstName', 'lastName', 'password', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
-      const isvalidoperation = updates.every((update) => allowedUpdates.includes(update));
-
-      if (!isvalidoperation) {
-        const { code, error } = errors.FORBIDDEN_UPDATE_ERROR(updates
-          .filter((key) => !allowedUpdates.includes(key)));
-        response.status(code);
-        throw error;
-      }
-
       updates.forEach((update) => {
         user[update] = request.body[update];
       });
 
       // Validate the document before updating
-      await user.validate()
-        .catch((error) => {
-          console.error(error);
-          const validationError = errors.VALIDATION_ERROR(error);
-          response.status(validationError.code);
-          throw validationError.error;
-        });
+      await user.validate().catch((error) => {
+        console.error(error);
+        const validationError = errors.VALIDATION_ERROR(error);
+        response.status(validationError.code);
+        throw validationError.error;
+      });
 
       await user.save().catch((error) => {
         console.error(error);
-        response.status(errors.USER_UPDATE_FAILURE.code);
-        throw errors.USER_UPDATE_FAILURE.error;
+        response.status(errors.UPDATE_USER_FAILED.code);
+        throw errors.UPDATE_USER_FAILED.error;
       });
 
       const {

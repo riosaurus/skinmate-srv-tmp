@@ -17,6 +17,7 @@
     - [User Profile Document Pattern](#user-profile-document-pattern)
     - [OTP Request Document Pattern](#otp-request-document-pattern)
     - [Service Document Pattern](#service-document-pattern)
+    - [Doctor Document Pattern](#doctor-document-pattern)
   - [Accounts](#accounts)
     - [Creating a user](#creating-a-user)
     - [Request OTP verification (phone)](#request-otp-verification-phone)
@@ -33,18 +34,24 @@
     - [User picture upload](#user-picture-upload)
   - [Services](#services)
     - [Creating a service](#creating-a-service)
-  - [Family Management](#family-management)
+    - [Fetching all services](#fetching-all-services)
+    - [Fetching service details](#fetching-service-details)
+    - [Deleting a service](#deleting-a-service)
+  - [Doctors](#doctors)
+    - [Creating a doctor](#creating-a-doctor)
+    - [Fetching all services](#fetching-all-services-1)
+    - [Fetching doctor details](#fetching-doctor-details)
+    - [Deleting a doctor](#deleting-a-doctor)
+  - [Family](#family)
     - [creating a family member](#creating-a-family-member)
     - [fetch all family members](#fetch-all-family-members)
     - [delete a family member](#delete-a-family-member)
     - [edit/update a family member](#editupdate-a-family-member)
 
 ## Disclaimer
-
-* This is a common instruction for all of the routes documented below other than *signin* and *user registration* route. 
-* Always hydrate request headers with Client details obtained after user creation or authentication. 
-* Hydrate `access-token` with the provided access token.
-* Hydrate `device-id`  with the provided deviceid.
+- Always hydrate request headers with vital properties obtained from [Client Access Document](#client-access-document-pattern).
+- All *responses* have common patterns. Follow up with the [Common Response Patterns](#common-response-patterns) listed below.
+- All *error responses* will always be a `String` value describing the error occured supported by a more descriptive status code.
 
 ## Common Response Patterns
 
@@ -111,16 +118,25 @@
 }
 ```
 
+### Doctor Document Pattern
+```js
+{
+    _id: String,    // 24-char doctorId
+    name: String,
+    email: String,
+    phone: String,
+    qualification: String,
+    busySlots: [/* coming up */]
+    __v: Number,    // Document version
+}
+```
+
 ## Accounts
 
-* Accounts service is provided through the `/accounts` route.
-* The responses from this route has only 2 common patterns.
-  * *Client access* pattern has the data to identify the device (access_token)
-  * *User profile* pattern will be the user profile.
+- Accounts service is provided through the `/accounts` route.
+- [User Profile Document](#user-profile-document-pattern), [Client Access Document](#client-access-document-pattern) & [OTP Request Document](#otp-request-document-pattern) patterns are the only responses responded.
 
 ### Creating a user
-
-**Request structure:**
 
 ```js
 /**
@@ -136,7 +152,7 @@
 }
 ```
 
-**Possible errors:**
+**Possible errors**
 
 | Status | Message |
 | --: | --- |
@@ -150,17 +166,14 @@
 
 **Note**
 
-* This route always responds with [CAD](#1-client-access-document-pattern) along with a status code `201 Created` (if no errors).
+* This route always responds with [Client Access Document](#client-access-document-pattern) along with a status code `201 Created`.
 * This route doesn't require header hydration.
 
 > Example: `[POST] https://skinmate.herokuapp.com/accounts`
 
 ***
 
-
 ### Request OTP verification (phone)
-
-**Request structure**
 
 ```js
 /**
@@ -183,7 +196,7 @@
 
 **Note**
 
-* This route responds with [OTPRD](#3-otp-request-document-pattern) to identify user for the requested OTP (if no error).
+* This route responds with [OTP Request Document](#otp-request-document-pattern) to identify user for the requested OTP (if no error).
 * A OTP code will be sent to the associated phone number.
 * Both the `_id` and OTP received is used to proceed with verification.
 
@@ -192,8 +205,6 @@
 ***
 
 ### OTP Verification (phone)
-
-**Request structure**
 
 ```js
 /**
@@ -229,12 +240,11 @@
 
 ### Request OTP verification (email)
 
-**Request structure**
-
 ```js
 /**
  * @method {GET}
  * @path {/accounts/verify/email}
+ * @headers `access-token` `device-id`
  * */
 ```
 
@@ -251,7 +261,7 @@
 
 **Note**
 
-* This route responds with [OTPRD](#3-otp-request-document-pattern) to identify user for the requested OTP (if no error).
+* This route responds with [OTP Request Document](#otp-request-document-pattern) to identify user for the requested OTP (if no error).
 * A OTP code will be sent to the associated email address.
 * Both the `_id` and OTP received is used to proceed with verification.
 
@@ -261,12 +271,11 @@
 
 ### OTP Verification (email)
 
-**Request structure**
-
 ```js
 /**
  * @method {POST}
  * @path {/accounts/verify/email}
+ * @headers `access-id` `device-id`
  * @body {x-www-form-urlencoded}
  * */
 {
@@ -296,8 +305,6 @@
 
 ### Fetching user
 
-**Request structure**
-
 ```js
 /**
  * @method {GET}
@@ -322,15 +329,13 @@
 **Note**
 
 * Only verified users can access this route.
-* This route always responds with [UPD](#2-user-profile-document-pattern) pattern (if no error)
+* This route always responds with [User Profile Document](#user-profile-document-pattern) pattern (if no error)
 
 > Example: `[GET] https://skinmate.herokuapp.com/accounts`
 
 ***
 
 ### User updation
-
-**Request structure**
 
 ```js
 /**
@@ -369,16 +374,13 @@
 **Note**
 
 * Expects phone number to be priorly verified.
-* This route always responds with [UPD](#2-user-profile-document-pattern) pattern (if no error)
+* This route always responds with [User Profile Document](#user-profile-document-pattern) pattern (if no error)
 
 > Example: `[PATCH] https://skinmate.herokuapp.com/accounts`
-
 
 ***
 
 ### User authentication (signin)
-
-**Request structure**
 
 ```js
 /**
@@ -404,22 +406,17 @@
 | 401 | Incorrect password |
 | 500 | Couldn\'t authenticate |
 
-
-
 **Note**
 
-* This route always responds with [CAD](#1-client-access-document-pattern) (if no errors).
+* This route always responds with [Client Access Document](#client-access-document-pattern).
 * This route doesn't require `access-token` or `device_id`.
 * If `device-id` exists, pass it to remove any orphaned client access documents.
 
 > Example: `[POST] https://skinmate.herokuapp.com/accounts/auth`
 
-
 ***
 
 ### User authentication (signout)
-
-**Request structure**
 
 ```js
 /**
@@ -437,21 +434,15 @@
 | 403 | Requires device-id |
 | 500 | Couldn\'t sign you out |
 
-
 **Note**
 
 * This route always responds a message **You\'re signed out** (if no error)
 
 > Example: `[PURGE] https://skinmate.herokuapp.com/accounts/auth`
 
-
 ***
 
-
-
 ### Request OTP signin (Forgot password)
-
-**Request structure**
 
 ```js
 /**
@@ -478,17 +469,14 @@
 
 **Note**
 
-* This route always responds with [OTPRD](#3-otp-request-document-pattern) (if no error)
+* This route always responds with [OTP Request Document](#otp-request-document-pattern) (if no error)
 * Sends OTP to phone or email based on the request body given.
 
 > Example: `[POST] https://skinmate.herokuapp.com/accounts/auth/request-otp-signin`
 
-
 ***
 
 ### OTP signin (Forgot password)
-
-**Request structure**
 
 ```js
 /**
@@ -515,17 +503,15 @@
 
 **Note**
 
-* This route always responds with [CAD](#1-client-access-document-pattern) (if no errors)
+* This route always responds with [Client Access Document](#client-access-document-pattern)
 * This request is same as email-password signin. Use the *Client Access Token* to login and update the password.
-* Use [User Update](#7-user-updation) route to update the password.
+* Use [User Update](#user-updation) route to update the password.
 
 > Example: `[POST] https://skinmate.herokuapp.com/accounts/auth/otp-signin`
 
 ***
 
 ### User deletion 
-
-**Request structure**
 
 ```js
 /**
@@ -548,16 +534,13 @@
 
 **Note**
 
-* This route always responds a message *"Account deleted"* (if no errors)
+* This route always responds a message *"Account deleted"*
 
 > Example: `[DELETE] https://skinmate.herokuapp.com/accounts`
-
 
 ***
 
 ### User picture upload
-
-**Request structure**
 
 ```js
 /**
@@ -570,7 +553,6 @@
     file: Buffer // 1:1 jpeg/jpg/png image
 }      
 
-
 ```
 
 **Possible errors**
@@ -582,25 +564,20 @@
 | 403 | Unrecognized device |
 | 404 | Account not found |
 
-
 **Note**
 
 *  This route always responds a message **avatar uploaded** (if no error)
 
 > Example: `[POST] https://skinmate.herokuapp.com/accounts/avatar`
 
-
 ***
-
 
 ## Services
 
 * Service of services is provided through the `/services` route.
-* All operations under `/services` has a single response pattern [Service Document Pattern](#4-service-document-pattern)
+* All operations under `/services` has a single response pattern [Service Document Pattern](#service-document-pattern)
 
 ### Creating a service
-
-**Request structure:**
 
 ```js
 /**
@@ -631,18 +608,219 @@
 
 **Note**
 
-* This route always responds with [CAD](#1-client-access-document-pattern) along with a status code `201 Created` (if no errors).
-* This route doesn't require header hydration.
+- This is a **admin only** route.
+- This route always responds with [Service Document](#service-document-pattern) along with a status code `201 Created`.
 
-> Example: `[POST] https://skinmate.herokuapp.com/accounts`
+> Example: `[POST] https://skinmate.herokuapp.com/services`
 
 ***
 
-## Family Management
+### Fetching all services
+
+```js
+/**
+ * @public
+ * @method {GET}
+ * @path {/services}
+ * */
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `500` | Couldn't find service |
+
+**Note**
+
+- This is a **public** route. Can be accessed without any authorized restrictions.
+- This route always responds with array of [Service Document](#service-document-pattern).
+
+> Example: `[GET] https://skinmate.herokuapp.com/services`
+
+***
+
+### Fetching service details
+
+```js
+/**
+ * @public
+ * @method {GET}
+ * @path {/services/:serviceId}
+ * */
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `404` | No such service |
+| `500` | Couldn\'t find service |
+
+**Note**
+
+- This is a **public** route. Can be accessed without any authorized restrictions.
+- This route always responds with [Service Document](#service-document-pattern).
+
+> Example: `[GET] https://skinmate.herokuapp.com/services/e73c5b37a8897c36b43f78c3`
+
+***
+
+### Deleting a service
+
+```js
+/**
+ * @adminOnly
+ * @method {DELETE}
+ * @path {/services/:serviceId}
+ * */
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `401`  | Operation requires `access-token` |
+| `403`  | Operation requires `device-id` |
+| `401` | Operation requires elevated privileges |
+| `404` | No such service |
+| `500` | Couldn\'t delete service |
+
+**Note**
+
+- This is a **admin only** route.
+- This route always responds with *'Service deleted'* message.
+
+> Example: `[DELETE] https://skinmate.herokuapp.com/services/e73c5b37a8897c36b43f78c3`
+
+***
+
+## Doctors
+
+* Details on doctors is provided through the `/doctors` route.
+* All operations under `/doctors` also has a single response pattern [Doctor Document Pattern](#doctor-document-pattern)
+
+### Creating a doctor
+
+```js
+/**
+ * @adminOnlyRoute
+ * @method {POST}
+ * @path {/doctors}
+ * @headers `access-token` `device-id`
+ * @body {x-www-form-urlencoded}
+ * */
+{
+    name: String,
+    description: String,
+    staff: [String],   // [doctor-id]
+}
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `401`  | Operation requires `access-token` |
+| `403`  | Operation requires `device-id` |
+| `403`  | Operation requires `user-agent` |
+| 401 | Operation requires elevated privileges |
+| `406` | Validation failed: (error message) |
+| `500` | Couldn't add doctor |
+
+**Note**
+
+- This is a **admin only** route.
+- This route always responds with [Doctor Document](#doctor-document-pattern) along with a status code `201 Created`.
+
+> Example: `[POST] https://skinmate.herokuapp.com/doctors`
+
+***
+
+### Fetching all services
+
+```js
+/**
+ * @public
+ * @method {GET}
+ * @path {/services}
+ * */
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `500` | Couldn't find doctor |
+
+**Note**
+
+- This is a **public** route. Can be accessed without any authorized restrictions.
+- This route always responds with array of [Service Document](#service-document-pattern).
+
+> Example: `[GET] https://skinmate.herokuapp.com/services`
+
+***
+
+### Fetching doctor details
+
+```js
+/**
+ * @public
+ * @method {GET}
+ * @path {/doctors/:doctorId}
+ * */
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `404` | No such service |
+| `500` | Couldn\'t find service |
+
+**Note**
+
+- This is a **public** route. Can be accessed without any authorized restrictions.
+- This route always responds with [Doctor Document](#doctor-document-pattern).
+
+> Example: `[GET] https://skinmate.herokuapp.com/doctors/e73c5b37a8897c36b43f78c3`
+
+***
+
+
+### Deleting a doctor
+
+```js
+/**
+ * @adminOnly
+ * @method {DELETE}
+ * @path {/doctors/:doctorId}
+ * */
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `401`  | Operation requires `access-token` |
+| `403`  | Operation requires `device-id` |
+| `401` | Operation requires elevated privileges |
+| `404` | No such service |
+| `500` | Couldn\'t delete service |
+
+**Note**
+
+- This is a **admin only** route.
+- This route always responds with *'Service deleted'* message.
+
+> Example: `[DELETE] https://skinmate.herokuapp.com/doctors/e73c5b37a8897c36b43f78c3`
+
+***
+
+## Family
 
 ### creating a family member 
-
-**Request structure**
 
 ```js
 /**
@@ -675,7 +853,6 @@
 | 403 | Unrecognized device |
 | 404 | Account not found |
 
-
 **Note**
 
 * This route always responds with  **family member created** pattern (if no error)
@@ -686,19 +863,12 @@
 
 ### fetch all family members
 
-**Request structure**
-
 ```js
 /**
  * @method {GET}
  * @path {/familymember/all}
  * @headers `access-token` `device-id`
- * @param {none} 
- * @body {none}
  * */
-{
-     
-}
 ```
 
 **Possible errors**
@@ -711,7 +881,6 @@
 | 404 | Account not found |
 | 404 |family members not found |
 
-
 **Note**
 
 * This route always responds with  **family members of the user** pattern (if no error)
@@ -722,19 +891,13 @@
 
 ### delete a family member
 
-**Request structure**
-
 ```js
 /**
  * @method {DELETE}
  * @path {/familymember/:id}
  * @headers `access-token` `device-id`
  * @param {:id:} 
- * @body {none}
  * */
-{
-     
-}
 ```
 
 **Possible errors**
@@ -747,7 +910,6 @@
 | 404 | Account not found |
 | 404 |family member not found |
 
-
 **Note**
 
 * This route always responds with  message **family member deleted** pattern (if no error)
@@ -758,8 +920,6 @@
 
 ### edit/update a family member
 
-**Request structure**
-
 ```js
 /**
  * @method {PATCH}
@@ -769,7 +929,7 @@
  * @body {x-www-form-urlencoded}
  * */
 {
-     firstName:String, 
+    firstName:String, 
     lastName:String,
     relationship:String,
     gender:String,

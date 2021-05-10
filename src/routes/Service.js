@@ -6,15 +6,13 @@ const { middlewares, errors } = require('../utils');
 const router = new Router();
 
 /**
- * `http POST` request handler for service creation.
- * * Requires `access-token` `device-id`
- * * Client must have elevated privileges
+ * @adminOnly
  */
 router.post(
   '/services',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ admin: true, phone: true, email: true }),
+  middlewares.requireVerification({ admin: true }),
   async (request, response) => {
     try {
       // Create service document
@@ -36,12 +34,10 @@ router.post(
 );
 
 /**
- * `http GET` request handler for fetching all services.
+ * @public
  */
 router.get(
   '/services',
-  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ phone: true, email: true }),
   async (_request, response) => {
     try {
       // Retrieve all services
@@ -60,12 +56,10 @@ router.get(
 );
 
 /**
- * `http GET` request handler for fetching a service.
+ * @public
  */
 router.get(
   '/services/:id',
-  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ phone: true, email: true }),
   async (request, response) => {
     try {
       // Fetch the service
@@ -148,12 +142,12 @@ router.patch(
 router.delete(
   '/services/:id',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ admin: true, phone: true, email: true }),
+  middlewares.requireVerification({ admin: true }),
   async (request, response) => {
     try {
       // Check for service
       if (!(await Service.exists({ _id: request.params.id }))) {
-        response.status(errors.NULL_SERVICE.error);
+        response.status(errors.NULL_SERVICE.code);
         throw errors.NULL_SERVICE.error;
       }
 
