@@ -46,6 +46,11 @@
     - [delete a family member](#delete-a-family-member)
     - [edit/update a family member](#editupdate-a-family-member)
   - [Appointment](#appointment)
+    - [creating an appointment](#creating-an-appointment)
+    - [reschedule an appointment](#reschedule-an-appointment)
+    - [cancel an appointment](#cancel-an-appointment)
+    - [list the user appointments](#list-the-user-appointments)
+    - [confirm an appointment](#confirm-an-appointment)
 
 ## Disclaimer
 - Always hydrate request headers with vital properties obtained from [Client Access Document](#client-access-document-pattern).
@@ -125,8 +130,32 @@
     email: String,
     phone: String,
     qualification: String,
-    busySlots: [/* coming up */]
+    busySlots: [{
+                 time:an array of String,
+                 date:Date
+                 }]
     __v: Number,    // Document version
+}
+```
+
+
+### Appointment Creation Pattern
+```js
+{
+    type : String,    // Type of service
+    date: Date,       // Date of appointment
+    time: String,     // Time of the appointment
+    id: String        // 24-char appointment id
+}
+```
+
+### Appointment Cancel and Reschedule Pattern
+```js
+{
+    doctorName : String,    
+    doctorEducation: Date,       
+    appointmentDate: Date,     
+    appointmentTime: String        
 }
 ```
 
@@ -816,6 +845,118 @@
 > Example: `[DELETE] https://skinmate.herokuapp.com/doctors/e73c5b37a8897c36b43f78c3`
 
 ***
+
+
+## Appointment
+
+### Creating an appointment
+
+```js
+/**
+ * @adminOnlyRoute
+ * @method {POST}
+ * @path {/appointment/create}
+ * @headers `access-token` `device-id`
+ * */
+{
+    doctorid: String,       //
+    ownerid: String,
+    date:Date,
+    time:[string].   //An array of string. Example ["7:00","7:15"]
+}
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `401`  | Operation requires `access-token` |
+| `403`  | Operation requires `device-id` |
+| `403`  | Operation requires `user-agent` |
+| `406` | Validation failed: (error message) |
+| `500` | Couldn't add appointment |
+| `500` | Couldn\'t register client |
+
+**Note**
+
+- This is a **admin only** route.
+- This route always responds with Appointment Creation Pattern(#service-document-pattern) along with a status code `201 Created`.
+
+> Example: `[POST] https://skinmate.herokuapp.com/appointment/create`
+
+***
+
+
+### reschedule an appointment
+
+```js
+/**
+ * @adminOnlyRoute
+ * @method {PATCH}
+ * @path {/appointment/reschedule/:id}
+ * @headers `access-token` `device-id`
+ * */
+{
+    date:Date,
+    time:[string].   //An array of string. Example ["7:00","7:15"]
+}
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `401`  | Operation requires `access-token` |
+| `403`  | Operation requires `device-id` |
+| `403`  | Operation requires `user-agent` |
+| `406` | Validation failed: (error message) |
+| `500` | Couldn\'t register client |
+
+**Note**
+
+- This is a **admin only** route.
+- This route always responds with Appointment Reschedule Pattern(#service-document-pattern) along with a status code `200`.
+
+> Example: `[POST] https://skinmate.herokuapp.com/appointment/reschedule`
+
+***
+
+
+
+### cancel an appointment
+
+```js
+/**
+ * @adminOnlyRoute
+ * @method {DELETE}
+ * @path {/appointment/cancel/:id}
+ * @headers `access-token` `device-id`
+ * */
+```
+
+**Possible errors:**
+
+| Status | Message |
+| --: | --- |
+| `401`  | Operation requires `access-token` |
+| `403`  | Operation requires `device-id` |
+| `403`  | Operation requires `user-agent` |
+| `406` | Validation failed: (error message) |
+| `500` | Couldn\'t register client |
+
+**Note**
+
+- This is a **admin only** route.
+- This route always responds with Appointment Reschedule Pattern(#service-document-pattern) along with a status code `200`.
+
+> Example: `[POST] https://skinmate.herokuapp.com/appointment/reschedule`
+
+***
+
+
+
+
+
 
 ## Family
 
