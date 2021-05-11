@@ -67,6 +67,7 @@ function requireVerification({ phone, email, admin }) {
       const client = await Client.findOne({
         _id: request.headers['device-id'],
         token: request.headers['access-token'],
+        isDeleted: { $ne: true },
       }).catch((error) => {
         console.error(error);
         response.status(errors.FIND_CLIENT_FAILED.code);
@@ -81,7 +82,7 @@ function requireVerification({ phone, email, admin }) {
 
       // Check user verification status
       const user = await User.findOne({
-        _id: client.user,
+        clients: client.id,
         isDeleted: { $ne: true },
       })
         .catch((error) => {
