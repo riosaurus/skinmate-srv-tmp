@@ -31,7 +31,7 @@ router.post(
         email: request.body.email,
         password: request.body.password,
         phone: request.body.phone,
-      })
+      });
 
       // Validate the document before generating a client
       await user.validate()
