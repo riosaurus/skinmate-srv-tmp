@@ -6,10 +6,86 @@ const { middlewares, errors } = require('../utils');
 const { Doctor } = require('../database');
 
 const router = Router();
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *    Doctor:
+ *     type: object
+ *     required:
+ *      - name
+ *      - email
+ *      - phone
+ *      - qualification
+ *     properties:
+ *      _id:
+ *       type: ObjectdID
+ *       description: The auto-generated Id for doctor
+ *      name:
+ *       type: String
+ *       description: name of doctor
+ *      email:
+ *       type: String
+ *       description: email address of doctor
+ *      phone:
+ *       type: String
+ *       description: phone number of doctor
+ *      qualification:
+ *       type: String
+ *       description: qualification of doctor
+ *      avatar:
+ *       type: Buffer
+ *       description: image of doctor(profile picture)
+ *      busySlots:
+ *       type: Array
+ *       description: appoimented slots for doctor
+ *     example:
+ *      name: PV Bhat
+ *      email: pvbhat199@gmail.com
+ *      phone: 9988775465
+ *      qualification: MBBS    
+ */
+/**
+ * @swagger
+ * tags:
+ *  name: Doctor
+ *  description: Doctor Managing API 
+ */
 
 /**
- * @adminOnly
- * `http POST` route for doctor creation
+ * @swagger
+ * /doctors:
+ *  post:
+ *   summary: creating doctor account
+ *   tags: [Doctor]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       $ref: '#/components/schemas/Doctor'
+ *   responses:
+ *    201:
+ *     description: doctor account was created successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    406:
+ *     description: validation Error
+ * 
+ *    
  */
 router.post(
   '/doctors',
@@ -18,6 +94,7 @@ router.post(
   middlewares.requireVerification({ admin: true }),
   async (request, response) => {
     try {
+      console.log(request.body)
       // Create a doctor document
       const doctor = new Doctor({
         name: request.body.name,
@@ -49,8 +126,18 @@ router.post(
 );
 
 /**
- * @public
+ * @swagger
+ * /doctors:
+ *  get:
+ *   summary: listing all doctors
+ *   tags: [Doctor]
+ *   responses:
+ *    200:
+ *     description: doctors list sent successfully
+ *    500:
+ *     description: something server error 
  */
+
 router.get(
   '/doctors',
   async (request, response) => {
@@ -83,7 +170,22 @@ router.get(
 );
 
 /**
- * @public
+ * @swagger
+ * /doctors/{id}:
+ *  get:
+ *   summary: fetching doctor by id
+ *   tags: [Doctor]
+ *   parameters:
+ *    - in: path
+ *      name: id
+ *      type: String
+ *      required: true
+ *      description: doctor id
+ *   responses:
+ *    200:
+ *     description: successfully fetched doctor deatails by id
+ *    500:
+ *     description: could not found doctor 
  */
 router.get(
   '/doctors/:id',
@@ -110,7 +212,41 @@ router.get(
 );
 
 /**
- * @adminOnly
+ * @swagger
+ * /doctors/{id}:
+ *  patch:
+ *   summary: updating doctor account
+ *   tags: [Doctor]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: id
+ *      in: path
+ *      required: true
+ *      type: String
+ *      description: doctor id
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       $ref: '#/components/schemas/Doctor'  
+ *   responses:
+ *    200:
+ *     description: doctor account was updated successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    
  */
 router.patch(
   '/doctors/:id',
@@ -165,7 +301,35 @@ router.patch(
 );
 
 /**
- * @adminOnly
+ * @swagger
+ * /doctors/{id}:
+ *  delete:
+ *   summary: deleting doctor account
+ *   tags: [Doctor]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: id
+ *      in: path
+ *      required: true
+ *      type: String 
+ *      description: doctor id
+ *   responses:
+ *    200:
+ *     description: doctor account was deleted successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    
  */
 router.delete(
   '/doctors/:id',
@@ -190,18 +354,70 @@ router.delete(
 );
 
 const upload = multer({
-  limits: { fileSize: 3000000 },
+  limits: { fileSize: 1000000 },
   fileFilter(_request, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
       return cb(new Error('Please upload a jpeg or jpg or png'));
     }
     return cb(null, true);
   },
-});
+}); 
+
+/**
+ * @swagger
+ * tags:
+ *  name: Doctor
+ *  description: Doctor Managing API 
+ */
+
+/**
+ * @swagger
+ * /doctor/{id}/avatar:
+ *  post:
+ *   summary: uploading doctor profile picture
+ *   tags: [Doctor]
+ *   consumes:
+ *    - multipart/form-data
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: id
+ *      in: path
+ *      required: true
+ *      type: String
+ *      description: doctor id
+ *   requestBody:
+ *    content:
+ *     multipart/form-data:
+ *      schema:
+ *       type: object
+ *       properties:
+ *        file:
+ *         type: file
+ *         format: binary
+ *         description: image for doctor profile picture
+ *   responses:
+ *    200:
+ *     description: doctor profile picture added successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    
+ */
 
 router.post(
   '/doctor/:id/avatar', upload.single('file'),
-  
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ admin: true }),
   //Use buffer for avatar upload
   async (request, response) => {
     const buffer = await sharp(request.file.buffer).png().toBuffer();

@@ -2,7 +2,6 @@ const { Schema, model } = require('mongoose');
 const { genSalt, hash } = require('bcryptjs');
 const validator = require('validator');
 const customValidators = require('../utils/validators');
-
 /**
  * User schema
  */
