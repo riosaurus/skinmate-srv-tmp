@@ -16,6 +16,8 @@
     - [OTP Request Document Pattern](#otp-request-document-pattern)
     - [Service Document Pattern](#service-document-pattern)
     - [Doctor Document Pattern](#doctor-document-pattern)
+    - [Appointment Creation Pattern](#appointment-creation-pattern)
+    - [Appointment Cancel and Reschedule Pattern](#appointment-cancel-and-reschedule-pattern)
   - [Accounts](#accounts)
     - [Creating a user](#creating-a-user)
     - [Request OTP verification (phone)](#request-otp-verification-phone)
@@ -40,17 +42,15 @@
     - [Fetching all services](#fetching-all-services-1)
     - [Fetching doctor details](#fetching-doctor-details)
     - [Deleting a doctor](#deleting-a-doctor)
+  - [Appointment](#appointment)
+    - [Creating an appointment](#creating-an-appointment)
+    - [reschedule an appointment](#reschedule-an-appointment)
+    - [cancel an appointment](#cancel-an-appointment)
   - [Family](#family)
     - [creating a family member](#creating-a-family-member)
     - [fetch all family members](#fetch-all-family-members)
     - [delete a family member](#delete-a-family-member)
     - [edit/update a family member](#editupdate-a-family-member)
-  - [Appointment](#appointment)
-    - [Creating an appointment](#creating-an-appointment)
-    - [Reschedule an appointment](#reschedule-an-appointment)
-    - [Cancel an appointment](#cancel-an-appointment)
-    - [List the user appointments](#list-the-user-appointments)
-    - [Confirm an appointment](#confirm-an-appointment)
 
 ## Disclaimer
 - Always hydrate request headers with vital properties obtained from [Client Access Document](#client-access-document-pattern).
@@ -970,17 +970,16 @@
  * @body {x-www-form-urlencoded}
  * */
 { 
-    firstName:String,
-    lastName:String,
-    relationship:String,
-    gender:String,
-    dateOfBirth:Date,
-    bloodGroup:String,
-    address:String,
-    insurance:String,
-    emergencyName:String,
-    emergencyNumber:String
-      
+    firstName: String,
+    lastName: String,
+    relationship: String,
+    gender: String,
+    dateOfBirth: Date,
+    bloodGroup: String,
+    address: String,
+    insurance: String,
+    emergencyName: String,
+    emergencyNumber: String   
 }
 ```
 
@@ -988,10 +987,14 @@
 
 | Status | Message |
 | --: | --- |
-| 403 | Requires access-token |
-| 403 | Requires device-id |
-| 403 | Unrecognized device |
-| 404 | Account not found |
+| 401 | Operation requires access-token |
+| 403 | Operation requires device-id |
+| 500 | Couldn't verify your identity |
+| 500 | Couldn't find user |
+| 401 | Unauthorized client |
+| 401 | Phone and email not verified |
+| 401 | Phone number not verified |
+| 401 | Email not verified |
 
 **Note**
 
@@ -1015,11 +1018,12 @@
 
 | Status | Message |
 | --: | --- |
-| 403 | Requires access-token |
-| 403 | Requires device-id |
-| 403 | Unrecognized device |
-| 404 | Account not found |
-| 404 |family members not found |
+| 401 | Operation requires access-token |
+| 403 | Operation requires device-id |
+| 500 | Couldn't verify your identity |
+| 500 | Couldn't find user |
+| 401 | Unauthorized client |
+| 401 | Phone number not verified |
 
 **Note**
 

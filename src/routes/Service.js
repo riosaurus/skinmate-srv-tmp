@@ -41,14 +41,22 @@ router.get(
   async (_request, response) => {
     try {
       // Retrieve all services
-      const service = await Service.find({})
+      const services = await Service.find()
         .catch((error) => {
           console.error(error);
           response.status(errors.FIND_SERVICE_FAILED.code);
           throw errors.FIND_SERVICE_FAILED.error;
         });
 
-      response.json(service);
+      // Populate refs
+      const populatedServices = await Promise.all(services.map(
+        (service) => service.populate({
+          path: 'staff',
+          select: 'name email phone qualification',
+        }).execPopulate(),
+      ));
+
+      response.json(populatedServices);
     } catch (error) {
       response.send(error.message);
     }
@@ -76,8 +84,13 @@ router.get(
         throw errors.NULL_SERVICE.error;
       }
 
+      // Populate refs
+      const populatedService = await service.populate({
+        path: 'staff',
+        select: 'name email phone qualification',
+      }).execPopulate();
 
-      response.json(service);
+      response.json(populatedService);
     } catch (error) {
       response.send(error);
     }
