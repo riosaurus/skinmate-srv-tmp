@@ -4,6 +4,8 @@ const { config } = require('dotenv');
 const yargs = require('yargs');
 const { connect } = require('mongoose');
 const { constants, smsServer } = require('./utils');
+const swaggerUI=require('swagger-ui-express');
+const swaggerJsDoc=require('swagger-jsdoc')
 const {
   UserRouter, DoctorRouter, FamilyRouter, ServiceRouter, AppointmentRouter, LocationRouter,
 } = require('./routes');
