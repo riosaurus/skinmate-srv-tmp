@@ -14,7 +14,8 @@ App.use(DoctorRouter);
 App.use(FamilyRouter);
 App.use(ServiceRouter);
 App.use(AppointmentRouter);
-App.use(LocationRouter)
+App.use(LocationRouter);
+
 const argv = yargs(process.argv.slice(2))
   .options({
     /**
@@ -67,4 +68,4 @@ connect(constants.mongoUri(), {
   });
 });
 
-module.exports=App;
+module.exports = App;
