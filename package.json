@@ -4,9 +4,6 @@
   "type":"module",
   "description": "Temporary repository for SkinMate Node.js backend.",
   "main": "src",
-  "engines": {
-    "node": "^14.2.1"
-  },
   "scripts": {
     "start": "node . --rtengine",
     "start:dev": "nodemon . --development --rtengine",
