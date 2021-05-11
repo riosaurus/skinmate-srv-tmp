@@ -76,6 +76,7 @@ router.get(
         throw errors.NULL_SERVICE.error;
       }
 
+
       response.json(service);
     } catch (error) {
       response.send(error);
