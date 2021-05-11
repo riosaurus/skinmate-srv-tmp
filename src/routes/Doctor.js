@@ -7,6 +7,9 @@ const { Doctor } = require('../database');
 
 const router = Router();
 /**
+ * @adminOnly
+ */
+/**
  * @swagger
  * components:
  *   schemas:
