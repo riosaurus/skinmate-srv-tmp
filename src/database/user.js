@@ -47,10 +47,10 @@ const usersSchema = new Schema({
     type: String,
     trim: true,
   },
-  insurance: {
+  insurance: [{
     type: String,
     trim: true,
-  },
+  }],
   emergencyName: {
     type: String,
     trim: true,

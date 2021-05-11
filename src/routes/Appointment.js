@@ -8,78 +8,73 @@ const { User, Client,Appointment,Doctor } = require('../database')
 const { middlewares, errors } = require('../utils')
 const { urlencoded, request } = require('express')
 
-
 router.post(
-    '/appointment/create',
-    express.json(),
-    middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-    middlewares.requireVerification({ phone: true, email: true }),
-    async (req,res)=>{
-
-     
-    try{
-          const client = await Client.findOne({
-            _id: req.headers['device-id'],
-            token: req.headers['access-token'],
-          })
-        
-    
-          if (!client) {
-            res.status(403);
-            throw new Error('Unrecognized device');
-          }
-    
-          const user = await User.findOne({
-            _id: client.user,
-            isDeleted: { $ne: true },
-          });
-    
-          if (!user) {
-            res.status(404);
-            throw new Error('Account not found');
-          }
-
-
-        const appointment = new Appointment({
-            doctorId:req.body.doctorid,
-            userId:user._id,
-            date:req.body.date,
-            time:req.body.time
+  '/appointment/create',
+  express.json(),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  async (req,res)=>{
+     try{
+        const client = await Client.findOne({
+          _id: req.headers['device-id'],
+          token: req.headers['access-token'],
         })
-        await appointment.save()
+      
+  
+        if (!client) {
+          res.status(403);
+          throw new Error('Unrecognized device');
+        }
+  
+        const user = await User.findOne({
+          _id: client.user,
+          isDeleted: { $ne: true },
+        });
+  
+        if (!user) {
+          res.status(404);
+          throw new Error('Account not found');
+        }
+
+      const appointment = new Appointment({
+          doctorId:req.body.doctorid,
+          userId:user._id,
+          date:req.body.date,
+          time:req.body.time,
+          paymentType:req.body.paymentType,
+          insuranceInfo:req.body.insuranceInfo,
+          appointmentFor:req.body.appointmentFor
+      })
+      await appointment.save()
 
 
-        const doctor =  await Doctor.findById({_id:req.body.doctorid})
-        if(!doctor){
-            res.status(403)
-            throw new Error('Doctor could not be found')
-        }
-        let bool = false
-        const date = new Date(req.body.date)
-        for(let i = 0;i<doctor.busySlots.length;i++){
-            if(doctor.busySlots[i].date.getTime()===date.getTime()){
-                doctor.busySlots[i].time = doctor.busySlots[i].time.concat(req.body.time)
-                bool = true
-            }
-        }
-        if(bool===false){
-                doctor.busySlots = doctor.busySlots.concat({
-                date:req.body.date,
-                time:req.body.time
-            })
-        }
-        await doctor.save()
-        res.status(201).send({
-            type:"Medical",
-            date:req.body.date,
-            time:req.body.time[0],
-            id:appointment._id, 
-            })
+      const doctor =  await Doctor.findById({_id:req.body.doctorid})
+      if(!doctor){
+          res.status(403)
+          throw new Error('Doctor could not be found')
+      }
+      let bool = false
+      const date = new Date(req.body.date)
+      for(let i = 0;i<doctor.busySlots.length;i++){
+          if(doctor.busySlots[i].date.getTime()===date.getTime()){
+              doctor.busySlots[i].time = doctor.busySlots[i].time.concat(req.body.time)
+              bool = true
+          }
+      }
+      if(bool===false){
+              doctor.busySlots = doctor.busySlots.concat({
+              date:req.body.date,
+              time:req.body.time
+          })
+      }
+      await doctor.save()
+      res.status(201).send("Appointment scheduled successfully")
 }
 catch(e){
-    res.status(500).send(e)
+  res.status(500).send(e)
 }
 })
+
 
 
 router.patch(
@@ -282,8 +277,7 @@ router.get(
 })
 
 
-
-router.post('/appointment/confirm/:id',
+router.get('/appointment/details',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
@@ -309,18 +303,14 @@ router.post('/appointment/confirm/:id',
             throw new Error('Account not found');
           }
 
-        const appointment = await Appointment.findById(req.params.id)
-        if(!appointment){
-            res.status(403)
-            throw new Error('Appointment could not be found')
+        let familymembers = await Family.find({user:user._id})
+        let family = []
+        for(let i=0;i<familymembers.length;i++){
+          family = family.concat(familymembers[i].firstName)
         }
-        const doctor = await Doctor.findById({_id:appointment.doctorId})
         res.status(200).send({
-            doctorName:doctor.name,
-            doctorEducation:doctor.qualification,
-            appointmentDate:appointment.date,
-            appointmentTime:appointment.time[0],
-            id:appointment._id
+            family,
+            insuranceInfo:user.insurance
         })
     }
     catch(e){
@@ -328,6 +318,40 @@ router.post('/appointment/confirm/:id',
     }
 })
 
+router.post('/appointment/insurance',
+    express.json(),
+    middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+    middlewares.requireVerification({ phone: true, email: true }),
+    async(req,res)=>{
+    try{
+        const client = await Client.findOne({
+            _id: req.headers['device-id'],
+            token: req.headers['access-token'],
+          });
+
+          if (!client) {
+            res.status(403);
+            throw new Error('Unrecognized device');
+          }
+
+          const user = await User.findOne({
+            _id: client.user,
+            isDeleted: { $ne: true },
+          });
+
+          if (!user) {
+            res.status(404);
+            throw new Error('Account not found');
+          }
+          user.insurance = user.insurance.concat(req.body.insurance)
+          await user.save()
+          res.status(201).send("New insurance added successfully")
+        }
+
+          catch(e){
+            res.status(500).send(e)
+          }
+  })
 
 
 module.exports = router
