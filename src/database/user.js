@@ -2,7 +2,6 @@ const { Schema, model } = require('mongoose');
 const { genSalt, hash } = require('bcryptjs');
 const validator = require('validator');
 const customValidators = require('../utils/validators');
-
 /**
  * User schema
  */
@@ -48,10 +47,10 @@ const usersSchema = new Schema({
     type: String,
     trim: true,
   },
-  insurance: {
+  insurance: [{
     type: String,
     trim: true,
-  },
+  }],
   emergencyName: {
     type: String,
     trim: true,
@@ -77,6 +76,10 @@ const usersSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  clients: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Client',
+  }],
   avatar: Buffer,
 }, {
   timestamps: true,

@@ -1,0 +1,377 @@
+swagger: "2.0"
+info:
+  description: "Node.js backend service provider for SkinMate applications"
+  version: "0.3-beta"
+  title: "SkinMate"
+  contact:
+    email: "skinmate24x7@gmail.com"
+  license:
+    name: "GNU GENERAL PUBLIC LICENSE"
+    url: "https://fsf.org/"
+host: "localhost:3001"
+basePath: "/"
+tags:
+- name: "Accounts"
+  description: "Account Management"
+  externalDocs:
+    description: "More on Accounts"
+    url: "https://github.com/riosaurus/skinmate-srv-tmp#accounts"
+- name: "Services"
+  description: "SkinMate Services"
+  externalDocs:
+    description: "More on Services"
+    url: "https://github.com/riosaurus/skinmate-srv-tmp#services"
+- name: "Doctors"
+  description: "Doctor details"
+  externalDocs:
+    description: "More on Doctors"
+    url: "https://github.com/riosaurus/skinmate-srv-tmp#doctors"
+schemes:
+- "http"
+- "https"
+paths:
+  /accounts:
+    post:
+      tags:
+      - "Accounts"
+      summary: "Create a new account"
+      description: ""
+      operationId: "addAccount"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "email"
+        required: true
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "phone"
+        required: true
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "password"
+        required: true
+        schema:
+          $ref: "#definitions/User"
+      responses:
+        "201":
+          description: "Invalid input"
+          schema:
+            $ref: '#definitions/Client'
+    get:
+      tags:
+      - "Accounts"
+      summary: "Get my profile"
+      description: ""
+      operationId: "getAccount"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "Account data"
+          schema:
+            $ref: '#definitions/Account'
+      security:
+      - device-id: []
+        access-token: []
+    patch:
+      tags:
+      - "Accounts"
+      summary: "Update my profile"
+      description: ""
+      operationId: "updateAccount"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "firstName"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "lastName"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "password"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "gender"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "dateOfBirth"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "bloodGroup"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "address"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "insurance"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "emergencyName"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "emergencyNumber"
+        schema:
+          $ref: "#definitions/User"
+      responses:
+        "200":
+          description: "Updated account"
+          schema:
+            $ref: '#definitions/Account'
+      security:
+      - device-id: []
+        access-token: []
+    delete:
+      tags:
+      - "Accounts"
+      summary: "Delete my profile"
+      description: ""
+      operationId: "deleteAccount"
+      produces:
+      - "text/plain"
+      responses:
+        "405":
+          description: "Invalid input"
+      security:
+      - device-id: []
+        access-token: []
+securityDefinitions:
+  device-id:
+    type: "apiKey"
+    name: "device-id"
+    in: "header"
+  access-token:
+    type: "apiKey"
+    name: "access-token"
+    in: "header"
+definitions:
+  Client:
+    type: "object"
+    required:
+      - user
+      - userAgent
+    properties:
+      _id:
+        type: "string"
+        format: "ObjectID"
+        description: "The 24-char device-id"
+      user:
+        type: "string"
+        format: "ObjectID"
+        description: "The 24-char user-id"
+      userAgent:
+        type: "string"
+      token:
+        type: "string"
+        description: "The access-token"
+      createdAt:
+        type: "string"
+        format: "date-time"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+  User:
+    type: "object"
+    required:
+      - email
+      - phone
+      - password
+    properties:
+      _id:
+        type: "string"
+        format: "ObjectID"
+        description: "The 24-char user-id"
+      email:
+        type: "string"
+      phone:
+        type: "string"
+        description: "Phone number must include the country code"
+      firstName:
+        type: "string"
+      lastName:
+        type: "string"
+      gender:
+        type: "string"
+      dateOfBirth:
+        type: "string"
+      bloodGroup:
+        type: "string"
+      address:
+        type: "string"
+      insurance:
+        type: "[string]"
+      emergencyName:
+        type: "string"
+      emergencyNumber:
+        type: "string"
+      verifiedPhone:
+        type: "boolean"
+      verifiedEmail:
+        type: "boolean"
+      elevatedAccess:
+        type: "boolean"
+      isDeleted:
+        type: "boolean"
+      createdAt:
+        type: "string"
+        format: "date-time"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+  TOTP:
+    type: "object"
+    required:
+      - user
+    properties:
+      _id:
+        type: "string"
+        format: "ObjectID"
+        description: "The OTP request-id"
+      user:
+        type: "string"
+        format: "ObjectID"
+        description: "The user-id of the requestee user"
+      createdAt:
+        type: "string"
+        format: "date-time"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+  Service:
+    type: "object"
+    required:
+      - name
+    properties:
+      _id:
+        type: "string"
+        format: "ObjectID"
+        description: "The 24-char device-id"
+      name:
+        type: "string"
+        description: "Service title"
+      description:
+        type: "string"
+        description: "Service description"
+      staff:
+        type: "array"
+        format: "ObjectId"
+        description: "Staff allotted for the service"
+      createdAt:
+        type: "string"
+        format: "date-time"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+  Doctor:
+    type: object
+    required:
+      - name
+      - email
+      - phone
+      - qualification
+    properties:
+      _id:
+        type: "string"
+        format: "ObjectID"
+        description: The auto-generated Id for doctor
+      name:
+        type: "string"
+        description: name of doctor
+      email:
+        type: "string"
+        description: email address of doctor
+      phone:
+        type: "string"
+        description: phone number of doctor
+      qualification:
+        type: "string"
+        description: qualification of doctor
+      avatar:
+        type: "buffer"
+        description: image of doctor(profile picture)
+      busySlots:
+        type: "array"
+        description: appointment slots of doctor
+      createdAt:
+        type: "string"
+        format: "date-time"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+  Family:
+    type: object
+    required:
+      - user
+      - firstName
+      - lastName
+      - relationship
+      - gender
+      - dateOfBirth
+      - bloodGroup
+      - address
+    properties:
+      _id:
+        type: "string"
+        format: "ObjectID"
+        description: The auto-generated Id for family member
+      user:
+        type: "string"
+        format: "ObjectID"
+        description: parent user id
+      firstName:
+        type: "string"
+        description: first name of family member
+      lastName:
+        type: "string"
+        description: last name of family member
+      relationship:
+        type: "string"
+        description: relationship between family member and parent user
+      gender:
+        type: "string"
+        description: gender of family member
+      dateOfBirth:
+        type: "string"
+        format: "date-time"
+        description: birth date of family member
+      bloodGroup:
+        type: "string"
+        enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]         
+        description: blood group of family member
+      address:
+        type: "string"
+        description: address of family member
+      insurance:
+        type: "string"
+        description: insurance of family member
+      emergencyName:
+        type: "string"
+        description: emergency name for family member
+      emergencyNumber:
+        type: "string"
+        description: emergency phone number for family member
+      createdAt:
+        type: "string"
+        format: "date-time"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+externalDocs:
+  description: "More detailed documentation"
+  url: "https://github.com/riosaurus/skinmate-srv-tmp"

@@ -3,7 +3,9 @@ const express = require('express');
 const { config } = require('dotenv');
 const yargs = require('yargs');
 const { connect } = require('mongoose');
-const { constants, smsServer } = require('./utils');
+const swaggerUI = require('swagger-ui-express');
+const yaml = require('yamljs');
+const { constants, smsServer, emailServer } = require('./utils');
 const {
   UserRouter, DoctorRouter, FamilyRouter, ServiceRouter, AppointmentRouter, LocationRouter,
 } = require('./routes');
@@ -14,7 +16,10 @@ App.use(DoctorRouter);
 App.use(FamilyRouter);
 App.use(ServiceRouter);
 App.use(AppointmentRouter);
-App.use(LocationRouter)
+App.use(LocationRouter);
+const swaggerDocs = yaml.load('assets/api-docs.yaml');
+App.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+
 const argv = yargs(process.argv.slice(2))
   .options({
     /**
@@ -60,11 +65,12 @@ connect(constants.mongoUri(), {
     process.stdout.write(`: listening on PORT ${constants.port()}\n`);
 
     if (argv.rtengine) {
-      process.stdout.write('- setting up socket listener');
+      process.stdout.write('- setting up analytics');
       smsServer.setSocketServer(server);
-      process.stdout.write(': socket listener is up\n');
+      emailServer.init();
+      process.stdout.write(': analytics is up\n');
     }
   });
 });
 
-module.exports=App;
+module.exports = App;

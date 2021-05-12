@@ -7,11 +7,6 @@ const constants = require('../utils/variables');
  * Client schema
  */
 const schema = new Schema({
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
   userAgent: {
     type: String,
     required: true,
@@ -21,6 +16,10 @@ const schema = new Schema({
     unique: true,
     validate: { validator: validator.default.isJWT, message: 'Invalid token' },
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  }
 }, {
   timestamps: true,
 });

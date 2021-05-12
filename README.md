@@ -972,17 +972,16 @@
  * @body {x-www-form-urlencoded}
  * */
 { 
-    firstName:String,
-    lastName:String,
-    relationship:String,
-    gender:String,
-    dateOfBirth:Date,
-    bloodGroup:String,
-    address:String,
-    insurance:String,
-    emergencyName:String,
-    emergencyNumber:String
-      
+    firstName: String,
+    lastName: String,
+    relationship: String,
+    gender: String,
+    dateOfBirth: Date,
+    bloodGroup: String,
+    address: String,
+    insurance: String,
+    emergencyName: String,
+    emergencyNumber: String   
 }
 ```
 
@@ -990,10 +989,14 @@
 
 | Status | Message |
 | --: | --- |
-| 403 | Requires access-token |
-| 403 | Requires device-id |
-| 403 | Unrecognized device |
-| 404 | Account not found |
+| 401 | Operation requires access-token |
+| 403 | Operation requires device-id |
+| 500 | Couldn't verify your identity |
+| 500 | Couldn't find user |
+| 401 | Unauthorized client |
+| 401 | Phone and email not verified |
+| 401 | Phone number not verified |
+| 401 | Email not verified |
 
 **Note**
 
@@ -1017,11 +1020,12 @@
 
 | Status | Message |
 | --: | --- |
-| 403 | Requires access-token |
-| 403 | Requires device-id |
-| 403 | Unrecognized device |
-| 404 | Account not found |
-| 404 |family members not found |
+| 401 | Operation requires access-token |
+| 403 | Operation requires device-id |
+| 500 | Couldn't verify your identity |
+| 500 | Couldn't find user |
+| 401 | Unauthorized client |
+| 401 | Phone number not verified |
 
 **Note**
 
