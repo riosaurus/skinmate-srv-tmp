@@ -1,7 +1,6 @@
 {
   "name": "skinmate-srv-tmp",
   "version": "1.0.0",
-  "type": "module",
   "description": "Temporary repository for SkinMate Node.js backend.",
   "main": "src",
   "scripts": {
