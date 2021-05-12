@@ -121,7 +121,7 @@ router.post(
         throw errors.SAVE_DOCTOR_FAILED.error;
       });
 
-      response.json(document);
+      response.status(201).json(document);
     } catch (error) {
       response.send(error.message);
     }

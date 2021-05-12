@@ -4,12 +4,77 @@ const { Service } = require('../database');
 const { middlewares, errors } = require('../utils');
 
 const router = new Router();
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *    Services:
+ *     type: object
+ *     required:
+ *      - name
+ *     properties:
+ *      _id:
+ *       type: ObjectdID
+ *       description: The auto-generated Id for services
+ *      name:
+ *       type: String
+ *       description: name of the service
+ *      description:
+ *       type: String
+ *       description: description of service
+ *      staff:
+ *       type: Array
+ *       description: collection of doctor id who is part of service
+ *      sub:
+ *       type: Array
+ *       description: collection of sub services       
+ *     example:
+ *      name: Medical
+ *      description: medical service having doctor appoiment feature  
+ */
+/**
+ * @swagger
+ * tags:
+ *  name: Service
+ *  description: Service Managing API 
+ */
 
 /**
  * @adminOnly
  */
-
-
+/**
+ * @swagger
+ * /services:
+ *  post:
+ *   summary: creating service
+ *   tags: [Service]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       $ref: '#/components/schemas/Services'
+ *   responses:
+ *    201:
+ *     description: Service was created successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    406:
+ *     description: validation Error    
+ */
 router.post(
   '/services',
   urlencoded({ extended: true }),
@@ -37,6 +102,18 @@ router.post(
 
 /**
  * @public
+ */
+/**
+ * @swagger
+ * /services:
+ *  get:
+ *   summary: listing all services
+ *   tags: [Service]
+ *   responses:
+ *    200:
+ *     description: service list sent successfully
+ *    500:
+ *     description: something server error 
  */
 router.get(
   '/services',
@@ -67,6 +144,25 @@ router.get(
 
 /**
  * @public
+ */
+
+/**
+ * @swagger
+ * /services/{id}:
+ *  get:
+ *   summary: fetching service by id
+ *   tags: [Service]
+ *   parameters:
+ *    - in: path
+ *      name: id
+ *      type: String
+ *      required: true
+ *      description: service id
+ *   responses:
+ *    200:
+ *     description: successfully fetched service deatails by id
+ *    500:
+ *     description: could not found doctor 
  */
 router.get(
   '/services/:id',
@@ -102,6 +198,44 @@ router.get(
 /**
  * `http PATCH` request handler for updating a service.
  */
+/**
+ * @swagger
+ * /services/{id}:
+ *  patch:
+ *   summary: updating service
+ *   tags: [Service]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: id
+ *      in: path
+ *      required: true
+ *      type: String
+ *      description: service id
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       $ref: '#/components/schemas/Services'  
+ *   responses:
+ *    200:
+ *     description: service was updated successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    
+ */
+
 router.patch(
   '/services/:id',
   urlencoded({ extended: true }),
@@ -155,6 +289,38 @@ router.patch(
  * `http DELETE` request handler for fetching a service.
  * * Requires `user-agent` to be present
  */
+/**
+ * @swagger
+ * /services/{id}:
+ *  delete:
+ *   summary: deleting service
+ *   tags: [Service]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: id
+ *      in: path
+ *      required: true
+ *      type: String 
+ *      description: service id
+ *   responses:
+ *    200:
+ *     description: service was deleted successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    
+ */
+
 router.delete(
   '/services/:id',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
