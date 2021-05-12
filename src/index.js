@@ -3,6 +3,8 @@ const express = require('express');
 const { config } = require('dotenv');
 const yargs = require('yargs');
 const { connect } = require('mongoose');
+const swaggerUI = require('swagger-ui-express');
+const yaml = require('yamljs');
 const { constants, smsServer, emailServer } = require('./utils');
 const {
   UserRouter, DoctorRouter, FamilyRouter, ServiceRouter, AppointmentRouter, LocationRouter,
@@ -15,6 +17,8 @@ App.use(FamilyRouter);
 App.use(ServiceRouter);
 App.use(AppointmentRouter);
 App.use(LocationRouter);
+const swaggerDocs = yaml.load('assets/api-docs.yaml');
+App.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
 const argv = yargs(process.argv.slice(2))
   .options({
