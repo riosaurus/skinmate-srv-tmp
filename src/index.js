@@ -3,42 +3,22 @@ const express = require('express');
 const { config } = require('dotenv');
 const yargs = require('yargs');
 const { connect } = require('mongoose');
+const swaggerUI = require('swagger-ui-express');
+const yaml = require('yamljs');
 const { constants, smsServer } = require('./utils');
-const swaggerJSDOCs=require('swagger-jsdoc');
-const swaggerUI=require('swagger-ui-express')
 const {
   UserRouter, DoctorRouter, FamilyRouter, ServiceRouter, AppointmentRouter, LocationRouter,
 } = require('./routes');
 
-const options={
-  definition:{
-    openapi:"3.0.0",
-    info:{
-      title:"SkinMate API Service",
-      version:"1.0.0",
-      description:"API service for Mobile Applications",
-    },
-    servers:[
-      {
-        url:"http://localhost:8080"
-      },
-      {
-        url:"https://skinmate.herokuapp.com"
-      }
-    ],
-  },
-  apis:["src/routes/*.js"]
-  }
-const specs=swaggerJSDOCs(options)  
 const App = express();
-App.use(express.json())
 App.use(UserRouter);
 App.use(DoctorRouter);
 App.use(FamilyRouter);
 App.use(ServiceRouter);
 App.use(AppointmentRouter);
 App.use(LocationRouter);
-App.use("/api-docs",swaggerUI.serve,swaggerUI.setup(specs))
+const swaggerDocs = yaml.load('assets/api-docs.yaml');
+App.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
 const argv = yargs(process.argv.slice(2))
   .options({
