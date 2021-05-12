@@ -44,6 +44,8 @@
     "sharp": "^0.28.1",
     "socket.io": "^4.0.1",
     "speakeasy": "^2.0.0",
+    "swagger-jsdoc": "^4.0.0",
+    "swagger-ui-express": "^4.1.6",
     "validator": "^13.6.0",
     "yargs": "^16.2.0"
   }

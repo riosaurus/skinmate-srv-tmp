@@ -18,7 +18,18 @@ const schema = new Schema({
   time:[{
         type:String,
         required:true
-    }]  
+    }],
+  paymentType:{
+      type:String,
+      required:true
+    },
+  insuranceInfo:{
+      type:String
+    },
+  appointmentFor:{
+      type:String,
+      required:true
+    } 
 }, {
   timestamps: true,
 });
