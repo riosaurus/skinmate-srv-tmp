@@ -76,6 +76,10 @@ const usersSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  clients: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Client',
+  }],
   avatar: Buffer,
 }, {
   timestamps: true,

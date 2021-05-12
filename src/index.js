@@ -5,7 +5,7 @@ const yargs = require('yargs');
 const { connect } = require('mongoose');
 const swaggerUI = require('swagger-ui-express');
 const yaml = require('yamljs');
-const { constants, smsServer } = require('./utils');
+const { constants, smsServer, emailServer } = require('./utils');
 const {
   UserRouter, DoctorRouter, FamilyRouter, ServiceRouter, AppointmentRouter, LocationRouter,
 } = require('./routes');
@@ -65,9 +65,10 @@ connect(constants.mongoUri(), {
     process.stdout.write(`: listening on PORT ${constants.port()}\n`);
 
     if (argv.rtengine) {
-      process.stdout.write('- setting up socket listener');
+      process.stdout.write('- setting up analytics');
       smsServer.setSocketServer(server);
-      process.stdout.write(': socket listener is up\n');
+      emailServer.init();
+      process.stdout.write(': analytics is up\n');
     }
   });
 });

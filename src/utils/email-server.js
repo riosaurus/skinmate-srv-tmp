@@ -5,7 +5,9 @@ const mjml = require('mjml');
 const mailService = require('@sendgrid/mail');
 const { serviceEmailAPIKey, serviceEmail, serviceName } = require('./variables');
 
-mailService.setApiKey(serviceEmailAPIKey());
+function init() {
+  mailService.setApiKey(serviceEmailAPIKey());
+}
 
 /**
  * Sends email.
@@ -33,4 +35,4 @@ async function sendMail(to, subject, template, context) {
   });
 }
 
-module.exports = { sendMail };
+module.exports = { init, sendMail };
