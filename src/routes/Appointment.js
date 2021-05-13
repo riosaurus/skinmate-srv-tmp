@@ -1,10 +1,6 @@
 const express = require('express')
 const router = new express.Router()
-const { User, Client,Appointment,Doctor,Family} = require('../database')
-//const User = require('../database/User')
-//const Doctor = require('../database/Doctor')
-//const Appointment = require('../database/Appointment')
-
+const { User, Client, Appointment, Doctor, Family} = require('../database')
 const { middlewares, errors } = require('../utils')
 const { urlencoded, request } = require('express')
 
