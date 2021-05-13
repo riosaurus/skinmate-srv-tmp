@@ -152,7 +152,7 @@ router.post(
           })
       }
       await doctor.save()
-      res.status(201).send(appointment)
+      res.status(201).json(appointment)
 }
 catch(e){
   res.status(500).send(e)
@@ -268,7 +268,7 @@ router.patch(
             })
         }
         await doctor.save()
-        res.status(200).send({
+        res.status(200).json({
             doctorName:doctor.name,
             doctorEducation:doctor.qualification,
             appointmentDate:req.body.date,
@@ -366,7 +366,7 @@ router.delete(
             doctor.busySlots.splice(index,1)
         }
         await doctor.save()
-        res.status(200).send({
+        res.status(200).json({
             doctorName:doctor.name,
             doctorEducation:doctor.qualification,
             appointmentDate:ddate,
@@ -459,7 +459,7 @@ router.get(
             }
             array = array.concat(obj)
         }
-        res.status(200).send(array)
+        res.status(200).json(array)
     }
     catch(e){
         res.status(500).send(e)
@@ -529,7 +529,7 @@ router.get('/appointment/details',
         for(let i=0;i<familymembers.length;i++){
           family = family.concat(familymembers[i].firstName)
         }
-        res.status(200).send({
+        res.status(200).json({
             family,
             insuranceInfo:user.insurance
         })
