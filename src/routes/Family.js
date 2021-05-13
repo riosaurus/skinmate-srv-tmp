@@ -143,7 +143,7 @@ router.post(
 
       await family.save();
 
-      response.status(201).send(family);
+      response.status(201).json(family);
     } catch (error) {
       console.error(error);
       response.send(error.message);
@@ -195,7 +195,7 @@ router.get('/familymember/all',
         response.status(404);
         throw new Error('family members not found');
       }
-      response.status(200).send(familymembers);
+      response.status(200).json(familymembers);
     } catch (error) {
       console.error(error);
       response.send(error.message);
@@ -257,6 +257,65 @@ router.delete('/familymember/:id',
       response.send(error.message);
     }
   });
+
+
+/**
+ * `http GET` request handler to fetch particular family member by id.
+ * * Requires `access-token `device-id` to be present
+ */
+
+/**
+ * @swagger
+ * /familymember/{id}:
+ *  get:
+ *   summary: fetching family member by id
+ *   tags: [Family]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - in: path
+ *      name: id
+ *      type: String
+ *      required: true
+ *      description: family id
+ *   responses:
+ *    200:
+ *     description: family member fetched successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    404:
+ *     description: family member not found
+ */
+
+  router.get('/familymember/:id',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true }),
+  async (request, response) => {
+    try {
+      
+      const familymember = await Family.findById({ _id: request.params.id, user: request.params.userId });
+
+      if (!familymember) {
+        response.status(404);
+        throw new Error('family member not found');
+      }
+      response.json(familymember);
+    } catch (error) {
+      console.error(error);
+      response.send(error.message);
+    }
+  });
+
 
 /**
  * `http PATCH` request handler to edit/update a family member.
@@ -332,7 +391,7 @@ router.patch('/familymember/:id',
 
       await family.save();
 
-      response.send(family);
+      response.json(family);
     } catch (error) {
       console.error(error);
       response.send(error.message);

@@ -60,6 +60,7 @@ const usersSchema = new Schema({
     trim: true,
     validate: { validator: validator.isMobilePhone, message: 'Invalid phone number' },
   },
+  
   verifiedPhone: {
     type: Boolean,
     default: false,

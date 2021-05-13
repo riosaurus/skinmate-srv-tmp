@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node . --rtengine",
     "start:dev": "nodemon . --development --rtengine",
-    "test": "jest"
+    "test": "jest --detectOpenHandles"
   },
   "repository": {
     "type": "git",
