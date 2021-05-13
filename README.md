@@ -1,15 +1,11 @@
-# SkinMate Backend
+# SkinMate Node.js Backend
 
-![Live on Heroku](https://badgen.net/badge/live/v.0.3-beta/)
-
-![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
-![Express](https://img.shields.io/badge/Express.js-404D59?style=for-the-badge)
-![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
-![Heroku](https://img.shields.io/badge/Heroku-430098?style=for-the-badge&logo=heroku&logoColor=white)
+[![Swagger UI](https://shields.io/badge/Swagger%20UI-ready-green?logo=Swagger)](https://skinmate.herokuapp.com/api-docs)
+[![Server URL](https://shields.io/badge/heroku-live-purple?logo=Heroku)](https://skinmate.herokuapp.com)
 
 ## Table of contents
 
-- [SkinMate Backend](#skinmate-backend)
+- [SkinMate Node.js Backend](#skinmate-nodejs-backend)
   - [Table of contents](#table-of-contents)
   - [Disclaimer](#disclaimer)
   - [Common Response Patterns](#common-response-patterns)
@@ -476,9 +472,11 @@
 
 ```js
 /**
- * @method {POST}
- * @path {/accounts/auth/request-otp-signin}
+ * @method {GET}
+ * @path {/accounts/auth/otp-signin}
  * @headers `user-agent`
+ * @query {string} email
+ * @query {string} phone
  * @body {x-www-form-urlencoded}
  * */
 {
@@ -502,7 +500,7 @@
 * This route always responds with [OTP Request Document](#otp-request-document-pattern) (if no error)
 * Sends OTP to phone or email based on the request body given.
 
-> Example: `[POST] https://skinmate.herokuapp.com/accounts/auth/request-otp-signin`
+> Example: `[GET] https://skinmate.herokuapp.com/accounts/auth/otp-signin?phone=+919922993344`
 
 ***
 

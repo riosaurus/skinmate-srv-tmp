@@ -87,6 +87,7 @@ router.post(
         name: request.body.name,
         description: request.body.description,
         staff: request.body.staff,
+        sub: request.body.sub,
       }).catch((error) => {
         console.error(error);
         response.status(errors.SAVE_SERVICE_FAILED.code);
