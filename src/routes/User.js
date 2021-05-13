@@ -42,12 +42,6 @@ router.post(
           throw validationError.error;
         });
 
-      await user.save().catch((error) => {
-        console.error(error);
-        response.status(errors.SAVE_USER_FAILED.code);
-        throw errors.SAVE_USER_FAILED.error;
-      });
-
       // On-register-direct-login approach
       const client = await Client.create({ user: user.id, userAgent: request.headers['user-agent'] })
         .catch((error) => {
@@ -56,7 +50,18 @@ router.post(
           throw errors.SAVE_CLIENT_FAILED.error;
         });
 
-      response.status(201).json(client);
+      // Add the client
+      user.clients.push(client.id);
+
+      await user.save().catch((error) => {
+        console.error(error);
+        response.status(errors.SAVE_USER_FAILED.code);
+        throw errors.SAVE_USER_FAILED.error;
+      });
+
+      const { isDeleted, ...rest } = client.toJSON();
+
+      response.status(201).json(rest);
     } catch (error) {
       response.send(error.message);
     }
@@ -83,7 +88,52 @@ router.get(
         throw errors.FIND_USER_FAILED.error;
       });
 
-      const { password, isDeleted, ...rest } = user.toJSON();
+      const populatedUser = await user.populate({
+        path: 'clients',
+        select: 'userAgent createdAt',
+        match: { isDeleted: { $ne: true } },
+      }).execPopulate();
+
+      const { password, isDeleted, ...rest } = populatedUser.toJSON();
+
+      response.json(rest);
+    } catch (error) {
+      console.error(error);
+      response.send(error.message);
+    }
+  },
+);
+
+/**
+ * @adminOnly
+ * `http GET` request handler to fetch a user
+ */
+router.get(
+  '/accounts/:id',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ admin: true }),
+  async (request, response) => {
+    try {
+      // Get the user document
+      const user = await User.findById(request.params.id)
+        .catch((error) => {
+          console.error(error);
+          response.status(errors.FIND_USER_FAILED.code);
+          throw errors.FIND_USER_FAILED.error;
+        });
+
+      if (!user) {
+        response.status(errors.NULL_USER.code);
+        throw errors.NULL_USER.error;
+      }
+
+      // Populate client details
+      const populatedUser = await user.populate({
+        path: 'clients',
+        select: 'userAgent createdAt',
+      }).execPopulate();
+
+      const { password, ...rest } = populatedUser.toJSON();
 
       response.json(rest);
     } catch (error) {
@@ -228,12 +278,18 @@ router.delete(
         throw errors.FIND_USER_FAILED.error;
       });
 
-      await user.update({ isDeleted: true })
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.USER_UPDATE_FAILURE.code);
-          throw errors.USER_UPDATE_FAILURE.error;
-        });
+      const u = await Client.find({
+        _id: { $in: user.clients },
+      });
+
+      console.log(u);
+
+      // await user.update({ isDeleted: true })
+      //   .catch((error) => {
+      //     console.error(error);
+      //     response.status(errors.USER_UPDATE_FAILURE.code);
+      //     throw errors.USER_UPDATE_FAILURE.error;
+      //   });
 
       response.send('Account deleted');
     } catch (error) {
@@ -285,24 +341,35 @@ router.post(
         throw errors.PASSWORD_INCORRECT.error;
       }
 
-      let client = await Client.findOne({ _id: request.headers['device-id'] })
-        .catch((error) => {
-          console.error(error);
-          // Safe skip
-        });
-
-      if (client) {
-        client = await client.save();
-      } else {
-        client = await Client.create({ user: user.id, userAgent: request.headers['user-agent'] })
-          .catch((error) => {
-            console.error(error);
-            response.status(errors.SAVE_CLIENT_FAILED.code);
-            throw errors.SAVE_CLIENT_FAILED.error;
-          });
+      // Soft delete existing client
+      if (await Client.exists({
+        _id: request.headers['device-id'],
+        isDeleted: { $ne: true },
+      })) {
+        await Client.updateOne(
+          { _id: request.headers['device-id'] },
+          { isDeleted: true },
+        );
       }
 
-      response.json(client);
+      const client = await Client.create({ userAgent: request.headers['user-agent'] })
+        .catch((error) => {
+          console.error(error);
+          response.status(errors.SAVE_CLIENT_FAILED.code);
+          throw errors.SAVE_CLIENT_FAILED.error;
+        });
+
+      user.clients.push(client.id);
+
+      await user.save().catch((error) => {
+        console.error(error);
+        response.status(errors.UPDATE_USER_FAILED.code);
+        throw errors.SAVE_USER_FAILED.error;
+      });
+
+      const { isDeleted, ...rest } = client.toJSON();
+
+      response.json(rest);
     } catch (error) {
       response.send(error.message);
     }
@@ -319,15 +386,15 @@ router.purge(
   middlewares.requireVerification({}),
   async (request, response) => {
     try {
-      await Client.deleteOne({
+      await Client.updateOne({
         _id: request.headers['device-id'],
         token: request.headers['access-token'],
-      })
-        .catch((error) => {
-          console.error(error);
-          response.status(500);
-          throw new Error('Couldn\'t sign you out');
-        });
+        is: { $ne: true },
+      }, { isDeleted: true }).catch((error) => {
+        console.error(error);
+        response.status(500);
+        throw new Error('Couldn\'t sign you out');
+      });
 
       response.send('You\'re signed out');
     } catch (error) {
@@ -569,8 +636,8 @@ router.post(
  * * Requires `email` or `phone` to be sent in the body.
  * * Requires `user.phone` to be verified
  */
-router.post(
-  '/accounts/auth/request-otp-signin',
+router.get(
+  '/accounts/auth/otp-signin',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
   async (request, response) => {
@@ -578,8 +645,8 @@ router.post(
       // Get the user document
       const user = await User.findOne({
         $or: [
-          { email: request.body.email },
-          { phone: request.body.phone },
+          { email: request.query.email },
+          { phone: request.query.phone },
         ],
         isDeleted: { $ne: true },
       }).catch((error) => {
@@ -675,8 +742,17 @@ router.post(
         throw errors.INVALID_OTP.error;
       }
 
+      // Get the requested user
+      const user = await User.findOne({
+        _id: totp.user,
+        isDeleted: { $ne: true },
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
+      });
+
       const client = await Client.create({
-        user: totp.user,
         userAgent: request.headers['user-agent'],
       }).catch((error) => {
         console.error(error);
@@ -684,12 +760,22 @@ router.post(
         throw errors.SAVE_CLIENT_FAILED.error;
       });
 
+      user.clients.push(client.id);
+
+      await user.save().catch((error) => {
+        console.error(error);
+        response.status(errors.UPDATE_USER_FAILED.code);
+        throw errors.UPDATE_USER_FAILED.error;
+      });
+
       // Remove totp document to prevent breach
       totp.remove().catch((error) => {
         console.error(error);
       });
 
-      response.json(client);
+      const { isDeleted, ...rest } = client.toJSON();
+
+      response.json(rest);
     } catch (error) {
       response.send(error.message);
     }
