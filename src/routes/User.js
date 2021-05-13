@@ -636,8 +636,8 @@ router.post(
  * * Requires `email` or `phone` to be sent in the body.
  * * Requires `user.phone` to be verified
  */
-router.post(
-  '/accounts/auth/request-otp-signin',
+router.get(
+  '/accounts/auth/otp-signin',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
   async (request, response) => {
@@ -645,8 +645,8 @@ router.post(
       // Get the user document
       const user = await User.findOne({
         $or: [
-          { email: request.body.email },
-          { phone: request.body.phone },
+          { email: request.query.email },
+          { phone: request.query.phone },
         ],
         isDeleted: { $ne: true },
       }).catch((error) => {
