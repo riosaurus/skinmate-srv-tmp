@@ -412,6 +412,165 @@ paths:
           description: "User not found"
         500:
           description: "Server error"
+  /services:
+    get:
+      tags:
+      - "Services"
+      summary: "Fetch all services"
+      description: "Public route to fetch all services provided"
+      operationId: "getServices"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Services"
+          schema:
+            $ref: "#definitions/Service"
+        500:
+          description: "Server error"
+    post:
+      tags:
+      - "Services"
+      summary: "Register a new service"
+      description: "Admin route to create a new service"
+      operationId: "createService"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "name"
+        description: "Service name"
+        required: true
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "description"
+        description: "Message describing the service"
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "staff"
+        description: "Assign staff to this service (doctor-ids)"
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "sub"
+        description: "Sub services to include under this"
+        schema:
+          $ref: "#definitions/Service"
+      responses:
+        201:
+          description: "Service created"
+          schema:
+            $ref: "#definitions/Service"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Forbidden access"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /services/{serviceid}:
+    get:
+      tags:
+      - "Services"
+      summary: "Get service details"
+      description: ""
+      operationId: "getService"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "serviceid"
+        type: "string"
+      responses:
+        200:
+          description: "Service details"
+          schema:
+            $ref: "#definitions/Service"
+        500:
+          description: "Server error"
+    patch:
+      tags:
+      - "Services"
+      summary: "Update a service"
+      description: ""
+      operationId: "updateService"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "serviceid"
+        description: "Service identifier"
+        required: true
+        type: "string"
+      - in: "formData"
+        name: "name"
+        description: "Service name"
+        required: true
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "description"
+        description: "Message describing the service"
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "staff"
+        description: "Assign staff to this service (doctor-ids)"
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "sub"
+        description: "Sub services to include under this"
+        schema:
+          $ref: "#definitions/Service"
+      responses:
+        200:
+          description: "Service details"
+          schema:
+            $ref: "#definitions/Service"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Forbidden access"
+        404:
+          description: "Service not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+    delete:
+      tags:
+      - "Services"
+      summary: "Get service details"
+      description: "Admin route to delete the service"
+      operationId: "getService"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "serviceid"
+        type: "string"
+      responses:
+        200:
+          description: "Service deleted"
+          schema:
+            $ref: "#definitions/Service"
+        404:
+          description: "Service not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
 securityDefinitions:
   device-id:
     type: "apiKey"
@@ -531,8 +690,16 @@ definitions:
         description: "Service description"
       staff:
         type: "array"
-        format: "ObjectId"
+        items:
+          type: "string"
+          format: "ObjectID"
         description: "Staff allotted for the service"
+      sub:
+        type: "array"
+        items:
+          type: "string"
+          format: "ObjectID"
+        description: "Included sub services"
       createdAt:
         type: "string"
         format: "date-time"
