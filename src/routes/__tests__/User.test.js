@@ -13,7 +13,10 @@ let server;
 beforeAll(async () => {
   mongoServer = new MongoMemoryServer();
   const mongoUri = await mongoServer.getUri();
-  await mongoose.connect(mongoUri, { useCreateIndex: true, useNewUrlParser: true });
+  await mongoose.connect(
+    mongoUri,
+    { useCreateIndex: true, useNewUrlParser: true, useUnifiedTopology: true },
+  );
   server = express();
   server.use(AccountsRouter);
 });

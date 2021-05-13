@@ -1,14 +1,14 @@
 swagger: "2.0"
 info:
   description: "Node.js backend service provider for SkinMate applications"
-  version: "0.3-beta"
+  version: "0.3"
   title: "SkinMate"
   contact:
     email: "skinmate24x7@gmail.com"
   license:
     name: "GNU GENERAL PUBLIC LICENSE"
     url: "https://fsf.org/"
-host: "localhost:3001"
+host: "skinmate.herokuapp.com"
 basePath: "/"
 tags:
 - name: "Accounts"
@@ -35,7 +35,7 @@ paths:
       tags:
       - "Accounts"
       summary: "Create a new account"
-      description: ""
+      description: "Provide valid phone & email with a strong password to register your account."
       operationId: "addAccount"
       consumes:
       - "application/x-www-form-urlencoded"
@@ -58,23 +58,39 @@ paths:
         schema:
           $ref: "#definitions/User"
       responses:
-        "201":
-          description: "Invalid input"
+        201:
+          description: "User is registered and logged in"
           schema:
-            $ref: '#definitions/Client'
+            $ref: "#definitions/Client"
+        401:
+          description: "access-token missing"
+        403:
+          description: "headers missing"
+        409:
+          description: "User already exists"
+        406:
+          description: "Validation failed: (error message)"
+        500:
+          description: "Either User or Client access failed to register"
     get:
       tags:
       - "Accounts"
       summary: "Get my profile"
-      description: ""
+      description: "Fetches your profile data."
       operationId: "getAccount"
       produces:
       - "application/json"
       responses:
-        "200":
+        200:
           description: "Account data"
           schema:
-            $ref: '#definitions/Account'
+            $ref: "#definitions/User"
+        401:
+          description: "Either headers or phone/email is unverified"
+        403:
+          description: "Missing device-id"
+        500:
+          description: "Couldn't identify or find user. Server error"
       security:
       - device-id: []
         access-token: []
@@ -130,10 +146,18 @@ paths:
         schema:
           $ref: "#definitions/User"
       responses:
-        "200":
+        200:
           description: "Updated account"
           schema:
-            $ref: '#definitions/Account'
+            $ref: "#definitions/User"
+        401:
+          description: "Either headers missing or verification pending"
+        403:
+          description: "device-id header missing"
+        406:
+          description: "Data validation failure"
+        500:
+          description: "Updation failure"
       security:
       - device-id: []
         access-token: []
@@ -148,6 +172,402 @@ paths:
       responses:
         "405":
           description: "Invalid input"
+      security:
+      - device-id: []
+        access-token: []
+  /accounts/{userid}:
+    get:
+      tags:
+      - "Accounts"
+      summary: "Admin route to obtain a users details"
+      description: "Only users with elevated privileges can request this route"
+      operationId: "getSpecificAccount"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "userid"
+        type: "string"
+      responses:
+        200:
+          description: "User details"
+          schema:
+            $ref: "#definitions/User"
+        401:
+          description: "Headers (access-token) missing or outdated; or verification pending"
+        403:
+          description: "Headers (device-id) missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /accounts/auth:
+    post:
+      tags:
+      - "Accounts"
+      summary: "Login to my account"
+      description: "Use email or phone to login. This generates a new client access document for next silent logins"
+      operationId: "signIn"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "email"
+        description: "Email to login"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "phone"
+        description: "Phone number to login"
+        schema:
+          $ref: "#definitions/User"
+      - in: "formData"
+        name: "password"
+        required: true
+        schema:
+          $ref: "#definitions/User"
+      responses:
+        200:
+          description: "Login success"
+          schema:
+            $ref: "#definitions/Client"
+        403:
+          description: "User agent header missing"
+        404:
+          description: "User doesn't exist or password incorrect"
+        500:
+          description: "Server error"
+    purge:
+      tags:
+      - "Accounts"
+      summary: "Logout off my account"
+      description: "Revokes the current access credentials the user has"
+      operationId: "signOut"
+      produces:
+      - "text/plain"
+      responses:
+        200:
+          description: "Logout success"
+        401:
+          description: "Either headers missing or verification pending"
+        403:
+          description: "Headers maybe missing"
+        500:
+          description: "Server error"
+  /accounts/verify/phone:
+    get:
+      tags:
+      - "Accounts"
+      summary: "Request OTP to verify phone"
+      description: ""
+      operationId: "requestPhoneVerification"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Request success"
+          schema:
+            $ref: "#definitions/TOTP"
+      security:
+      - device-id: []
+        access-token: []
+    post:
+      tags:
+      - "Accounts"
+      summary: "Verify the received OTP"
+      description: ""
+      operationId: "verifyPhoneOTP"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "requestId"
+        required: true
+        schema:
+          $ref: "#definitions/TOTP"
+      - in: "formData"
+        name: "code"
+        required: true
+        schema:
+          $ref: "#definitions/TOTP"
+      responses:
+        200:
+          description: "Account data"
+          schema:
+            type: "string"
+      security:
+      - device-id: []
+        access-token: []
+  /accounts/verify/email:
+    get:
+      tags:
+      - "Accounts"
+      summary: "Request OTP to verify email"
+      description: ""
+      operationId: "requestEmailVerification"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Request success"
+          schema:
+            $ref: "#definitions/TOTP"
+      security:
+      - device-id: []
+        access-token: []
+    post:
+      tags:
+      - "Accounts"
+      summary: "Verify the received OTP"
+      description: ""
+      operationId: "verifyEmailOTP"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "requestId"
+        required: true
+        schema:
+          $ref: "#definitions/TOTP"
+      - in: "formData"
+        name: "code"
+        required: true
+        schema:
+          $ref: "#definitions/TOTP"
+      responses:
+        200:
+          description: "Account data"
+          schema:
+            type: "string"
+      security:
+      - device-id: []
+        access-token: []
+  /accounts/auth/otp-signin:
+    get:
+      tags:
+      - "Accounts"
+      summary: "Request OTP to signin"
+      description: "OTP signin helper in case the user forgets the password"
+      operationId: "requestOTPSignin"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "query"
+        name: "phone"
+        schema:
+          $ref: "#definitions/User"
+      - in: "query"
+        name: "email"
+        schema:
+          $ref: "#definitions/User"
+      responses:
+        200:
+          description: "The request identifying document"
+          schema:
+            $ref: "#definitions/TOTP"
+        403:
+          description: "device-id header missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+    post:
+      tags:
+      - "Accounts"
+      summary: "Signin with OTP"
+      description: "OTP signin helper in case the user forgets the password"
+      operationId: "signinOTP"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "requestId"
+        required: true
+        schema:
+          $ref: "#definitions/TOTP"
+      - in: "formData"
+        name: "code"
+        required: true
+        schema:
+          $ref: "#definitions/TOTP"
+      responses:
+        200:
+          description: "The request identifying document"
+          schema:
+            $ref: "#definitions/Client"
+        403:
+          description: "device-id header missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+  /services:
+    get:
+      tags:
+      - "Services"
+      summary: "Fetch all services"
+      description: "Public route to fetch all services provided"
+      operationId: "getServices"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Services"
+          schema:
+            $ref: "#definitions/Service"
+        500:
+          description: "Server error"
+    post:
+      tags:
+      - "Services"
+      summary: "Register a new service"
+      description: "Admin route to create a new service"
+      operationId: "createService"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "name"
+        description: "Service name"
+        required: true
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "description"
+        description: "Message describing the service"
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "staff"
+        description: "Assign staff to this service (doctor-ids)"
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "sub"
+        description: "Sub services to include under this"
+        schema:
+          $ref: "#definitions/Service"
+      responses:
+        201:
+          description: "Service created"
+          schema:
+            $ref: "#definitions/Service"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Forbidden access"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /services/{serviceid}:
+    get:
+      tags:
+      - "Services"
+      summary: "Get service details"
+      description: ""
+      operationId: "getService"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "serviceid"
+        type: "string"
+      responses:
+        200:
+          description: "Service details"
+          schema:
+            $ref: "#definitions/Service"
+        500:
+          description: "Server error"
+    patch:
+      tags:
+      - "Services"
+      summary: "Update a service"
+      description: ""
+      operationId: "updateService"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "serviceid"
+        description: "Service identifier"
+        required: true
+        type: "string"
+      - in: "formData"
+        name: "name"
+        description: "Service name"
+        required: true
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "description"
+        description: "Message describing the service"
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "staff"
+        description: "Assign staff to this service (doctor-ids)"
+        schema:
+          $ref: "#definitions/Service"
+      - in: "formData"
+        name: "sub"
+        description: "Sub services to include under this"
+        schema:
+          $ref: "#definitions/Service"
+      responses:
+        200:
+          description: "Service details"
+          schema:
+            $ref: "#definitions/Service"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Forbidden access"
+        404:
+          description: "Service not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+    delete:
+      tags:
+      - "Services"
+      summary: "Get service details"
+      description: "Admin route to delete the service"
+      operationId: "getService"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "serviceid"
+        type: "string"
+      responses:
+        200:
+          description: "Service deleted"
+          schema:
+            $ref: "#definitions/Service"
+        404:
+          description: "Service not found"
+        500:
+          description: "Server error"
       security:
       - device-id: []
         access-token: []
@@ -242,11 +662,11 @@ definitions:
       _id:
         type: "string"
         format: "ObjectID"
-        description: "The OTP request-id"
+        description: "The 24-char OTP request-id"
       user:
         type: "string"
         format: "ObjectID"
-        description: "The user-id of the requestee user"
+        description: "The user-id of the requestee"
       createdAt:
         type: "string"
         format: "date-time"
@@ -270,8 +690,16 @@ definitions:
         description: "Service description"
       staff:
         type: "array"
-        format: "ObjectId"
+        items:
+          type: "string"
+          format: "ObjectID"
         description: "Staff allotted for the service"
+      sub:
+        type: "array"
+        items:
+          type: "string"
+          format: "ObjectID"
+        description: "Included sub services"
       createdAt:
         type: "string"
         format: "date-time"

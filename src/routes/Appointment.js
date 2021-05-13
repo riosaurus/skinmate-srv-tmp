@@ -1,15 +1,101 @@
 const express = require('express')
 const router = new express.Router()
-const { User, Client,Appointment,Doctor,Family } = require('../database')
-//const User = require('../database/User')
-//const Doctor = require('../database/Doctor')
-//const Appointment = require('../database/Appointment')
-
+const { User, Client, Appointment, Doctor, Family} = require('../database')
 const { middlewares, errors } = require('../utils')
 const { urlencoded, request } = require('express')
 
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *    Appointment:
+ *     type: object
+ *     required:
+ *      - doctorId
+ *      - date
+ *      - time
+ *      - paymentType
+ *      - appointmentFor
+ *     properties:
+ *      _id:
+ *       type: ObjectdID
+ *       description: The auto-generated Id for doctor
+ *      doctorId:
+ *       type: ObjectID
+ *       description: The auto-generated Id of the appointment doctor
+ *      userId:
+ *       type: ObjectID
+ *       description: The auto-generated Id of the appointment owner
+ *      date:
+ *       type: Date
+ *       description: Date of the appointment
+ *      time:
+ *       type: An array of String
+ *       description: Time of the appointment
+ *      paymentType:
+ *       type: String
+ *       description: payment type of the appointment bill
+ *      insuranceInfo:
+ *       type: String
+ *       description: insurance information
+ *      appointmentFor:
+ *       type: String
+ *       description: Name of the person for whom the appointment is booked
+ *     example:
+ *      doctorid: 609a2bda4b2b7600154d3c49
+ *      date: 2021-06-01
+ *      time: ["6:00","6:15"]
+ *      paymentType: Insurance
+ *      insuranceInfo: insurance1
+ *      appointmentFor: Trishul
+ */
+/**
+ * @swagger
+ * tags:
+ *  name: Appointment
+ *  description: Appointments Managing API 
+ */
+
+/**
+ * @swagger
+ * /appointments:
+ *  post:
+ *   summary: creating new appointment
+ *   tags: [Appointment]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       $ref: '#/components/schemas/Appointment'
+ *   responses:
+ *    201:
+ *     description: Appointment was created successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    406:
+ *     description: validation Error
+ * 
+ *    
+ */
+
+
 router.post(
-  '/appointment/create',
+  '/appointments',
   express.json(),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true, email: true }),
@@ -46,8 +132,6 @@ router.post(
           appointmentFor:req.body.appointmentFor
       })
       await appointment.save()
-
-
       const doctor =  await Doctor.findById({_id:req.body.doctorid})
       if(!doctor){
           res.status(403)
@@ -68,12 +152,51 @@ router.post(
           })
       }
       await doctor.save()
-      res.status(201).send("Appointment scheduled successfully")
+      res.status(201).send(appointment)
 }
 catch(e){
   res.status(500).send(e)
 }
 })
+
+
+/**
+ * @swagger
+ * /appointment/reschedule/{id}:
+ *  patch:
+ *   summary: rescheduling an existing appointment
+ *   tags: [Appointment]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: id
+ *      in: path
+ *      required: true
+ *      type: String
+ *      description: appointment id
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       $ref: '#/components/schemas/Appointment'  
+ *   responses:
+ *    200:
+ *     description: Appointment rescheduled successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    
+ */
 
 
 
@@ -159,6 +282,40 @@ router.patch(
 })
 
 
+
+/**
+ * @swagger
+ * /appointment/cancel/{id}:
+ *  delete:
+ *   summary: cancelling an existing appointment
+ *   tags: [Appointment]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: id
+ *      in: path
+ *      required: true
+ *      type: String
+ *      description: appointment id  
+ *   responses:
+ *    200:
+ *     description: Appointment cancelled successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    
+ */
+
+
 router.delete(
     '/appointment/cancel/:id',
     express.json(),
@@ -223,9 +380,39 @@ router.delete(
 })
 
 
+/**
+ * @swagger
+ * /appointments:
+ *  get:
+ *   summary: listing user appointments
+ *   tags: [Appointment]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *   responses:
+ *    200:
+ *     description: Appointment list sent successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    406:
+ *     description: validation Error
+ * 
+ *    
+ */
+
 
 router.get(
-    '/myappointments',
+    '/appointments',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
@@ -260,6 +447,9 @@ router.get(
         var array = []
         for(let i = 0;i<user.appointments.length;i++){
             let doctor = await Doctor.findById({_id:user.appointments[i].doctorId})
+            if(!doctor){
+              res.status(404).send("Could not find the doctor")
+            }
             let obj = {
                 date:user.appointments[i].date,
                 time:user.appointments[i].time[0],
@@ -275,6 +465,38 @@ router.get(
         res.status(500).send(e)
     }
 })
+
+
+
+/**
+ * @swagger
+ * /appointment/details:
+ *  get:
+ *   summary: listing family members details and insurance list
+ *   tags: [Appointment]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *   responses:
+ *    200:
+ *     description: Family details and insurance list sent successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    406:
+ *     description: validation Error
+ * 
+ *    
+ */
 
 
 router.get('/appointment/details',
@@ -302,8 +524,7 @@ router.get('/appointment/details',
             res.status(404);
             throw new Error('Account not found');
           }
-
-        let familymembers = await Family.find({user:user._id})
+        var familymembers = await Family.find({user:user._id})
         let family = []
         for(let i=0;i<familymembers.length;i++){
           family = family.concat(familymembers[i].firstName)
@@ -317,6 +538,43 @@ router.get('/appointment/details',
         res.status(500).send(e)
     }
 })
+
+
+/**
+ * @swagger
+ * /appointment/insurance:
+ *  post:
+ *   summary: Creating new insurance
+ *   tags: [Appointment]
+ *   parameters:
+ *    - name: access-token
+ *      in: header
+ *      required: true
+ *      type: String
+ *    - name: device-id
+ *      in: header
+ *      required: true
+ *      type: String
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       $ref: '#/components/schemas/Appointment'
+ *   responses:
+ *    201:
+ *     description: New insurance created successfully
+ *    500:
+ *     description: something server error
+ *    401:
+ *     description: unauthorized access-token
+ *    403:
+ *     description: Operation requires 'device-id'
+ *    406:
+ *     description: validation Error
+ * 
+ *    
+ */
 
 router.post('/appointment/insurance',
     express.json(),
@@ -343,9 +601,14 @@ router.post('/appointment/insurance',
             res.status(404);
             throw new Error('Account not found');
           }
-          user.insurance = user.insurance.concat(req.body.insurance)
-          await user.save()
-          res.status(201).send("New insurance added successfully")
+          if(req.body.insurance){
+            user.insurance = user.insurance.concat(req.body.insurance)
+            await user.save()
+            res.status(201).send("New insurance added successfully")
+          }
+          else{
+            res.status(403).send("New insurance cannot be added")
+          }
         }
 
           catch(e){
