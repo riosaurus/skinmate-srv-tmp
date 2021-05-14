@@ -526,7 +526,6 @@ paths:
       - in: "formData"
         name: "name"
         description: "Service name"
-        required: true
         schema:
           $ref: "#definitions/Service"
       - in: "formData"
