@@ -31,6 +31,7 @@ const schema = new Schema({
     type: String,
     required: true,
     trim: true,
+    validate: { validator: customValidators.isValidGender, message: 'Invalid gender' },
   },
   dateOfBirth: {
     type: Date,

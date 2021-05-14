@@ -1,6 +1,5 @@
 const { Server: HttpServer } = require('http');
 const { Server } = require('socket.io');
-const speakeasy = require('speakeasy');
 const { readFileSync } = require('fs');
 const { compile } = require('handlebars');
 
