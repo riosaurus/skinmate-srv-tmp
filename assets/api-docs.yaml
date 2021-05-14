@@ -564,7 +564,7 @@ paths:
     delete:
       tags:
       - "Services"
-      summary: "Get service details"
+      summary: "delete service details"
       description: "Admin route to delete the service"
       operationId: "getService"
       produces:
@@ -971,6 +971,33 @@ paths:
           description: "Missing device-id"
         404:
           description: "Doctor data unavailable"
+      security:
+      - device-id: []
+        access-token: []
+    delete:
+      tags:
+      - "Doctors"
+      summary: "delete doctor details"
+      description: "Admin route to delete the doctor"
+      operationId: "getDoctor"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+      responses:
+        200:
+          description: "Doctor deleted"
+          schema:
+            $ref: "#definitions/Doctor"
+        404:
+          description: "Doctor not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []        
   /appointments:
     post:
       tags:
