@@ -453,13 +453,15 @@ paths:
       - in: "formData"
         name: "staff"
         description: "Assign staff to this service (doctor-ids)"
-        schema:
-          $ref: "#definitions/Service"
+        type: "array"
+        items:
+          type: "string"
       - in: "formData"
         name: "sub"
         description: "Sub services to include under this"
-        schema:
-          $ref: "#definitions/Service"
+        type: "array"
+        items:
+          type: "string"
       responses:
         201:
           description: "Service created"
