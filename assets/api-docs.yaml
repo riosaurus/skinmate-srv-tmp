@@ -9,6 +9,7 @@ info:
     name: "GNU GENERAL PUBLIC LICENSE"
     url: "https://fsf.org/"
 host: "skinmate.herokuapp.com"
+# host: "localhost:3001"
 basePath: "/"
 tags:
 - name: "Accounts"
@@ -26,6 +27,16 @@ tags:
   externalDocs:
     description: "More on Doctors"
     url: "https://github.com/riosaurus/skinmate-srv-tmp#doctors"
+- name: "Family"
+  description: "User Family Management"
+  externalDocs:
+    description: "More on Family"
+    url: "https://github.com/riosaurus/skinmate-srv-tmp#family"
+- name: "Appointments"
+  description: "Appointment management"
+  externalDocs:
+    description: "More on Appointments"
+    url: "https://github.com/riosaurus/skinmate-srv-tmp#appointments"
 schemes:
 - "http"
 - "https"
@@ -526,13 +537,15 @@ paths:
       - in: "formData"
         name: "staff"
         description: "Assign staff to this service (doctor-ids)"
-        schema:
-          $ref: "#definitions/Service"
+        type: "array"
+        items:
+          type: "string"
       - in: "formData"
         name: "sub"
         description: "Sub services to include under this"
-        schema:
-          $ref: "#definitions/Service"
+        type: "array"
+        items:
+          type: "string"
       responses:
         200:
           description: "Service details"
@@ -568,6 +581,660 @@ paths:
             $ref: "#definitions/Service"
         404:
           description: "Service not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /familymember:
+    post:
+      tags:
+      - "Family"
+      summary: "Add a new Family member"
+      description: ""
+      operationId: "addFamily"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "firstName"
+        type: "string"
+        required: true
+        description: "First name"
+      - in: "formData"
+        name: "lastName"
+        type: "string"
+        required: true
+        description: "Last name"
+      - in: "formData"
+        name: "relationship"
+        type: "string"
+        required: true
+        description: "Relationship"
+      - in: "formData"
+        name: "gender"
+        type: "string"
+        required: true
+        description: "Gender"
+      - in: "formData"
+        name: "dateOfBirth"
+        type: "string"
+        format: "date-time"
+        required: true
+        description: "Date of Birth"
+      - in: "formData"
+        name: "bloodGroup"
+        type: "string"
+        enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]         
+        required: true
+        description: "Blood group"
+      - in: "formData"
+        name: "address"
+        type: "string"
+        required: true
+        description: "Address"
+      - in: "formData"
+        name: "insurance"
+        type: "string"
+        description: "Insurance details"
+      - in: "formData"
+        name: "emergencyName"
+        type: "string"
+        required: true
+        description: "Emergency contact name"
+      - in: "formData"
+        name: "emergencyNumber"
+        type: "string"
+        required: true
+        description: "Emergency contact number"
+      responses:
+        201:
+          description: "Family member added"
+          schema:
+            $ref: "#definitions/Family"
+        500:
+          description: "Server error"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Missing device-id"
+        406:
+          description: "Data validation failure"
+      security:
+      - device-id: []
+        access-token: []
+  /familymember/all:
+    get:
+      tags:
+      - "Family"
+      summary: "Get all my family members"
+      description: ""
+      operationId: "getAllFamily"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "All family members"
+          schema:
+            type: "array"
+            items:
+              schema:
+                $ref: "#definitions/Family"
+        500:
+          description: "Server error"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Missing device-id"
+        404:
+          description: "Family data unavailable"
+      security:
+      - device-id: []
+        access-token: []
+  /familymember/{id}:
+    get:
+      tags:
+      - "Family"
+      summary: "Fetch a family member"
+      description: ""
+      operationId: "fetchAMember"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+        description: "Family member id"
+        required: true
+      responses:
+        200:
+          description: "Family member"
+          schema:
+            $ref: "#definitions/Family"
+        500:
+          description: "Server error"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Missing device-id"
+        404:
+          description: "Family data unavailable"
+      security:
+      - device-id: []
+        access-token: []
+    patch:
+      tags:
+      - "Family"
+      summary: "Update a family member"
+      description: ""
+      operationId: "updateMember"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        type: "string"
+        description: "Family member id"
+      - in: "formData"
+        name: "firstName"
+        type: "string"
+        description: "First name"
+      - in: "formData"
+        name: "lastName"
+        type: "string"
+        description: "Last name"
+      - in: "formData"
+        name: "relationship"
+        type: "string"
+        description: "Relationship"
+      - in: "formData"
+        name: "gender"
+        type: "string"
+        description: "Gender"
+      - in: "formData"
+        name: "dateOfBirth"
+        type: "string"
+        format: "date-time"
+        description: "Date of Birth"
+      - in: "formData"
+        name: "bloodGroup"
+        type: "string"
+        enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]         
+        description: "Blood group"
+      - in: "formData"
+        name: "address"
+        type: "string"
+        description: "Address"
+      - in: "formData"
+        name: "insurance"
+        type: "string"
+        description: "Insurance details"
+      - in: "formData"
+        name: "emergencyName"
+        type: "string"
+        description: "Emergency contact name"
+      - in: "formData"
+        name: "emergencyNumber"
+        type: "string"
+        description: "Emergency contact number"
+      responses:
+        200:
+          description: "Member details updated"
+          schema:
+            $ref: "#definitions/Family"
+        500:
+          description: something server error
+        401:
+          description: unauthorized access-token
+        403:
+          description: Operation requires 'device-id'
+        404:
+          description: family member not found
+      security:
+      - device-id: []
+        access-token: []
+    delete:
+      tags:
+      - "Family"
+      summary: "Remove a new Family member"
+      description: ""
+      operationId: "addFamily"
+      produces:
+      - "application/json"
+      parameters:
+      - in: path
+        name: id
+        type: "string"
+        description: "Family member id"
+        required: true
+      responses:
+        200:
+          description: "Family member deleted"
+        500:
+          description: "Server error"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Missing device-id"
+        404:
+          description: "Family data unavailable"
+      security:
+      - device-id: []
+        access-token: []
+  /doctors:
+    post:
+      tags:
+      - "Doctors"
+      summary: "Add a new doctor"
+      description: ""
+      operationId: "addDoctor"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "formData"
+        name: "name"
+        description: "Doctors name"
+        schema:
+          $ref: "#definitions/Doctor"
+      - in: "formData"
+        name: "email"
+        description: "Doctors email"
+      - in: "formData"
+        name: "phone"
+        description: "Doctors phone"
+        schema:
+          $ref: "#definitions/Doctor"
+      - in: "formData"
+        name: "qualification"
+        description: "Doctors qualification"
+        schema:
+          $ref: "#definitions/Doctor"
+      responses:
+        201:
+          description: "Doctor added"
+          schema:
+            $ref: "#definitions/Doctor"
+        500:
+          description: "Server error"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Missing device-id"
+        406:
+          description: "Data validation failure"
+      security:
+      - device-id: []
+        access-token: []
+    get:
+      tags:
+      - "Doctors"
+      summary: "Get all doctors"
+      description: ""
+      operationId: "getDoctors"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "All doctors"
+          schema:
+            type: "array"
+            items:
+              schema:
+                $ref: "#definitions/Doctor"
+        406:
+          description: "Forbidden query fields"
+        500:
+          description: "Server error"
+  /doctors/{id}:
+    get:
+      tags:
+      - "Doctors"
+      summary: "Get doctor details"
+      description: ""
+      operationId: "getDoctor"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: "Doctor id"
+      responses:
+        200:
+          description: "Doctor details"
+          schema:
+            $ref: "#definitions/Doctor"
+        404:
+          description: "No doctor matching the id"
+        500:
+          description: "Server error"
+    patch:
+      tags:
+      - "Doctors"
+      summary: "Update doctor details"
+      description: ""
+      operationId: "updateDoctor"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        required: true
+        type: "string"
+        description: "Doctor id"
+      - in: "formData"
+        name: "name"
+        type: "string"
+        description: name of doctor
+      - in: "formData"
+        name: "email"
+        type: "string"
+        description: "Doctors email"
+      - in: "formData"
+        name: "phone"
+        type: "string"
+        description: "Doctors phone"
+      - in: "formData"
+        name: "qualification"
+        type: "string"
+        description: "Doctors qualification"
+      - in: "formData"
+        name: "avatar"
+        type: "string"
+        format: "binary"
+        description: "Doctors picture"
+      - in: "formData"
+        name: "busySlots"
+        type: "array"
+        items:
+          type: "string"
+        description: "Doctor reserved slots"
+      responses:
+        200:
+          description: "Doctor updated"
+          schema:
+            $ref: "#definitions/Doctor"
+        500:
+          description: "Server error"
+        401:
+          description: "Unauthorized access"
+        403:
+          description: "Missing device-id"
+        404:
+          description: "Doctor data unavailable"
+  /appointments:
+    post:
+      tags:
+      - "Appointments"
+      summary: "Create a new appointment"
+      description: ""
+      operationId: "addAppointment"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "Apppointment body"
+        type: application/json
+        schema:
+         properties:
+              doctorid:
+                type: "string"
+                format: "ObjectID"
+                description: Parent doctor Id
+              date:
+                type: "string"
+                format: "date"
+                description: Date of appointment
+              time:
+                type: "array"
+                items:
+                  type: "string"
+                description: Time of the appointment
+              paymentType: 
+                type: "string"
+                description: Type of appointment bill payment
+              insuranceInfo: 
+                type: "string"
+                description: Insurance information
+              appointmentFor: 
+                type: "string"
+                description: Person name for whom appointment is booked
+      responses:
+        201:
+          description: "Appointment created successfully"
+          schema:
+            $ref: "#definitions/Appointment"
+        401:
+          description: "access-token missing"
+        403:
+          description: "headers missing"
+        409:
+          description: "User already exists"
+        406:
+          description: "Validation failed: (error message)"
+        500:
+          description: "Either User or Client access failed to register"
+      security:
+      - device-id: []
+        access-token: []
+    get:
+      tags:
+      - "Appointments"
+      summary: "List user appointments"
+      description: ""
+      operationId: "getAppointment"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Appointment data"
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                date:
+                  type: "string"
+                  format: "date-time"
+                  description: Date of the appointment
+                time:
+                  type: "string"
+                  format: "time"
+                  description: Time of the appointment
+                doctorName:
+                  type: "string"
+                  description: Name of the doctor
+                doctorEducation:
+                  type: "string"
+                  description: Qualification of the doctor
+                id:
+                  type: "string"
+                  format: "ObjectID"
+                  description: The auto-generated Id for appointment
+        401:
+          description: "Either headers or phone/email is unverified"
+        403:
+          description: "Missing device-id"
+        500:
+          description: "Couldn't identify or find user. Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /appointments/{id}:
+    delete:
+      tags:
+      - "Appointments"
+      summary: "Deleting an appointment"
+      description: ""
+      operationId: "deleteAppointment"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "ObjectID"
+      responses:
+        200:
+          description: "Appointment deleted successfully"
+          schema:
+            properties:
+              date:
+                type: "string"
+                format: "date"
+                description: Date of the appointment
+              time:
+                type: "string"
+                format: "time"
+                description: Time of the appointment
+              doctorName:
+                type: "string"
+                description: Name of the doctor
+              doctorEducation:
+                type: "string"
+                description: Qualification of the doctor
+        401:
+          description: "Headers (access-token) missing or outdated; or verification pending"
+        403:
+          description: "Headers (device-id) missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+    patch:
+      tags:
+      - "Appointments"
+      summary: "Rescheduling an appointment"
+      description: ""
+      operationId: "patchAppointment"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "ObjectID"
+      - in: "body"
+        name: "Rescheduling body"
+        type: application/json
+        schema:
+         properties:
+              date:
+                type: "string"
+                format: "date"
+                description: Date of the appointment
+              time:
+                type: "array"
+                items:
+                  type: "string"
+                description: Time of the appointment
+      responses:
+        200:
+          description: "Appointment rescheduled successfully"
+          schema:
+            properties:
+              date:
+                type: "string"
+                format: "date"
+                description: Date of the appointment
+              time:
+                type: "string"
+                format: "time"
+                description: Time of the appointment
+              doctorName:
+                type: "string"
+                description: Name of the doctor
+              doctorEducation:
+                type: "string"
+                description: Qualification of the doctor
+        401:
+          description: "Headers (access-token) missing or outdated; or verification pending"
+        403:
+          description: "Headers (device-id) missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /appointments/details:
+    get:
+      tags:
+      - "Appointments"
+      summary: "List family members and insurance details"
+      description: ""
+      operationId: "getAppointmentDetails"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Insurance list and family members details sent successfully "
+          schema:
+            properties:
+              family:
+                type: "array"
+                items: 
+                  type: "string"
+              insuranceInfo:
+                type: "array"
+                items: 
+                  type: "string"        
+        401:
+          description: "Headers (access-token) missing or outdated; or verification pending"
+        403:
+          description: "Headers (device-id) missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /appointments/insurance:
+    post:
+      tags:
+      - "Appointments"
+      summary: "Create new insurance details"
+      description: ""
+      operationId: "postAppointmentDetails"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "Insurance info"
+        type: application/json
+        schema:
+         properties:
+              insurance:
+                type: "string"
+                description: Insurance information
+      responses:
+        200:
+          description: "New insurance information created successfully "
+        401:
+          description: "Headers (access-token) missing or outdated; or verification pending"
+        403:
+          description: "Headers (device-id) missing"
+        404:
+          description: "User not found"
         500:
           description: "Server error"
       security:
@@ -719,24 +1386,27 @@ definitions:
       _id:
         type: "string"
         format: "ObjectID"
-        description: The auto-generated Id for doctor
+        description: "The doctor-id"
       name:
         type: "string"
         description: name of doctor
       email:
         type: "string"
-        description: email address of doctor
+        description: "Doctors email"
       phone:
         type: "string"
-        description: phone number of doctor
+        description: "Doctors phone"
       qualification:
         type: "string"
-        description: qualification of doctor
+        description: "Doctors qualification"
       avatar:
-        type: "buffer"
-        description: image of doctor(profile picture)
+        type: "string"
+        format: "binary"
+        description: "Doctors picture"
       busySlots:
         type: "array"
+        items:
+          type: "string"
         description: appointment slots of doctor
       createdAt:
         type: "string"
@@ -796,6 +1466,52 @@ definitions:
       emergencyNumber:
         type: "string"
         description: emergency phone number for family member
+      createdAt:
+        type: "string"
+        format: "date-time"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+  Appointment:
+    type: object
+    required:
+      - userId
+      - doctorId
+      - date
+      - time
+      - paymentType
+      - appointmentFor
+    properties:
+      _id:
+        type: "string"
+        format: "ObjectID"
+        description: The auto-generated Id for appointment
+      userId:
+        type: "string"
+        format: "ObjectID"
+        description: parent user id
+      doctorId:
+        type: "string"
+        format: "ObjectID"
+        description: parent doctor id
+      date:
+        type: "string"
+        format: "date-time"
+        description: date of appointment
+      time:
+        type: "array"
+        items:
+          type: "string"
+        description: time slots of appointment
+      paymentType:
+        type: "string"
+        description: payment type of the appointment bill
+      insuranceInfo:
+        type: "string"
+        description: insurance information
+      appointmentFor:
+        type: "string"         
+        description: person name for whom the appointment is booked
       createdAt:
         type: "string"
         format: "date-time"

@@ -5,6 +5,7 @@ const { middlewares, errors } = require('../utils')
 const { urlencoded, request } = require('express')
 
 
+
 /**
  * @swagger
  * components:
@@ -100,28 +101,11 @@ router.post(
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true, email: true }),
   async (req,res)=>{
-     try{
-        const client = await Client.findOne({
-          _id: req.headers['device-id'],
-          token: req.headers['access-token'],
-        })
-      
-  
-        if (!client) {
-          res.status(403);
-          throw new Error('Unrecognized device');
-        }
-  
-        const user = await User.findOne({
-          _id: client.user,
-          isDeleted: { $ne: true },
-        });
-  
-        if (!user) {
-          res.status(404);
-          throw new Error('Account not found');
-        }
-
+      try{
+          const user = await User.findById(req.params.userId)
+          if (!user) {
+            res.status(404).send("Account not found")
+          }
       const appointment = new Appointment({
           doctorId:req.body.doctorid,
           userId:user._id,
@@ -134,8 +118,7 @@ router.post(
       await appointment.save()
       const doctor =  await Doctor.findById({_id:req.body.doctorid})
       if(!doctor){
-          res.status(403)
-          throw new Error('Doctor could not be found')
+          res.status(403).send("Could not find doctor")
       }
       let bool = false
       const date = new Date(req.body.date)
@@ -152,7 +135,7 @@ router.post(
           })
       }
       await doctor.save()
-      res.status(201).json(appointment)
+      res.status(201).send(appointment)
 }
 catch(e){
   res.status(500).send(e)
@@ -201,37 +184,20 @@ catch(e){
 
 
 router.patch(
-    '/appointment/reschedule/:id',
+    '/appointments/:id',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
-    try{
-        const client = await Client.findOne({
-            _id: req.headers['device-id'],
-            token: req.headers['access-token'],
-          });
-    
-          if (!client) {
-            res.status(403);
-            throw new Error('Unrecognized device');
-          }
-    
-          const user = await User.findOne({
-            _id: client.user,
-            isDeleted: { $ne: true },
-          });
-    
-          if (!user) {
-            res.status(404);
-            throw new Error('Account not found');
-          }
-
-
+    try{ 
+        const user = await User.findById(req.params.userId)
+        if (!user) {
+          res.status(404).send("Account not found")
+        }
+        
         const appointment = await Appointment.findById(req.params.id)
         if(!appointment){
-            res.status(404)
-            throw new Error('Appointment could not be found')
+            res.status(404).send("Appointment could not be found")
         }
         const doctor = await Doctor.findById(appointment.doctorId)
         const dtime = appointment.time
@@ -268,7 +234,7 @@ router.patch(
             })
         }
         await doctor.save()
-        res.status(200).json({
+        res.status(200).send({
             doctorName:doctor.name,
             doctorEducation:doctor.qualification,
             appointmentDate:req.body.date,
@@ -317,37 +283,22 @@ router.patch(
 
 
 router.delete(
-    '/appointment/cancel/:id',
+    '/appointments/:id',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
     try{
-        const client = await Client.findOne({
-            _id: req.headers['device-id'],
-            token: req.headers['access-token'],
-          });
-    
-          if (!client) {
-            res.status(403);
-            throw new Error('Unrecognized device');
-          }
-    
-          const user = await User.findOne({
-            _id: client.user,
-            isDeleted: { $ne: true },
-          });
-    
-          if (!user) {
-            res.status(404);
-            throw new Error('Account not found');
-          }
 
+        const user = await User.findById(req.params.userId)
+        if (!user) {
+          res.status(404).send("Account not found")
+        }
 
         const appointment = await Appointment.findById(req.params.id)
         if(!appointment){
-            res.status(404)
-            throw new Error('Appointment could not be found')
+            res.status(404).send('Appointment could not be found')
+            
         }
         const doctor = await Doctor.findById(appointment.doctorId)
         const dtime = appointment.time
@@ -366,7 +317,7 @@ router.delete(
             doctor.busySlots.splice(index,1)
         }
         await doctor.save()
-        res.status(200).json({
+        res.status(200).send({
             doctorName:doctor.name,
             doctorEducation:doctor.qualification,
             appointmentDate:ddate,
@@ -418,26 +369,10 @@ router.get(
     middlewares.requireVerification({ phone: true, email: true }),
     async (req,res)=>{
     try{
-        const client = await Client.findOne({
-            _id: req.headers['device-id'],
-            token: req.headers['access-token'],
-          });
-    
-          if (!client) {
-            res.status(403);
-            throw new Error('Unrecognized device');
-          }
-    
-          const user = await User.findOne({
-            _id: client.user,
-            isDeleted: { $ne: true },
-          });
-    
-          if (!user) {
-            res.status(404);
-            throw new Error('Account not found');
-          }
-
+      const user = await User.findById(req.params.userId)
+      if (!user) {
+        res.status(404).send("Account not found")
+      }
 
         // const user = await Users.findById({_id:req.body.userid})
         await user.populate('appointments').execPopulate()
@@ -459,7 +394,7 @@ router.get(
             }
             array = array.concat(obj)
         }
-        res.status(200).json(array)
+        res.status(200).send(array)
     }
     catch(e){
         res.status(500).send(e)
@@ -499,37 +434,23 @@ router.get(
  */
 
 
-router.get('/appointment/details',
+router.get('/appointments/details',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
-    try{
-        const client = await Client.findOne({
-            _id: req.headers['device-id'],
-            token: req.headers['access-token'],
-          });
-    
-          if (!client) {
-            res.status(403);
-            throw new Error('Unrecognized device');
-          }
-    
-          const user = await User.findOne({
-            _id: client.user,
-            isDeleted: { $ne: true },
-          });
-    
+        try{
+          const user = await User.findById(req.params.userId)
           if (!user) {
-            res.status(404);
-            throw new Error('Account not found');
+            res.status(404).send("Account not found")
           }
+
         var familymembers = await Family.find({user:user._id})
         let family = []
         for(let i=0;i<familymembers.length;i++){
           family = family.concat(familymembers[i].firstName)
         }
-        res.status(200).json({
+        res.status(200).send({
             family,
             insuranceInfo:user.insurance
         })
@@ -576,30 +497,16 @@ router.get('/appointment/details',
  *    
  */
 
-router.post('/appointment/insurance',
+router.post('/appointments/insurance',
     express.json(),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
     try{
-        const client = await Client.findOne({
-            _id: req.headers['device-id'],
-            token: req.headers['access-token'],
-          });
 
-          if (!client) {
-            res.status(403);
-            throw new Error('Unrecognized device');
-          }
-
-          const user = await User.findOne({
-            _id: client.user,
-            isDeleted: { $ne: true },
-          });
-
+          const user = await User.findById(req.params.userId)
           if (!user) {
-            res.status(404);
-            throw new Error('Account not found');
+            res.status(404).send("Account not found")
           }
           if(req.body.insurance){
             user.insurance = user.insurance.concat(req.body.insurance)
