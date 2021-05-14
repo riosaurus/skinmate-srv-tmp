@@ -26,6 +26,11 @@ tags:
   externalDocs:
     description: "More on Doctors"
     url: "https://github.com/riosaurus/skinmate-srv-tmp#doctors"
+- name: "Appointments"
+  description: "Appointment management"
+  externalDocs:
+    description: "More on Appointments"
+    url: "https://github.com/riosaurus/skinmate-srv-tmp#appointments"
 schemes:
 - "http"
 - "https"
@@ -571,6 +576,274 @@ paths:
       security:
       - device-id: []
         access-token: []
+  /appointments:
+    post:
+      tags:
+      - "Appointments"
+      summary: "Create a new appointment"
+      description: ""
+      operationId: "addAppointment"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "Apppointment body"
+        type: application/json
+        schema:
+         properties:
+              doctorid:
+                type: "string"
+                format: "ObjectID"
+                description: Parent doctor Id
+              date:
+                type: "string"
+                format: "date"
+                description: Date of appointment
+              time:
+                type: "array"
+                items:
+                  type: "string"
+                description: Time of the appointment
+              paymentType: 
+                type: "string"
+                description: Type of appointment bill payment
+              insuranceInfo: 
+                type: "string"
+                description: Insurance information
+              appointmentFor: 
+                type: "string"
+                description: Person name for whom appointment is booked
+      responses:
+        201:
+          description: "Appointment created successfully"
+          schema:
+            $ref: "#definitions/Appointment"
+        401:
+          description: "access-token missing"
+        403:
+          description: "headers missing"
+        409:
+          description: "User already exists"
+        406:
+          description: "Validation failed: (error message)"
+        500:
+          description: "Either User or Client access failed to register"
+      security:
+      - device-id: []
+        access-token: []
+    get:
+      tags:
+      - "Appointments"
+      summary: "List user appointments"
+      description: ""
+      operationId: "getAppointment"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Appointment data"
+          schema:
+             type: array
+             items:
+                  type: object
+                  properties:
+                    date:
+                      type: "string"
+                      format: "date-time"
+                      description: Date of the appointment
+                    time:
+                      type: "string"
+                      format: "time"
+                      description: Time of the appointment
+                    doctorName:
+                      type: "string"
+                      description: Name of the doctor
+                    doctorEducation:
+                      type: "string"
+                      description: Qualification of the doctor
+                    id:
+                      type: "string"
+                      format: "ObjectID"
+                      description: The auto-generated Id for appointment
+        401:
+          description: "Either headers or phone/email is unverified"
+        403:
+          description: "Missing device-id"
+        500:
+          description: "Couldn't identify or find user. Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /appointments/{id}:
+    delete:
+      tags:
+      - "Appointments"
+      summary: "Deleting an appointment"
+      description: ""
+      operationId: "deleteAppointment"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "ObjectID"
+      responses:
+        200:
+          description: "Appointment deleted successfully"
+          schema:
+            properties:
+              date:
+                type: "string"
+                format: "date"
+                description: Date of the appointment
+              time:
+                type: "string"
+                format: "time"
+                description: Time of the appointment
+              doctorName:
+                type: "string"
+                description: Name of the doctor
+              doctorEducation:
+                type: "string"
+                description: Qualification of the doctor
+        401:
+          description: "Headers (access-token) missing or outdated; or verification pending"
+        403:
+          description: "Headers (device-id) missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+    patch:
+      tags:
+      - "Appointments"
+      summary: "Rescheduling an appointment"
+      description: ""
+      operationId: "patchAppointment"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "ObjectID"
+      - in: "body"
+        name: "Rescheduling body"
+        type: application/json
+        schema:
+         properties:
+              date:
+                type: "string"
+                format: "date"
+                description: Date of the appointment
+              time:
+                type: "array"
+                items:
+                  type: "string"
+                description: Time of the appointment
+      responses:
+        200:
+          description: "Appointment rescheduled successfully"
+          schema:
+            properties:
+              date:
+                type: "string"
+                format: "date"
+                description: Date of the appointment
+              time:
+                type: "string"
+                format: "time"
+                description: Time of the appointment
+              doctorName:
+                type: "string"
+                description: Name of the doctor
+              doctorEducation:
+                type: "string"
+                description: Qualification of the doctor
+        401:
+          description: "Headers (access-token) missing or outdated; or verification pending"
+        403:
+          description: "Headers (device-id) missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /appointments/details:
+    get:
+      tags:
+      - "Appointments"
+      summary: "List family members and insurance details"
+      description: ""
+      operationId: "getAppointmentDetails"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Insurance list and family members details sent successfully "
+          schema:
+            properties:
+              family:
+                type: "array"
+                items: 
+                  type: "string"
+              insuranceInfo:
+                type: "array"
+                items: 
+                  type: "string"        
+        401:
+          description: "Headers (access-token) missing or outdated; or verification pending"
+        403:
+          description: "Headers (device-id) missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+  /appointments/insurance:
+    post:
+      tags:
+      - "Appointments"
+      summary: "Create new insurance details"
+      description: ""
+      operationId: "postAppointmentDetails"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "Insurance info"
+        type: application/json
+        schema:
+         properties:
+              insurance:
+                type: "string"
+                description: Insurance information
+      responses:
+        200:
+          description: "New insurance information created successfully "
+        401:
+          description: "Headers (access-token) missing or outdated; or verification pending"
+        403:
+          description: "Headers (device-id) missing"
+        404:
+          description: "User not found"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
 securityDefinitions:
   device-id:
     type: "apiKey"
@@ -794,6 +1067,52 @@ definitions:
       emergencyNumber:
         type: "string"
         description: emergency phone number for family member
+      createdAt:
+        type: "string"
+        format: "date-time"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+  Appointment:
+    type: object
+    required:
+      - userId
+      - doctorId
+      - date
+      - time
+      - paymentType
+      - appointmentFor
+    properties:
+      _id:
+        type: "string"
+        format: "ObjectID"
+        description: The auto-generated Id for appointment
+      userId:
+        type: "string"
+        format: "ObjectID"
+        description: parent user id
+      doctorId:
+        type: "string"
+        format: "ObjectID"
+        description: parent doctor id
+      date:
+        type: "string"
+        format: "date-time"
+        description: date of appointment
+      time:
+        type: "array"
+        items:
+          type: "string"
+        description: time slots of appointment
+      paymentType:
+        type: "string"
+        description: payment type of the appointment bill
+      insuranceInfo:
+        type: "string"
+        description: insurance information
+      appointmentFor:
+        type: "string"         
+        description: person name for whom the appointment is booked
       createdAt:
         type: "string"
         format: "date-time"
