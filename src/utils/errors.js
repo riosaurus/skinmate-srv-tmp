@@ -264,6 +264,11 @@ module.exports = {
     error: new Error('User already exists'),
   },
 
+  UNOWNED_DOCUMENT: {
+    code: 401,
+    error: new Error('This document is not owned'),
+  },
+
   /**
    * Forbidden fields update error generator
    * @param {Array<string>} fields Error instance
@@ -281,17 +286,11 @@ module.exports = {
     error: new Error('Couldn\'t read image'),
   },
 
-  /**
-   * `password` compare failure
-   */
   PASSWORD_COMPARE_FAILED: {
     code: 500,
     error: new Error('Couldn\'t check password'),
   },
 
-  /**
-   * `password` incorrect error
-   */
   PASSWORD_INCORRECT: {
     code: 401,
     error: new Error('Incorrect password'),

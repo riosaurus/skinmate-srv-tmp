@@ -2,6 +2,7 @@ const { Schema, model } = require('mongoose');
 const { genSalt, hash } = require('bcryptjs');
 const validator = require('validator');
 const customValidators = require('../utils/validators');
+
 /**
  * User schema
  */
@@ -51,6 +52,10 @@ const usersSchema = new Schema({
     type: String,
     trim: true,
   }],
+  family: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Family',
+  }],
   emergencyName: {
     type: String,
     trim: true,
@@ -60,7 +65,6 @@ const usersSchema = new Schema({
     trim: true,
     validate: { validator: validator.isMobilePhone, message: 'Invalid phone number' },
   },
-  
   verifiedPhone: {
     type: Boolean,
     default: false,
