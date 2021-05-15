@@ -69,9 +69,9 @@ router.post('/',
   });
 
 /**
- * `http GET` request handler to fetch user
- * * Requires `access-token` `device-id` `user-agent`
- */
+* `http GET` request handler to fetch user
+* * Requires `access-token` `device-id` `user-agent`
+*/
 router.get('/',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true, email: true }),
@@ -98,6 +98,103 @@ router.get('/',
       response.json(rest);
     } catch (error) {
       console.error(error);
+      response.send(error.message);
+    }
+  });
+
+/**
+* `http PATCH` request handler to edit user profile
+* * Requires `access-token` `device-id`
+*/
+router.patch('/',
+  urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true }),
+  async (request, response) => {
+    try {
+      const updates = Object.keys(request.body);
+      const updatable = ['firstName', 'lastName', 'password', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
+      const isValidOperation = updates.every((update) => updatable.includes(update));
+
+      if (!isValidOperation) {
+        const { code, error } = errors.FORBIDDEN_FIELDS_ERROR(updates
+          .filter((key) => !updatable.includes(key)));
+        response.status(code);
+        throw error;
+      }
+
+      // Get the user document
+      const user = await User.findOne({
+        _id: request.params.userId,
+        isDeleted: { $ne: true },
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
+      });
+
+      updates.forEach((update) => {
+        user[update] = request.body[update];
+      });
+
+      // Validate the document before updating
+      await user.validate().catch((error) => {
+        console.error(error);
+        const validationError = errors.VALIDATION_ERROR(error);
+        response.status(validationError.code);
+        throw validationError.error;
+      });
+
+      await user.save().catch((error) => {
+        console.error(error);
+        response.status(errors.UPDATE_USER_FAILED.code);
+        throw errors.UPDATE_USER_FAILED.error;
+      });
+
+      const {
+        password, isDeleted, avatar, ...rest
+      } = user.toJSON();
+
+      response.json(rest);
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
+
+/**
+* `http DELETE` request handler to delete user
+* * Requires `access-token` `device-id`
+*/
+router.delete('/',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true }),
+  async (request, response) => {
+    try {
+      // Get the user
+      const user = await User.findOne({
+        _id: request.params.userId,
+        isDeleted: { $ne: true },
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
+      });
+
+      const u = await Client.find({
+        _id: { $in: user.clients },
+      });
+
+      console.log(u);
+
+      // await user.update({ isDeleted: true })
+      //   .catch((error) => {
+      //     console.error(error);
+      //     response.status(errors.USER_UPDATE_FAILURE.code);
+      //     throw errors.USER_UPDATE_FAILURE.error;
+      //   });
+
+      response.send('Account deleted');
+    } catch (error) {
       response.send(error.message);
     }
   });
@@ -882,140 +979,6 @@ router.delete('/family/:id',
 
       response.send('Member has been removed');
     } catch (error) {
-      response.send(error.message);
-    }
-  });
-
-/**
- * `http PATCH` request handler to edit user profile
- * * Requires `access-token` `device-id`
- */
-router.patch('/',
-  urlencoded({ extended: true }),
-  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ phone: true }),
-  async (request, response) => {
-    try {
-      const updates = Object.keys(request.body);
-      const updatable = ['firstName', 'lastName', 'password', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
-      const isValidOperation = updates.every((update) => updatable.includes(update));
-
-      if (!isValidOperation) {
-        const { code, error } = errors.FORBIDDEN_FIELDS_ERROR(updates
-          .filter((key) => !updatable.includes(key)));
-        response.status(code);
-        throw error;
-      }
-
-      // Get the user document
-      const user = await User.findOne({
-        _id: request.params.userId,
-        isDeleted: { $ne: true },
-      }).catch((error) => {
-        console.error(error);
-        response.status(errors.FIND_USER_FAILED.code);
-        throw errors.FIND_USER_FAILED.error;
-      });
-
-      updates.forEach((update) => {
-        user[update] = request.body[update];
-      });
-
-      // Validate the document before updating
-      await user.validate().catch((error) => {
-        console.error(error);
-        const validationError = errors.VALIDATION_ERROR(error);
-        response.status(validationError.code);
-        throw validationError.error;
-      });
-
-      await user.save().catch((error) => {
-        console.error(error);
-        response.status(errors.UPDATE_USER_FAILED.code);
-        throw errors.UPDATE_USER_FAILED.error;
-      });
-
-      const {
-        password, isDeleted, avatar, ...rest
-      } = user.toJSON();
-
-      response.json(rest);
-    } catch (error) {
-      response.send(error.message);
-    }
-  });
-
-/**
-* `http DELETE` request handler to delete user
-* * Requires `access-token` `device-id`
-*/
-router.delete('/',
-  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ phone: true }),
-  async (request, response) => {
-    try {
-    // Get the user
-      const user = await User.findOne({
-        _id: request.params.userId,
-        isDeleted: { $ne: true },
-      }).catch((error) => {
-        console.error(error);
-        response.status(errors.FIND_USER_FAILED.code);
-        throw errors.FIND_USER_FAILED.error;
-      });
-
-      const u = await Client.find({
-        _id: { $in: user.clients },
-      });
-
-      console.log(u);
-
-      // await user.update({ isDeleted: true })
-      //   .catch((error) => {
-      //     console.error(error);
-      //     response.status(errors.USER_UPDATE_FAILURE.code);
-      //     throw errors.USER_UPDATE_FAILURE.error;
-      //   });
-
-      response.send('Account deleted');
-    } catch (error) {
-      response.send(error.message);
-    }
-  });
-
-/**
- * @adminOnly
- * `http GET` request handler to fetch a user
- */
-router.get('/:id',
-  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ admin: true }),
-  async (request, response) => {
-    try {
-      // Get the user document
-      const user = await User.findById(request.params.id)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_USER_FAILED.code);
-          throw errors.FIND_USER_FAILED.error;
-        });
-
-      if (!user) {
-        response.status(errors.NULL_USER.code);
-        throw errors.NULL_USER.error;
-      }
-
-      // Populate client details
-      const populatedUser = await user.populate({
-        path: 'clients',
-        select: 'userAgent createdAt',
-      }).execPopulate();
-
-      const { password, ...rest } = populatedUser.toJSON();
-
-      response.json(rest);
-    } catch (error) {
-      console.error(error);
       response.send(error.message);
     }
   });

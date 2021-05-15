@@ -58,7 +58,7 @@ const schema = new Schema({
   isDeleted: {
     type: Boolean,
     default: false,
-  }
+  },
 }, {
   timestamps: true,
 });
