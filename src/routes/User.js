@@ -35,13 +35,12 @@ router.post('/',
       });
 
       // Validate the document before generating a client
-      await user.validate()
-        .catch((error) => {
-          console.error(error);
-          const validationError = errors.VALIDATION_ERROR(error);
-          response.status(validationError.code);
-          throw validationError.error;
-        });
+      await user.validate().catch((error) => {
+        console.error(error);
+        const validationError = errors.VALIDATION_ERROR(error);
+        response.status(validationError.code);
+        throw validationError.error;
+      });
 
       // On-register-direct-login approach
       const client = await Client.create({ user: user.id, userAgent: request.headers['user-agent'] })
@@ -767,7 +766,7 @@ router.post('/family',
   async (request, response) => {
     try {
       // Create the document
-      const family = await Family.create({
+      const family = new Family({
         user: request.params.userId,
         firstName: request.body.firstName,
         lastName: request.body.lastName,
@@ -779,16 +778,26 @@ router.post('/family',
         insurance: request.body.insurance,
         emergencyName: request.body.emergencyName,
         emergencyNumber: request.body.emergencyNumber,
-      }).catch((error) => {
+      });
+
+      // Validate data before saving
+      await family.validate().catch((error) => {
+        console.error(error);
+        const validationError = errors.VALIDATION_ERROR(error);
+        response.status(validationError.code);
+        throw validationError.error;
+      });
+
+      await family.save().catch((error) => {
         console.error(error);
         response.status(errors.SAVE_FAMILY_FAILED.code);
         throw errors.SAVE_FAMILY_FAILED.error;
-      });
+      })
 
       // Reference family doc in user.family
       await User.updateOne(
         { _id: request.params.userId },
-        { family: { $push: family.id } },
+        { $push: { family: family.id } },
       ).catch((error) => {
         console.error(error);
         response.status(errors.UPDATE_USER_FAILED.code);
