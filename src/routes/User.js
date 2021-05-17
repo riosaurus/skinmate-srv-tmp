@@ -7,7 +7,7 @@ const { User, Client, TOTP } = require('../database');
 const {
   constants, middlewares, errors, otp, emailServer, smsServer,
 } = require('../utils');
-
+const path = require("path"); 
 const router = Router();
 
 /**
@@ -143,19 +143,55 @@ router.get(
   },
 );
 
-const upload = multer({
-  limits: { fileSize: 1000000 },
-  fileFilter(_, file, cb) {
-    let error = null;
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      error = new Error('Not a JPEG/PNG image');
-      // return cb(new Error('Not a JPEG/PNG image'));
-    }
-    // cb(null, true);
-    // return null;
-    return cb(error, !!error);
+// const upload = multer({
+//   limits: { fileSize: 1000000 },
+//   fileFilter(_, file, cb) {
+//     let error = null;
+//     if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+//       error = new Error('Not a JPEG/PNG image');
+//       // return cb(new Error('Not a JPEG/PNG image'));
+//     }
+//     // cb(null, true);
+//     // return null;
+//     return cb(error, !!error);
+//   },
+// });
+
+/** Storage Engine */
+const storageEngine = multer.diskStorage({
+  destination: "../src/assets/avatar",
+  filename: function (req, file, fn) {
+    fn(
+      null,
+      new Date().getTime().toString() +
+        "-" +
+        file.fieldname +
+        path.extname(file.originalname)
+    );
   },
 });
+
+//validation
+const upload = multer({
+  storage: storageEngine,
+  limits: { fileSize: 200000 },
+  fileFilter: function (req, file, callback) {
+    validateFile(file, callback);
+  },
+});
+
+let validateFile = function (file, cb) {
+  allowedFileTypes = /jpeg|jpg|png/;
+  const extension = allowedFileTypes.test(
+    path.extname(file.originalname).toLowerCase()
+  );
+  const mimeType = allowedFileTypes.test(file.mimetype);
+  if (extension && mimeType) {
+    return cb(null, true);
+  } else {
+    cb("Invalid file type. Only JPEG, PNG and JPG are allowed.");
+  }
+};
 
 /**
  * `http POST` request handler to upload user profile avatar
@@ -176,16 +212,16 @@ router.post(
           throw errors.FIND_USER_FAILED.error;
         });
 
-      const buffer = await sharp(request.file.buffer)
-        .png()
-        .toBuffer()
-        .catch((error) => {
-          console.log(error);
-          response.status(errors.IMAGE_READ_FAILED.code);
-          throw errors.IMAGE_READ_FAILED.error;
-        });
+//       const buffer = await sharp(request.file.buffer)
+//         .png()
+//         .toBuffer()
+//         .catch((error) => {
+//           console.log(error);
+//           response.status(errors.IMAGE_READ_FAILED.code);
+//           throw errors.IMAGE_READ_FAILED.error;
+//         });
 
-      user.avatar = buffer;
+//       user.avatar = buffer;
 
       await user.save();
 
