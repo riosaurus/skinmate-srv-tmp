@@ -31,6 +31,11 @@ module.exports = {
     error: new Error('Operation requires elevated privileges'),
   },
 
+  INCOMPLETE_PROFILE: (fields) => ({
+    code: 403,
+    error: new Error(`Incomplete profile: ${fields.join(', ')}`),
+  }),
+
   /* OTP errors */
   INVALID_OTP: {
     code: 401,
@@ -248,6 +253,11 @@ module.exports = {
     error: new Error('Operation requires \'user-agent\''),
   },
 
+  NULL_REQUEST_BODY: {
+    code: 400,
+    error: new Error('Request body is empty'),
+  },
+
   /* Conflicts */
   SIGN_IN: {
     code: 500,
@@ -267,6 +277,11 @@ module.exports = {
   UNOWNED_DOCUMENT: {
     code: 401,
     error: new Error('This document is not owned'),
+  },
+
+  INVALID_ACCESS_TOKEN: {
+    code: 401,
+    error: new Error('Invalid access-token'),
   },
 
   /**

@@ -19,6 +19,7 @@ const router = Router();
 router.post('/',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Check if user exists
@@ -109,6 +110,7 @@ router.patch('/',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       const updates = Object.keys(request.body);
@@ -257,6 +259,7 @@ router.post('/avatar',
 router.post('/auth',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Get the user
@@ -412,6 +415,7 @@ router.post('/verify/phone',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({}),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Get the user
@@ -523,6 +527,7 @@ router.post('/verify/email',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Get the user
@@ -656,6 +661,7 @@ router.get('/auth/otp-signin',
 router.post('/auth/otp-signin',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Get the TOTP document
@@ -738,6 +744,7 @@ router.get('/family',
       const populatedDoc = await user
         .populate({
           path: 'family',
+          select: 'firstName lastName relationship gender dateOfBirth',
           match: { isDeleted: { $ne: true } },
         })
         .execPopulate()
@@ -763,6 +770,7 @@ router.post('/family',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true, email: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Create the document
@@ -792,7 +800,7 @@ router.post('/family',
         console.error(error);
         response.status(errors.SAVE_FAMILY_FAILED.code);
         throw errors.SAVE_FAMILY_FAILED.error;
-      })
+      });
 
       // Reference family doc in user.family
       await User.updateOne(
@@ -866,6 +874,7 @@ router.patch('/family/:id',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true, email: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Get the family document

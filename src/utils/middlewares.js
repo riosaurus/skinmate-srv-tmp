@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+const validator = require('validator');
 const { Client, User } = require('../database');
 const errors = require('./errors');
 
@@ -41,6 +42,30 @@ function requireHeaders({ accessToken, deviceId, userAgent }) {
 }
 
 /**
+ * Allows next operations only if request body isn't empty.
+ * ***
+ * ### Possible errors
+ * | Code | Message |
+ * | ---: | :------ |
+ * | `400`  | Request body is empty |
+ * ***
+ * @returns {RequestHandler} express middleware
+ */
+function requireBody() {
+  return (request, response, next) => {
+    try {
+      if (Object.entries(request.body).length === 0) {
+        response.status(errors.NULL_REQUEST_BODY.code);
+        throw errors.NULL_REQUEST_BODY.error;
+      }
+      next();
+    } catch (error) {
+      response.send(error.message);
+    }
+  }
+}
+
+/**
  * Allows next operations only on communication medium verification.
  * ***
  * * Use `requireHeaders` middleware to ensure `device-id` and `access-token` presence
@@ -56,11 +81,14 @@ function requireHeaders({ accessToken, deviceId, userAgent }) {
  * | `401`  | Phone and email not verified |
  * | `401`  | Phone number not verified |
  * | `401`  | Email not verified |
+ * | `403`  | Incomplete profile (incomplete fields) |
  * ***
  * @param {{phone: boolean, email: boolean, admin: boolean}} params Comms to verify
  * @returns {RequestHandler} express middleware
  */
-function requireVerification({ phone, email, admin }) {
+function requireVerification({
+  phone, email, profile, admin,
+}) {
   return async (request, response, next) => {
     try {
       // Get the client document
@@ -74,10 +102,15 @@ function requireVerification({ phone, email, admin }) {
         throw errors.FIND_CLIENT_FAILED.error;
       });
 
-      // Check client validity
+      // Check if client exist
       if (!client) {
         response.status(errors.NULL_CLIENT.code);
         throw errors.NULL_CLIENT.error;
+      }
+
+      if (!(await client.isValid())) {
+        response.status(errors.INVALID_ACCESS_TOKEN.code);
+        throw errors.INVALID_ACCESS_TOKEN.error;
       }
 
       // Check user verification status
@@ -119,6 +152,20 @@ function requireVerification({ phone, email, admin }) {
         throw errors.EMAIL_UNVERIFIED.error;
       }
 
+      if (profile) {
+        const userObject = user.toJSON();
+        const keys = Object.keys(userObject);
+        const expected = ['firstName', 'lastName', 'password', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
+        const allow = keys.every((key) => expected.includes(key)
+        && !validator.default.isEmpty(userObject[key]));
+        if (!allow) {
+          const { code, error } = errors.INCOMPLETE_PROFILE(keys
+            .filter((key) => !expected.includes(key)));
+          response.status(code);
+          throw error;
+        }
+      }
+
       next();
     } catch (error) {
       response.send(error.message);
@@ -126,4 +173,4 @@ function requireVerification({ phone, email, admin }) {
   };
 }
 
-module.exports = { requireHeaders, requireVerification };
+module.exports = { requireHeaders, requireBody, requireVerification };
