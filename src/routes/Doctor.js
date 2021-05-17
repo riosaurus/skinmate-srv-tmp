@@ -4,6 +4,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { middlewares, errors } = require('../utils');
 const { Doctor } = require('../database');
+const path = require("path");
 
 const router = Router();
 /**
@@ -356,15 +357,15 @@ router.delete(
   },
 );
 
-const upload = multer({
-  limits: { fileSize: 1000000 },
-  fileFilter(_request, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      return cb(new Error('Please upload a jpeg or jpg or png'));
-    }
-    return cb(null, true);
-  },
-}); 
+// const upload = multer({
+//   limits: { fileSize: 1000000 },
+//   fileFilter(_request, file, cb) {
+//     if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+//       return cb(new Error('Please upload a jpeg or jpg or png'));
+//     }
+//     return cb(null, true);
+//   },
+// }); 
 
 /**
  * @swagger
@@ -416,6 +417,41 @@ const upload = multer({
  *     description: Operation requires 'device-id'
  *    
  */
+/** Storage Engine */
+const storageEngine = multer.diskStorage({
+  destination: "../src/assets/avatar",
+  filename: function (req, file, fn) {
+    fn(
+      null,
+      new Date().getTime().toString() +
+        "-" +
+        file.fieldname +
+        path.extname(file.originalname)
+    );
+  },
+});
+
+//validation
+const upload = multer({
+  storage: storageEngine,
+  limits: { fileSize: 200000 },
+  fileFilter: function (req, file, callback) {
+    validateFile(file, callback);
+  },
+});
+
+let validateFile = function (file, cb) {
+  allowedFileTypes = /jpeg|jpg|png/;
+  const extension = allowedFileTypes.test(
+    path.extname(file.originalname).toLowerCase()
+  );
+  const mimeType = allowedFileTypes.test(file.mimetype);
+  if (extension && mimeType) {
+    return cb(null, true);
+  } else {
+    cb("Invalid file type. Only JPEG, PNG and JPG are allowed.");
+  }
+};
 
 router.post(
   '/doctor/:id/avatar', upload.single('file'),
@@ -423,9 +459,9 @@ router.post(
   middlewares.requireVerification({ admin: true }),
   //Use buffer for avatar upload
   async (request, response) => {
-    const buffer = await sharp(request.file.buffer).png().toBuffer();
-    const doctor = await Doctor.findById(request.params.id);
-    doctor.avatar = buffer;
+//     const buffer = await sharp(request.file.buffer).png().toBuffer();
+//     const doctor = await Doctor.findById(request.params.id);
+//     doctor.avatar = buffer;
     await doctor.save();
     response.send();
   }, (error, request, response, next) => {
