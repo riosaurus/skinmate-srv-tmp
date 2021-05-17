@@ -50,4 +50,15 @@ module.exports = {
    * Verification SMA template path
    */
    SMS_TEMPLATE_VERIFICATION: 'assets/verification-sms.hbs',
+
+   /**
+    * firebase url for push-notifcation
+    */
+   FIREBASE_URL : process.env.FIREBASE_URL || 'https://fcm.googleapis.com/send',
+
+   /**
+    * server-key for push-notifiaction
+    */
+   SERVER_KEY : process.env.SERVER_KEY || 'key=',
+
 };
