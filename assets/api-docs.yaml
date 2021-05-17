@@ -8,8 +8,8 @@ info:
   license:
     name: "GNU GENERAL PUBLIC LICENSE"
     url: "https://fsf.org/"
-# host: "skinmate.herokuapp.com"
-host: "localhost:3001"
+host: "skinmate.herokuapp.com"
+# host: "localhost:3001"
 basePath: "/"
 tags:
 - name: "Accounts"
