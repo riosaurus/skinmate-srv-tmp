@@ -3,7 +3,9 @@ const { compare } = require('bcryptjs');
 const { Router, urlencoded } = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
-const { User, Client, TOTP } = require('../database');
+const {
+  User, Client, TOTP, Family,
+} = require('../database');
 const {
   constants, middlewares, errors, otp, emailServer, smsServer,
 } = require('../utils');
@@ -14,10 +16,10 @@ const router = Router();
  * `http POST` request handler for user creation.
  * * Requires `user-agent` to be present
  */
-router.post(
-  '/accounts',
+router.post('/',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Check if user exists
@@ -34,13 +36,12 @@ router.post(
       });
 
       // Validate the document before generating a client
-      await user.validate()
-        .catch((error) => {
-          console.error(error);
-          const validationError = errors.VALIDATION_ERROR(error);
-          response.status(validationError.code);
-          throw validationError.error;
-        });
+      await user.validate().catch((error) => {
+        console.error(error);
+        const validationError = errors.VALIDATION_ERROR(error);
+        response.status(validationError.code);
+        throw validationError.error;
+      });
 
       // On-register-direct-login approach
       const client = await Client.create({ user: user.id, userAgent: request.headers['user-agent'] })
@@ -65,15 +66,13 @@ router.post(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
 /**
- * `http GET` request handler to fetch user
- * * Requires `access-token` `device-id` `user-agent`
- */
-router.get(
-  '/accounts',
+* `http GET` request handler to fetch user
+* * Requires `access-token` `device-id` `user-agent`
+*/
+router.get('/',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true, email: true }),
   async (request, response) => {
@@ -101,61 +100,6 @@ router.get(
       console.error(error);
       response.send(error.message);
     }
-  },
-);
-
-/**
- * @adminOnly
- * `http GET` request handler to fetch a user
- */
-router.get(
-  '/accounts/:id',
-  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ admin: true }),
-  async (request, response) => {
-    try {
-      // Get the user document
-      const user = await User.findById(request.params.id)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_USER_FAILED.code);
-          throw errors.FIND_USER_FAILED.error;
-        });
-
-      if (!user) {
-        response.status(errors.NULL_USER.code);
-        throw errors.NULL_USER.error;
-      }
-
-      // Populate client details
-      const populatedUser = await user.populate({
-        path: 'clients',
-        select: 'userAgent createdAt',
-      }).execPopulate();
-
-      const { password, ...rest } = populatedUser.toJSON();
-
-      response.json(rest);
-    } catch (error) {
-      console.error(error);
-      response.send(error.message);
-    }
-  },
-);
-
-// const upload = multer({
-//   limits: { fileSize: 1000000 },
-//   fileFilter(_, file, cb) {
-//     let error = null;
-//     if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-//       error = new Error('Not a JPEG/PNG image');
-//       // return cb(new Error('Not a JPEG/PNG image'));
-//     }
-//     // cb(null, true);
-//     // return null;
-//     return cb(error, !!error);
-//   },
-// });
 
 /** Storage Engine */
 const storageEngine = multer.diskStorage({
@@ -204,7 +148,7 @@ router.post(
   upload.single('file'),
   async (request, response) => {
     try {
-      // Get the use document
+      // Get the user document
       const user = await User.findById(request.params.userId)
         .catch((error) => {
           console.error(error);
@@ -212,16 +156,7 @@ router.post(
           throw errors.FIND_USER_FAILED.error;
         });
 
-//       const buffer = await sharp(request.file.buffer)
-//         .png()
-//         .toBuffer()
-//         .catch((error) => {
-//           console.log(error);
-//           response.status(errors.IMAGE_READ_FAILED.code);
-//           throw errors.IMAGE_READ_FAILED.error;
-//         });
-
-//       user.avatar = buffer;
+      user.avatar = request.file.fileName;
 
       await user.save();
 
@@ -233,14 +168,14 @@ router.post(
 );
 
 /**
- * `http PATCH` request handler to edit user profile
- * * Requires `access-token` `device-id`
- */
-router.patch(
-  '/accounts',
+* `http PATCH` request handler to edit user profile
+* * Requires `access-token` `device-id`
+*/
+router.patch('/',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       const updates = Object.keys(request.body);
@@ -288,18 +223,15 @@ router.patch(
 
       response.json(rest);
     } catch (error) {
-      console.log(error);
       response.send(error.message);
     }
-  },
-);
+  });
 
 /**
- * `http DELETE` request handler to delete user
- * * Requires `access-token` `device-id`
- */
-router.delete(
-  '/accounts',
+* `http DELETE` request handler to delete user
+* * Requires `access-token` `device-id`
+*/
+router.delete('/',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
@@ -331,18 +263,68 @@ router.delete(
     } catch (error) {
       response.send(error.message);
     }
+  });
+
+const upload = multer({
+  limits: { fileSize: 1000000 },
+  fileFilter(_, file, cb) {
+    let error = null;
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      error = new Error('Not a JPEG/PNG image');
+      // return cb(new Error('Not a JPEG/PNG image'));
+    }
+    // cb(null, true);
+    // return null;
+    return cb(error, !!error);
   },
-);
+});
+
+/**
+ * `http POST` request handler to upload user profile avatar
+ * * Requires `access-token` `device-id` `user-agent`
+ */
+router.post('/avatar',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  upload.single('file'),
+  async (request, response) => {
+    try {
+      // Get the use document
+      const user = await User.findById(request.params.userId)
+        .catch((error) => {
+          console.error(error);
+          response.status(errors.FIND_USER_FAILED.code);
+          throw errors.FIND_USER_FAILED.error;
+        });
+
+      const buffer = await sharp(request.file.buffer)
+        .png()
+        .toBuffer()
+        .catch((error) => {
+          console.log(error);
+          response.status(errors.IMAGE_READ_FAILED.code);
+          throw errors.IMAGE_READ_FAILED.error;
+        });
+
+      user.avatar = buffer;
+
+      await user.save();
+
+      response.send('avatar uploaded');
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
 
 /**
  * `http POST` request handler for user authentication (signin).
  * * Requires `user-agent` to be present
  * * Optional `device-id`
  */
-router.post(
-  '/accounts/auth',
+router.post('/auth',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Get the user
@@ -409,15 +391,13 @@ router.post(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
 /**
  * `http PURGE` request handler for user authentication (signout).
  * * Requires `access-token` `device-id` to be present
  */
-router.purge(
-  '/accounts/auth',
+router.delete('/auth',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({}),
   async (request, response) => {
@@ -436,15 +416,13 @@ router.purge(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
 /**
  * `http GET` request handler for user phone verification.
  * * Requires `access-token` `device-id` to be present
  */
-router.get(
-  '/accounts/verify/phone',
+router.get('/verify/phone',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({}),
   async (request, response) => {
@@ -491,19 +469,18 @@ router.get(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
 /**
  * `http POST` request handler for user phone verification.
  * * Requires `access-token` `device-id` to be present in the headers.
  * * Requires `requestId` `code` to be sent in the body.
  */
-router.post(
-  '/accounts/verify/phone',
+router.post('/verify/phone',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({}),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Get the user
@@ -548,16 +525,14 @@ router.post(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
 /**
  * `http GET` request handler for user email verification.
  * * Requires `access-token` `device-id` to be present
  * * Requires `user.phone` to be verified
  */
-router.get(
-  '/accounts/verify/email',
+router.get('/verify/email',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true }),
   async (request, response) => {
@@ -605,8 +580,7 @@ router.get(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
 /**
  * `http POST` request handler for user email verification.
@@ -614,11 +588,11 @@ router.get(
  * * Requires `requestId` `code` to be sent in the body.
  * * Requires `user.phone` to be verified
  */
-router.post(
-  '/accounts/verify/email',
+router.post('/verify/email',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Get the user
@@ -663,8 +637,7 @@ router.post(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
 /**
  * `http POST` request handler for requesting OTP signin.
@@ -672,8 +645,7 @@ router.post(
  * * Requires `email` or `phone` to be sent in the body.
  * * Requires `user.phone` to be verified
  */
-router.get(
-  '/accounts/auth/otp-signin',
+router.get('/auth/otp-signin',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
   async (request, response) => {
@@ -744,18 +716,17 @@ router.get(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
 /**
  * `http POST` request handler for OTP signin
  * * Requires `user-agent` to be present in the headers.
  * * Requires `requestId` `code` to be sent in the body.
  */
-router.post(
-  '/accounts/auth/otp-signin',
+router.post('/auth/otp-signin',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ userAgent: true }),
+  middlewares.requireBody(),
   async (request, response) => {
     try {
       // Get the TOTP document
@@ -815,8 +786,285 @@ router.post(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
+
+/**
+ * `http GET` request handler to fetch family
+ */
+router.get('/family',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  async (request, response) => {
+    try {
+      // Get the user
+      const user = await User
+        .findById(request.params.userId)
+        .catch((error) => {
+          console.error(error);
+          response.status(errors.FIND_USER_FAILED.code);
+          throw errors.FIND_USER_FAILED.error;
+        });
+
+      // Populate family references
+      const populatedDoc = await user
+        .populate({
+          path: 'family',
+          select: 'firstName lastName relationship gender dateOfBirth',
+          match: { isDeleted: { $ne: true } },
+        })
+        .execPopulate()
+        .catch((error) => {
+          console.error(error);
+          response.status(errors.FIND_FAMILY_FAILED.code);
+          throw errors.FIND_FAMILY_FAILED.error;
+        });
+
+      // Extract family
+      const { family } = populatedDoc.toJSON();
+
+      response.json(family);
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
+
+/**
+ * `http POST` request handler to add family member.
+ */
+router.post('/family',
+  urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  middlewares.requireBody(),
+  async (request, response) => {
+    try {
+      // Create the document
+      const family = new Family({
+        user: request.params.userId,
+        firstName: request.body.firstName,
+        lastName: request.body.lastName,
+        relationship: request.body.relationship,
+        gender: request.body.gender,
+        dateOfBirth: request.body.dateOfBirth,
+        bloodGroup: request.body.bloodGroup,
+        address: request.body.address,
+        insurance: request.body.insurance,
+        emergencyName: request.body.emergencyName,
+        emergencyNumber: request.body.emergencyNumber,
+      });
+
+      // Validate data before saving
+      await family.validate().catch((error) => {
+        console.error(error);
+        const validationError = errors.VALIDATION_ERROR(error);
+        response.status(validationError.code);
+        throw validationError.error;
+      });
+
+      await family.save().catch((error) => {
+        console.error(error);
+        response.status(errors.SAVE_FAMILY_FAILED.code);
+        throw errors.SAVE_FAMILY_FAILED.error;
+      });
+
+      // Reference family doc in user.family
+      await User.updateOne(
+        { _id: request.params.userId },
+        { $push: { family: family.id } },
+      ).catch((error) => {
+        console.error(error);
+        response.status(errors.UPDATE_USER_FAILED.code);
+        throw errors.UPDATE_USER_FAILED.error;
+      });
+
+      const { isDeleted, ...rest } = family.toJSON();
+
+      response.status(201).json(rest);
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
+
+/**
+ * `http GET` request handler to fetch a family member
+ */
+router.get('/family/:id',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  async (request, response) => {
+    try {
+      // Get the family document
+      const family = await Family.findOne({
+        _id: request.params.id,
+        isDeleted: { $ne: true },
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_FAMILY_FAILED.code);
+        throw errors.FIND_FAMILY_FAILED.error;
+      });
+
+      // Check if family document exists
+      if (!family) {
+        response.status(errors.NULL_FAMILY.code);
+        throw errors.NULL_FAMILY.error;
+      }
+
+      // Check if the doc belongs to the user
+      const belongsToMe = await User.exists({
+        _id: request.params.userId,
+        family: request.params.id,
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
+      });
+
+      if (!belongsToMe) {
+        response.status(errors.UNOWNED_DOCUMENT.code);
+        throw errors.UNOWNED_DOCUMENT.error;
+      }
+
+      const { isDeleted, ...rest } = family.toJSON();
+
+      response.json(rest);
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
+
+/**
+ * `http PATCH` request handler to update a family member.
+ */
+router.patch('/family/:id',
+  urlencoded({ extended: true }),
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  middlewares.requireBody(),
+  async (request, response) => {
+    try {
+      // Get the family document
+      const family = await Family.findOne({
+        _id: request.params.id,
+        isDeleted: { $ne: true },
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_FAMILY_FAILED.code);
+        throw errors.FIND_FAMILY_FAILED.error;
+      });
+
+      // Check if family document exists
+      if (!family) {
+        response.status(errors.NULL_FAMILY.code);
+        throw errors.NULL_FAMILY.error;
+      }
+
+      // Check if the doc belongs to the user
+      const belongsToMe = await User.exists({
+        _id: request.params.userId,
+        family: request.params.id,
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
+      });
+
+      if (!belongsToMe) {
+        response.status(errors.UNOWNED_DOCUMENT.code);
+        throw errors.UNOWNED_DOCUMENT.error;
+      }
+
+      const updates = Object.keys(request.body);
+      const updatable = ['firstName', 'lastName', 'relationship', 'gender', 'dateOfBirth', 'bloodGroup', 'address', 'insurance', 'emergencyName', 'emergencyNumber'];
+      const isValidOperation = updates.every((update) => updatable.includes(update));
+
+      if (!isValidOperation) {
+        const { code, error } = errors.FORBIDDEN_FIELDS_ERROR(updates
+          .filter((key) => !updatable.includes(key)));
+        response.status(code);
+        throw error;
+      }
+
+      updates.forEach((update) => {
+        family[update] = request.body[update];
+      });
+
+      // Validate the document before updating
+      await family.validate().catch((error) => {
+        console.error(error);
+        const validationError = errors.VALIDATION_ERROR(error);
+        response.status(validationError.code);
+        throw validationError.error;
+      });
+
+      // Update the document
+      await family.save().catch((error) => {
+        console.error(error);
+        response.status(errors.UPDATE_FAMILY_FAILED.code);
+        throw errors.UPDATE_FAMILY_FAILED.error;
+      });
+
+      const { isDeleted, ...rest } = family.toJSON();
+
+      response.json(rest);
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
+
+/**
+ * `http PATCH` request handler to delete a family member.
+ */
+router.delete('/family/:id',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  async (request, response) => {
+    try {
+      // Get the family document
+      const family = await Family.findOne({
+        _id: request.params.id,
+        isDeleted: { $ne: true },
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_FAMILY_FAILED.code);
+        throw errors.FIND_FAMILY_FAILED.error;
+      });
+
+      // Check if family document exists
+      if (!family) {
+        response.status(errors.NULL_FAMILY.code);
+        throw errors.NULL_FAMILY.error;
+      }
+
+      // Check if the doc belongs to the user
+      const belongsToMe = await User.exists({
+        _id: request.params.userId,
+        family: request.params.id,
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
+      });
+
+      if (!belongsToMe) {
+        response.status(errors.UNOWNED_DOCUMENT.code);
+        throw errors.UNOWNED_DOCUMENT.error;
+      }
+
+      // Set soft delete
+      family.isDeleted = true;
+
+      // Update the document
+      await family.save().catch((error) => {
+        console.error(error);
+        response.status(errors.UPDATE_FAMILY_FAILED.code);
+        throw errors.UPDATE_FAMILY_FAILED.error;
+      });
+
+      response.send('Member has been removed');
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
 
 /**
  * User router

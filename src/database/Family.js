@@ -2,16 +2,10 @@ const { Schema, model } = require('mongoose');
 const validator = require('validator');
 const customValidators = require('../utils/validators');
 
-
 /**
  * Family schema
  */
 const schema = new Schema({
-  user : {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-},
   firstName: {
     type: String,
     required: true,
@@ -61,6 +55,12 @@ const schema = new Schema({
     trim: true,
     validate: { validator: validator.isMobilePhone, message: 'Invalid phone number' },
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+}, {
+  timestamps: true,
 });
 
 /**
