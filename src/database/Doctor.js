@@ -30,7 +30,7 @@ const schema = new Schema({
     date: Date,
     time: [String],
   }],
-});
+},{timestamps:true});
 
 schema.virtual('service', {
   ref: 'Service',
