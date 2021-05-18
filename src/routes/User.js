@@ -142,7 +142,7 @@ let validateFile = function (file, cb) {
  * * Requires `access-token` `device-id` `user-agent`
  */
 router.post(
-  '/accounts/avatar',
+  '/avatar',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true, email: true }),
   upload.single('file'),
@@ -260,57 +260,6 @@ router.delete('/',
       //   });
 
       response.send('Account deleted');
-    } catch (error) {
-      response.send(error.message);
-    }
-  });
-
-const upload = multer({
-  limits: { fileSize: 1000000 },
-  fileFilter(_, file, cb) {
-    let error = null;
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      error = new Error('Not a JPEG/PNG image');
-      // return cb(new Error('Not a JPEG/PNG image'));
-    }
-    // cb(null, true);
-    // return null;
-    return cb(error, !!error);
-  },
-});
-
-/**
- * `http POST` request handler to upload user profile avatar
- * * Requires `access-token` `device-id` `user-agent`
- */
-router.post('/avatar',
-  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ phone: true, email: true }),
-  upload.single('file'),
-  async (request, response) => {
-    try {
-      // Get the use document
-      const user = await User.findById(request.params.userId)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_USER_FAILED.code);
-          throw errors.FIND_USER_FAILED.error;
-        });
-
-      const buffer = await sharp(request.file.buffer)
-        .png()
-        .toBuffer()
-        .catch((error) => {
-          console.log(error);
-          response.status(errors.IMAGE_READ_FAILED.code);
-          throw errors.IMAGE_READ_FAILED.error;
-        });
-
-      user.avatar = buffer;
-
-      await user.save();
-
-      response.send('avatar uploaded');
     } catch (error) {
       response.send(error.message);
     }
