@@ -25,6 +25,10 @@ const schema = new Schema({
     type: String,
     required: true,
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
   insuranceInfo: {
     type: String,
   },
