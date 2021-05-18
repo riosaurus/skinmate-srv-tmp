@@ -5,7 +5,7 @@ const notifcationSchema=new Schema({
     type:Schema.Types.ObjectId,
     ref:'User'
   },
-  for:{
+  type:{
    type:String,
    required:true
   },

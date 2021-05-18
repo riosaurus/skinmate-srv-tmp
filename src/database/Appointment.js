@@ -69,7 +69,7 @@ schema.post('save',async function(){
 /**
  * creating notification for cancel notification
  */
-schema.post('remove',function(){
+schema.post('remove',async function(){
   let time=new Date()
   let {title,body} = NOTIFICATION_ACTION.cancel.notification
     let response=await notification({
