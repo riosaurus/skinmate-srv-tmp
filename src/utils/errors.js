@@ -93,7 +93,6 @@ module.exports = {
     error: new Error('Couldn\'t find member'),
   },
 
-  /* Document save errors */
   SAVE_CLIENT_FAILED: {
     code: 500,
     error: new Error('Couldn\'t register client'),
@@ -129,7 +128,6 @@ module.exports = {
     error: new Error('Couldn\'t add member'),
   },
 
-  /* Document update errors */
   UPDATE_CLIENT_FAILED: {
     code: 500,
     error: new Error('Couldn\'t update client'),
@@ -201,7 +199,6 @@ module.exports = {
     error: new Error('Couldn\'t delete member'),
   },
 
-  /* Null Document errors */
   NULL_CLIENT: {
     code: 401,
     error: new Error('Unauthorized client'),
@@ -237,7 +234,6 @@ module.exports = {
     error: new Error('Member isn\'t available'),
   },
 
-  /* Null properties errors */
   NULL_ACCESS_TOKEN: {
     code: 401,
     error: new Error('Operation requires \'access-token\''),
@@ -285,20 +281,22 @@ module.exports = {
   },
 
   /**
-   * Forbidden fields update error generator
-   * @param {Array<string>} fields Error instance
+   * Forbidden fields error generator
+   * @param {string[]} fields Error instance
    */
   FORBIDDEN_FIELDS_ERROR: (fields) => ({
     code: 406,
     error: new Error(`Forbidden fields present: ${fields.join(', ')}`),
   }),
 
-  /**
-   * `user-agent` not supplied error
-   */
-  IMAGE_READ_FAILED: {
+  MEDIA_READ_FAILED: {
     code: 501,
     error: new Error('Couldn\'t read image'),
+  },
+
+  MEDIA_INVALID: {
+    code: 406,
+    error: new Error('Invalid media type'),
   },
 
   PASSWORD_COMPARE_FAILED: {

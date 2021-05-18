@@ -62,7 +62,7 @@ function requireBody() {
     } catch (error) {
       response.send(error.message);
     }
-  }
+  };
 }
 
 /**
@@ -173,4 +173,6 @@ function requireVerification({
   };
 }
 
-module.exports = { requireHeaders, requireBody, requireVerification };
+module.exports = {
+  requireHeaders, requireBody, requireVerification,
+};
