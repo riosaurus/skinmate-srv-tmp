@@ -75,22 +75,6 @@ schema.post('save', async function onSave() {
 /**
  * creating notification for cancel notification
  */
-<<<<<<< HEAD
-schema.post('remove',async function(){
-  let time=new Date()
-  let {title,body} = NOTIFICATION_ACTION.cancel.notification
-    let response=await notification({
-      user: this.userId,
-      type:NOTIFICATION_TYPE.CANCEL_APPOINMENT,
-      fcm_token:this.fcm_token,
-      title,
-      body,
-      data:NOTIFICATION_ACTION.cancel.data.message,
-      date:`${time.toDateString()} ${time.toTimeString()}`,
-    })
-    await response.save()
-})
-=======
 schema.post('remove', async function onRemove() {
   const time = new Date();
   const { title, body } = NOTIFICATION_ACTION.cancel.notification;
@@ -106,5 +90,4 @@ schema.post('remove', async function onRemove() {
   await response.save();
 });
 
->>>>>>> 2358c33d6fc43f7b6d311658e895b6ab90b00725
 module.exports = model('Appointment', schema);
