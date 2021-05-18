@@ -18,7 +18,7 @@ beforeAll(async () => {
     { useCreateIndex: true, useNewUrlParser: true, useUnifiedTopology: true },
   );
   server = express();
-  server.use(AccountsRouter);
+  server.use('/accounts', AccountsRouter);
 });
 
 afterAll(async () => {

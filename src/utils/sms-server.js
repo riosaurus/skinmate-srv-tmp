@@ -20,7 +20,7 @@ function setSocketServer(server) {
 }
 
 /**
- * Sends email.
+ * Emits a event to connected SMSMSB client to send SMS.
  * @param {string} to
  * @param {string} subject
  * @param {string} template path
