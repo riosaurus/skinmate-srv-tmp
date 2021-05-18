@@ -8,20 +8,32 @@ module.exports={
   },
   NOTIFICATION_ACTION : 
   {
-    'create' : {
-      title : '',
-      subtitle :``,
-      body : '',
+    create : {
+      notification:{
+        body:"just for testing..😀",
+        title:"from node.js"
+        },
+       data:{
+          message:"FROM NODE JS TEAM..."
+        },
     },
-    're-schedule' : {
-      title : '',
-      subtitle : '',
-      body : '',
+    reschedule : {
+      notification:{
+        body:"just for testing..😀",
+        title:"from node.js"
+        },
+       data:{
+          message:"FROM NODE JS TEAM..."
+        },
     },
-    'cancel' : {
-      title : '',
-      subtitle : '',
-      body : '',
+    cancel: {
+      notification:{
+        body:"just for testing..😀",
+        title:"from node.js"
+        },
+       data:{
+          message:"FROM NODE JS TEAM..."
+        },
     },
   }
 }

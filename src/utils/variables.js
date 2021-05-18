@@ -54,11 +54,11 @@ module.exports = {
    /**
     * firebase url for push-notifcation
     */
-   FIREBASE_URL : process.env.FIREBASE_URL || 'https://fcm.googleapis.com/send',
+   FIREBASE_URL : process.env.FIREBASE_URL || 'https://fcm.googleapis.com/fcm/send',
 
    /**
     * server-key for push-notifiaction
     */
-   SERVER_KEY : process.env.SERVER_KEY || 'key=',
+   SERVER_KEY : process.env.SERVER_KEY || 'key=AAAAgxmrcX0:APA91bGmD5FE7PlLHTnU3S-0fYJz4i1TIbIQLnxwa5sRLQArvWMZEwUX9HtLlB2N7pNlUDw5alffALOXYUb-Nq1vH7MY0ehlzyw1pv3e-eRbZr-cTUBoMe98swq6vp272YF8eRxOzctN',
 
 };
