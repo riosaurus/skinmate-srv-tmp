@@ -10,29 +10,29 @@ module.exports={
   {
     create : {
       notification:{
-        body:"just for testing..😀",
-        title:"from node.js"
+        body:"apppoinment scheduled succesfully.",
+        title:"Skin-Mate"
         },
        data:{
-          message:"FROM NODE JS TEAM..."
+          message:""
         },
     },
     reschedule : {
       notification:{
-        body:"just for testing..😀",
-        title:"from node.js"
+        body:"appoinment re-scheduled.",
+        title:"Skin-Mate"
         },
        data:{
-          message:"FROM NODE JS TEAM..."
+          message:""
         },
     },
     cancel: {
       notification:{
-        body:"just for testing..😀",
-        title:"from node.js"
+        body:"appoinment canceled",
+        title:"Skin-Mate"
         },
        data:{
-          message:"FROM NODE JS TEAM..."
+          message:""
         },
     },
   }
