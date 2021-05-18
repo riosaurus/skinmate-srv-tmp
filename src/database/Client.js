@@ -1,5 +1,5 @@
 const { Schema, model } = require('mongoose');
-const { sign } = require('jsonwebtoken');
+const { sign, verify } = require('jsonwebtoken');
 const validator = require('validator');
 const constants = require('../utils/variables');
 
@@ -19,7 +19,7 @@ const schema = new Schema({
   isDeleted: {
     type: Boolean,
     default: false,
-  }
+  },
 }, {
   timestamps: true,
 });
@@ -28,8 +28,23 @@ const schema = new Schema({
  * Pre save hook to sign a JWT
  */
 schema.pre('save', function preSave() {
-  this.token = sign(this.id, constants.token());
+  const { token, ...payload } = this.toJSON();
+  this.token = sign(payload, constants.token());
 });
+
+/**
+ * Method to verify token
+ */
+schema.methods.isValid = async function isValid() {
+  try {
+    verify(this.token, constants.token());
+    return true;
+  } catch (error) {
+    this.isDeleted = true;
+    await this.save();
+    return false;
+  }
+};
 
 /**
  * Client model
