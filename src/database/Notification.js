@@ -10,8 +10,7 @@ const notifcationSchema=new Schema({
    required:true
   },
   fcm_token:{
-   type:String,
-   required:true
+   type:String
   },
   title:{
     type:String,
