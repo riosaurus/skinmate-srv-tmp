@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 const validator = require('validator');
-const { Client, User } = require('../database');
+const {
+  Client, User, Doctor, Service,
+} = require('../database');
 const errors = require('./errors');
 
 /**
@@ -173,6 +175,78 @@ function requireVerification({
   };
 }
 
+/**
+ * Allows next operations only if Service exists.
+ * Expects `:id` (service-id) to be present in path parameter
+ * ***
+ * ### Possible errors
+ * | Code | Message |
+ * | ---: | :------ |
+ * | `404` | No such service |
+ * | `500` | Couldn\'t find service |
+ * ***
+ * @returns {RequestHandler} express middleware
+ */
+function requireService() {
+  return async (request, response, next) => {
+    try {
+      const isInDb = await Service.exists({
+        _id: request.params.id,
+        isDeleted: { $ne: true },
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_SERVICE_FAILED.code);
+        throw errors.FIND_SERVICE_FAILED.error;
+      });
+
+      if (!isInDb) {
+        response.status(errors.NULL_SERVICE.code);
+        throw errors.NULL_SERVICE.error;
+      }
+
+      next();
+    } catch (error) {
+      response.send(error.message);
+    }
+  };
+}
+
+/**
+ * Allows next operations only if Doctor exists.
+ * Expects `:id` (doctor-id) to be present in path parameter
+ * ***
+ * ### Possible errors
+ * | Code | Message |
+ * | ---: | :------ |
+ * | `404` | Doctor doesn\'t exist |
+ * | `500` | Couldn\'t find doctor |
+ * ***
+ * @returns {RequestHandler} express middleware
+ */
+function requireDoctor() {
+  return async (request, response, next) => {
+    try {
+      const isInDb = await Doctor.exists({
+        _id: request.params.id,
+        isDeleted: { $ne: true },
+      }).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_DOCTOR_FAILED.code);
+        throw errors.FIND_DOCTOR_FAILED.error;
+      });
+
+      if (!isInDb) {
+        response.status(errors.NULL_DOCTOR.code);
+        throw errors.NULL_DOCTOR.error;
+      }
+
+      next();
+    } catch (error) {
+      response.send(error.message);
+    }
+  };
+}
+
 module.exports = {
-  requireHeaders, requireBody, requireVerification,
+  requireHeaders, requireBody, requireVerification, requireService, requireDoctor,
 };
