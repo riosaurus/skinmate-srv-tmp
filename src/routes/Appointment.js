@@ -51,6 +51,7 @@ router.post(
       }
       
       // Creating Apointment document
+      
       const appointment = new Appointment({
           doctorId:req.body.doctorid,
           userId:user._id,
@@ -90,6 +91,7 @@ router.post(
 }
 catch(e){
   res.status(500).send(e)
+  console.log(e)
 }
 })
 

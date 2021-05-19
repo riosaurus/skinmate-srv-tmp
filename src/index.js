@@ -11,6 +11,7 @@ const {
 } = require('./routes');
 
 const App = express();
+App.use(express.json())
 App.use('/accounts', UserRouter);
 App.use(DoctorRouter);
 App.use(ServiceRouter);

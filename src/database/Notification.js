@@ -11,7 +11,7 @@ const notifcationSchema=new Schema({
   },
   fcm_token:{
    type:String,
-   required:true 
+   required:true
   },
   title:{
     type:String,
@@ -34,9 +34,14 @@ const notifcationSchema=new Schema({
     default:false
   }
 },{timestamps:true})
-
+notifcationSchema.pre('save', function (next) {
+  this.wasNew = this.isNew;
+  next();
+})
 notifcationSchema.post('save',function(){
- push_notification.trigger(this.type,this.fcm_token)
+   if(this.wasNew){
+    push_notification.trigger(this.type,this.fcm_token)
+   }
 })
 
 module.exports=model('Notification',notifcationSchema)

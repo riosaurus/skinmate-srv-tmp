@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 const { Router, urlencoded } = require('express');
+const { readFileSync, existsSync } = require('fs');
 const multer = require('multer');
-const sharp = require('sharp');
 const { middlewares, errors } = require('../utils');
 const { Doctor } = require('../database');
 
@@ -72,8 +72,8 @@ router.get('/doctors',
     }
   });
 
-router.get(
-  '/doctors/:id',
+router.get('/doctors/:id',
+  middlewares.requireDoctor(),
   async (request, response) => {
     try {
       // Get the doctor document
@@ -84,23 +84,17 @@ router.get(
           throw errors.FIND_DOCTOR_FAILED.error;
         });
 
-      if (!doctor) {
-        response.status(errors.NULL_DOCTOR.code);
-        throw errors.NULL_DOCTOR.error;
-      }
-
       response.json(doctor);
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
-router.patch(
-  '/doctors/:id',
+router.patch('/doctors/:id',
   urlencoded({ extended: true }),
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ admin: true }),
+  middlewares.requireDoctor(),
   middlewares.requireBody(),
   async (request, response) => {
     try {
@@ -146,12 +140,12 @@ router.patch(
     } catch (error) {
       response.send(error.message);
     }
-  },
-);
+  });
 
 router.delete('/doctors/:id',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ admin: true }),
+  middlewares.requireDoctor(),
   async (request, response) => {
     try {
       // Delete based on _id
@@ -170,29 +164,79 @@ router.delete('/doctors/:id',
   });
 
 const upload = multer({
-  limits: { fileSize: 1000000 },
-  fileFilter(_request, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      return cb(new Error('Please upload a jpeg or jpg or png'));
+  dest: 'assets/doctor-avatars',
+  limits: { fileSize: 800000 },
+  fileFilter(_request, file, callback) {
+    if (/^(image)\/(jpeg|jpg|png)$/.test(file.mimetype)) {
+      return callback(null, true);
     }
-    return cb(null, true);
+    return callback(null, false);
   },
 });
 
-router.post('/doctor/:id/avatar',
-  upload.single('file'),
+/**
+ * `http POST` request handler to upload user profile avatar
+ * * Requires `access-token` `device-id` `user-agent`
+ */
+router.post('/doctors/:id/avatar',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ admin: true }),
-  // Use buffer for avatar upload
+  middlewares.requireDoctor(),
+  upload.single('file'),
   async (request, response) => {
-    const buffer = await sharp(request.file.buffer).png().toBuffer();
-    const doctor = await Doctor.findById(request.params.id);
-    doctor.avatar = buffer;
-    await doctor.save();
-    response.send();
-  }, (error, request, response, next) => {
-    console.log(error);
-    response.status(400).send({ error });
+    try {
+      // Check for file existence
+      if (!request.file) {
+        response.status(errors.NULL_REQUEST_BODY);
+        throw errors.NULL_REQUEST_BODY.error;
+      }
+
+      await Doctor.updateOne(
+        { _id: request.params.userId },
+        { avatar: request.file.filename },
+      ).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
+      });
+
+      response.send('Avatar uploaded');
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
+
+/**
+ * `http POST` request handler to upload user profile avatar
+ * * Requires `access-token` `device-id` `user-agent`
+ */
+router.get('/doctors/:id/avatar',
+  middlewares.requireDoctor(),
+  async (request, response) => {
+    try {
+    // Get doctor document
+      const doctor = await Doctor.findById(request.params.id).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_DOCTOR_FAILED.code);
+        throw errors.FIND_DOCTOR_FAILED.error;
+      });
+
+      // Avatar path
+      const avatar = `assets/doctor-avatars/${doctor.avatar}`;
+
+      // Check if file exists
+      if (!existsSync(avatar)) {
+        response.status(errors.MEDIA_READ_FAILED.code);
+        throw errors.MEDIA_READ_FAILED.error;
+      }
+
+      const file = readFileSync(avatar);
+
+      response.contentType('jpeg');
+      response.send(file);
+    } catch (error) {
+      response.send(error.message);
+    }
   });
 
 module.exports = router;

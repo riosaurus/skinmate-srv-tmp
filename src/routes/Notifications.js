@@ -1,9 +1,9 @@
 const { Router } = require('express');
-const { Notification } = require('../database');
+const { Notification, } = require('../database');
 const {middlewares} =require('../utils')
 const router=Router()
-const push_notification=require('../utils/push-notification')
-
+const {FIREBASE_URL,SERVER_KEY} = require('../utils/variables')
+const axios = require('axios')
 /**
  * for demo purpose we are sending test notification 
  * 
@@ -13,13 +13,35 @@ const push_notification=require('../utils/push-notification')
 router.get(
   '/test-notification',
   async (request,response)=>{
-    try {
-      await push_notification.trigger('create','etFPAeTdQDiaTusYrLp7Uh:APA91bH4DAEJ0ZGs54cVvsJ-Pq0Qqm83DyNW5LvVmaibdzwQtbC9MW9kqRs9sxUkW7MCZ2doiOANz0ACJysB9-5wZ5jZibwm6Zyf0UCisfgnp-PvPvbla4J8xdYimyotX6EYKKb7eA2A')
-      response.status(200).send("notification sent")
-    } catch (error) {
-      response.status(500).send("error occured while sending notification")
+    const body={notification:{
+      body:"Demo push notification",
+      title:"Skin-Mate"
+      },
+     data:{
+        message:""
+      },
+      to:'etFPAeTdQDiaTusYrLp7Uh:APA91bH4DAEJ0ZGs54cVvsJ-Pq0Qqm83DyNW5LvVmaibdzwQtbC9MW9kqRs9sxUkW7MCZ2doiOANz0ACJysB9-5wZ5jZibwm6Zyf0UCisfgnp-PvPvbla4J8xdYimyotX6EYKKb7eA2A'
     }
-
+    axios({
+      method:"POST", 
+      url:FIREBASE_URL,
+      headers:{
+        'Content-Type':'application/json',
+        //server api-key for clould messanging
+        'Authorization':SERVER_KEY
+      },
+      data:body
+    }).then(res=>{
+      if(res.data.success){
+        response.status(200).send(res.data)
+      }
+      else{
+        response.status(500).send(res.data.results[0].error)
+      }
+    })
+    .catch(err=>{
+      console.log(err)
+    })
   }
 )
 /**
@@ -73,12 +95,13 @@ router.patch(
   '/notification/:userId',
   middlewares.requireHeaders({ accessToken: true, deviceId: true }),
   middlewares.requireVerification({ phone: true, email: true }),
-  async (request,response)=>{
+  async(request,response)=>{
     try {
-      let notification_id=req.body.n_id
-    let notifcation=await Notification.find({_id:notification_id,user:request.params.userId})
-    if(notifcation){
-      notifcation.checked=true
+    let notification_id=request.body.n_id
+    let notification = await Notification.findOne({_id:notification_id,user:request.params.userId})
+  
+    if(notification){
+      notification.checked=true
       await notification.save()
       response.status(200).send()
     }
@@ -86,7 +109,9 @@ router.patch(
       response.status(404).send("notification not found")
     }
     } catch (error) {
+      console.log(error)
       response.status(500).send(error)
+      
     }
   })
 
@@ -95,12 +120,12 @@ router.patch(
    */
 
   router.delete(
-    'notification/:userId/:n_id',
+    '/notification/:userId',
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async (request,response)=>{
      try {
-      await Notification.deleteOne({_id:request.params.n_id,user:request.params.userId})
+      await Notification.deleteOne({_id:request.body.n_id,user:request.params.userId})
       .then(res=>{
         response.status(200).send()
       })
