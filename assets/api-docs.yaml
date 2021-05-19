@@ -42,6 +42,11 @@ tags:
   externalDocs:
     description: "More on Appointments"
     url: "https://github.com/riosaurus/skinmate-srv-tmp#appointments"
+- name: "Notifications"
+  description: "Notification management"  
+  externalDocs:
+    description: "More on Notifications"
+    url: "https://github.com/riosaurus/skinmate-srv-tmp#notifications"  
 schemes:
 - "http"
 - "https"
@@ -881,6 +886,120 @@ paths:
       security:
       - device-id: []
         access-token: []
+  /test-notification:
+    get:
+      tags:
+      - "Notifications"
+      summary: "demo api for push notification"
+      description: "testing-api"
+      produces: 
+      - "application/json"
+      responses:
+        200:
+          description: "push-notification sent successfully"
+        500:
+          description: "server error"
+  /notifications/{userId}:
+    get:
+      tags:
+      - "Notifications"
+      summary: "fetch all notification for particular user"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "userId"
+        required: true
+        description: "user id"
+      responses:
+        200:
+          description: "Array of notifications"
+        404:
+          description: "notification not found"
+        500:
+          description: "server error"  
+      security:
+      - device-id: []
+        access-token: []  
+  /notification/{userId}/{n_id}:
+    get:
+      tags:
+      - "Notifications"
+      summary: "fetch all notification for particular user"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "userId"
+        required: true
+        description: "user id"
+      - in: "path"
+        name: "n_id"
+        description: "notification id"  
+      responses:
+        200:
+          description: "notification by id"
+        404:
+          description: "notification not found"
+        500:
+          description: "server error"  
+      security:
+      - device-id: []
+        access-token: []       
+  /notification/{userId}:
+    patch:
+      tags:
+      - "Notifications"
+      summary: "update the status of notification"
+      produces:
+      - "application/json"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "userId"
+        required: true
+        description: "user id"
+      - in: "body"
+        name: "n_id"
+        description: "notification id"  
+      responses:
+        200:
+          description: "notification status updated"
+        404:
+          description: "notification not found"
+        500:
+          description: "server error"  
+      security:
+      - device-id: []
+        access-token: []
+    delete:
+      tags:
+      - "Notifications"
+      summary: "delete notification"
+      produces:
+      - "application/json"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "userId"
+        required: true
+        description: "user id"
+      - in: "body"
+        name: "n_id"
+        description: "notification id"  
+      responses:
+        200:
+          description: "notification deleted"
+        404:
+          description: "notification not found"
+        500:
+          description: "server error"  
+      security:
+      - device-id: []
+        access-token: []    
+                
   /doctors:
     post:
       tags:
@@ -1616,6 +1735,40 @@ definitions:
       updatedAt:
         type: "string"
         format: "date-time"
+  Notifications:
+    type: object
+    required:
+      - user
+      - type
+      - title
+      - fcm_token
+      - date
+    properties:
+      _id:
+        type: String
+        format: hex
+        description: id for notification
+      type:
+        type: String
+        description: type of notification
+      fcm_token:
+        type: String
+        description: device-id of user 
+      date:
+        type: String
+        description: date and time of notification generation
+      title:
+        type: String,
+        description: title of notification
+      body:
+        type: String
+        description: body of notification
+      data:
+        type: String
+        description: event information of notification
+      checked:
+        type: Boolean
+        description: status of notification        
   Appointment:
     type: object
     required:
@@ -1671,3 +1824,4 @@ definitions:
 externalDocs:
   description: "More detailed documentation"
   url: "https://github.com/riosaurus/skinmate-srv-tmp"
+            

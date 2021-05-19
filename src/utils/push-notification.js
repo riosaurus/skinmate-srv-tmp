@@ -21,7 +21,7 @@ const push_notification = {
     }).then(response=>{
       if(response.data.success){
         console.log("success..")
-        console.log(response.data)
+        console.log(response.data )
       }
       else{
         console.log(response.data.results[0].error)
@@ -43,10 +43,10 @@ const push_notification = {
         push_notification.request({...NOTIFICATION_ACTION.create,"to":fcm_token})
         break
       case NOTIFICATION_TYPE.UPDATE_APPOINMENT :
-        notification.request({...NOTIFICATION_ACTION.reschedule,"to":fcm_token})
+        push_notification.request({...NOTIFICATION_ACTION.reschedule,"to":fcm_token})
         break
       case NOTIFICATION_TYPE.CANCEL_APPOINMENT :
-        notification.request({...NOTIFICATION_ACTION.cancel,"to":fcm_token})   
+        push_notification.request({...NOTIFICATION_ACTION.cancel,"to":fcm_token})   
         break 
     }
   }
