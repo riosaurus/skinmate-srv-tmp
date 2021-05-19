@@ -7,15 +7,17 @@ const swaggerUI = require('swagger-ui-express');
 const yaml = require('yamljs');
 const { constants, smsServer, emailServer } = require('./utils');
 const {
-  UserRouter, DoctorRouter, ServiceRouter, AppointmentRouter, LocationRouter,
+  UserRouter, DoctorRouter, ServiceRouter, AppointmentRouter, LocationRouter, NotificationRouter,
 } = require('./routes');
 
 const App = express();
+App.use(express.json())
 App.use('/accounts', UserRouter);
 App.use(DoctorRouter);
 App.use(ServiceRouter);
 App.use(AppointmentRouter);
 App.use(LocationRouter);
+App.use(NotificationRouter);
 const swaggerDocs = yaml.load('assets/api-docs.yaml');
 App.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 

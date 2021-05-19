@@ -20,7 +20,7 @@ const schema = new Schema({
     unique: true,
   },
   avatar: {
-    type: Buffer,
+    type: String,
   },
   qualification: {
     type: String,
@@ -30,7 +30,7 @@ const schema = new Schema({
     date: Date,
     time: [String],
   }],
-});
+},{timestamps:true});
 
 schema.virtual('service', {
   ref: 'Service',

@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@sendgrid/mail": "^7.4.2",
+    "axios": "^0.21.1",
     "bcryptjs": "^2.4.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
@@ -42,8 +43,6 @@
     "mjml": "^4.9.3",
     "mongoose": "^5.12.5",
     "multer": "^1.4.2",
-    "node-fetch": "^2.6.1",
-    "sharp": "^0.28.1",
     "socket.io": "^4.0.1",
     "speakeasy": "^2.0.0",
     "swagger-ui-express": "^4.1.6",

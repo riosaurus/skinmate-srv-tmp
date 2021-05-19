@@ -81,11 +81,14 @@ const usersSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  fcm_token:{
+    type:String
+  },
   clients: [{
     type: Schema.Types.ObjectId,
     ref: 'Client',
   }],
-  avatar: Buffer,
+  avatar: String,
 }, {
   timestamps: true,
 });

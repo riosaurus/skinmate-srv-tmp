@@ -8,20 +8,32 @@ module.exports={
   },
   NOTIFICATION_ACTION : 
   {
-    'create' : {
-      title : '',
-      subtitle :``,
-      body : '',
+    create : {
+      notification:{
+        body:"apppoinment scheduled succesfully.",
+        title:"Skin-Mate"
+        },
+       data:{
+          message:""
+        },
     },
-    're-schedule' : {
-      title : '',
-      subtitle : '',
-      body : '',
+    reschedule : {
+      notification:{
+        body:"appoinment re-scheduled.",
+        title:"Skin-Mate"
+        },
+       data:{
+          message:""
+        },
     },
-    'cancel' : {
-      title : '',
-      subtitle : '',
-      body : '',
+    cancel: {
+      notification:{
+        body:"appoinment canceled",
+        title:"Skin-Mate"
+        },
+       data:{
+          message:""
+        },
     },
   }
 }
