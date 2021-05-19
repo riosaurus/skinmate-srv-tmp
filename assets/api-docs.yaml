@@ -282,6 +282,57 @@ paths:
       security:
       - device-id: []
         access-token: []
+  /accounts/avatar:
+    post:
+      tags:
+      - "Accounts"
+      summary: "Upload profile picture"
+      description: "Only JPEG images are supported currently"
+      operationId: "uploadAvatar"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "text/plain"
+      parameters:
+      - in: "formData"
+        name: "file"
+        description: "JPEG Image"
+        type: "string"
+        format: "binary"
+      responses:
+        200:
+          description: "Login success"
+          schema:
+            $ref: "#/definitions/Client"
+        403:
+          description: "User agent header missing"
+        404:
+          description: "User doesn't exist or password incorrect"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+    get:
+      tags:
+      - "Accounts"
+      summary: "Get profile picture"
+      description: ""
+      operationId: "getAvatar"
+      produces:
+      - "image/jpeg"
+      responses:
+        200:
+          description: "Profile picture"
+        403:
+          description: "User agent header missing"
+        404:
+          description: "User doesn't exist or password incorrect"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
   /accounts/verify/phone:
     get:
       tags:
@@ -1122,6 +1173,65 @@ paths:
       security:
       - device-id: []
         access-token: []        
+  /doctors/{id}/avatar:
+    post:
+      tags:
+      - "Doctors"
+      summary: "Upload doctor picture"
+      description: "Only JPEG images are supported currently"
+      operationId: "uploadDoctorAvatar"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "text/plain"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: "Doctor id"
+      - in: "formData"
+        name: "file"
+        description: "JPEG Image"
+        type: "string"
+        format: "binary"
+      responses:
+        200:
+          description: "Login success"
+          schema:
+            $ref: "#/definitions/Client"
+        403:
+          description: "User agent header missing"
+        404:
+          description: "User doesn't exist or password incorrect"
+        500:
+          description: "Server error"
+      security:
+      - device-id: []
+        access-token: []
+    get:
+      tags:
+      - "Doctors"
+      summary: "Get doctor picture"
+      description: ""
+      operationId: "getDoctorAvatar"
+      produces:
+      - "image/jpeg"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: "Doctor id"
+      responses:
+        200:
+          description: "Profile picture"
+        403:
+          description: "User agent header missing"
+        404:
+          description: "User doesn't exist or password incorrect"
+        500:
+          description: "Server error"
   /appointments:
     post:
       tags:

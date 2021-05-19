@@ -95,8 +95,6 @@ schema.post('save', async function onSave() {
 /**
  * creating notification for cancel notification
  */
-
-
 schema.post('remove', async function onRemove() {
   try {
   const time = new Date();

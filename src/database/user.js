@@ -88,7 +88,7 @@ const usersSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Client',
   }],
-  avatar: Buffer,
+  avatar: String,
 }, {
   timestamps: true,
 });

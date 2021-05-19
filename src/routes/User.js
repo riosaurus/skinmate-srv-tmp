@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 const { compare } = require('bcryptjs');
 const { Router, urlencoded } = require('express');
+const { readFileSync, existsSync } = require('fs');
 const multer = require('multer');
-const sharp = require('sharp');
 const {
   User, Client, TOTP, Family,
 } = require('../database');
@@ -102,6 +102,82 @@ router.get('/',
     }
   });
 
+const upload = multer({
+  dest: 'assets/user-avatars',
+  limits: { fileSize: 800000 },
+  fileFilter(_request, file, callback) {
+    if (/^(image)\/(jpeg|jpg)$/.test(file.mimetype)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+});
+
+/**
+ * `http POST` request handler to upload user profile avatar
+ * * Requires `access-token` `device-id` `user-agent`
+ */
+router.post('/avatar',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  upload.single('file'),
+  async (request, response) => {
+    try {
+      // Check for file existence
+      if (!request.file) {
+        response.status(errors.NULL_REQUEST_BODY.code);
+        throw errors.NULL_REQUEST_BODY.error;
+      }
+
+      await User.updateOne(
+        { _id: request.params.userId },
+        { avatar: request.file.filename },
+      ).catch((error) => {
+        console.error(error);
+        response.status(errors.UPDATE_USER_FAILED.code);
+        throw errors.UPDATE_USER_FAILED.error;
+      });
+
+      response.send('Avatar uploaded');
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
+
+/**
+ * `http POST` request handler to upload user profile avatar
+ * * Requires `access-token` `device-id` `user-agent`
+ */
+router.get('/avatar',
+  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
+  middlewares.requireVerification({ phone: true, email: true }),
+  async (request, response) => {
+    try {
+      // Get user document
+      const user = await User.findById(request.params.userId).catch((error) => {
+        console.error(error);
+        response.status(errors.FIND_USER_FAILED.code);
+        throw errors.FIND_USER_FAILED.error;
+      });
+
+      // Avatar path
+      const avatar = `assets/user-avatars/${user.avatar}`;
+
+      // Check if file exists
+      if (!existsSync(avatar)) {
+        response.status(errors.MEDIA_READ_FAILED.code);
+        throw errors.MEDIA_READ_FAILED.error;
+      }
+
+      const file = readFileSync(avatar);
+
+      response.contentType('jpeg');
+      response.send(file);
+    } catch (error) {
+      response.send(error.message);
+    }
+  });
+
 /**
 * `http PATCH` request handler to edit user profile
 * * Requires `access-token` `device-id`
@@ -195,57 +271,6 @@ router.delete('/',
       //   });
 
       response.send('Account deleted');
-    } catch (error) {
-      response.send(error.message);
-    }
-  });
-
-const upload = multer({
-  limits: { fileSize: 1000000 },
-  fileFilter(_, file, cb) {
-    let error = null;
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      error = new Error('Not a JPEG/PNG image');
-      // return cb(new Error('Not a JPEG/PNG image'));
-    }
-    // cb(null, true);
-    // return null;
-    return cb(error, !!error);
-  },
-});
-
-/**
- * `http POST` request handler to upload user profile avatar
- * * Requires `access-token` `device-id` `user-agent`
- */
-router.post('/avatar',
-  middlewares.requireHeaders({ accessToken: true, deviceId: true }),
-  middlewares.requireVerification({ phone: true, email: true }),
-  upload.single('file'),
-  async (request, response) => {
-    try {
-      // Get the use document
-      const user = await User.findById(request.params.userId)
-        .catch((error) => {
-          console.error(error);
-          response.status(errors.FIND_USER_FAILED.code);
-          throw errors.FIND_USER_FAILED.error;
-        });
-
-      const buffer = await sharp(request.file.buffer)
-        .png()
-        .toBuffer()
-        .catch((error) => {
-          console.log(error);
-          response.status(errors.IMAGE_READ_FAILED.code);
-          throw errors.IMAGE_READ_FAILED.error;
-        });
-
-      user.avatar = buffer;
-
-      await user.save();
-
-      response.send('avatar uploaded');
     } catch (error) {
       response.send(error.message);
     }
