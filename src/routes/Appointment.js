@@ -350,7 +350,7 @@ router.get('/appointments/details',
 
 
 router.post('/appointments/insurance',
-    express.json(),
+    urlencoded({ extended: true }),
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
