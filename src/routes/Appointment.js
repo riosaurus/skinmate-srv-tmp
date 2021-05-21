@@ -321,6 +321,9 @@ router.get(
             }
         }
         appointments = await Appointment.find({userId:req.params.userId,isDeleted:false})
+        if(appointments.length===0){
+            return res.status(200).send("No appointments to show")
+        }
         var array = []
         for(let i = 0;i<appointments.length;i++){
             let doctor = await Doctor.findById({_id:appointments[i].doctorId})
