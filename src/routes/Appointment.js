@@ -290,36 +290,36 @@ router.get(
 
         // Removing expired appointments
         let appointments = await Appointment.find({userId:req.params.userId,isDeleted:false})
-        for(let i=0;i<appointments.length;i++){
-            // Since time is stored as String type, we need to convert that string to Valid datetime 
-            let index = appointments[i].time[0].indexOf(":")
-            let hour = appointments[i].time[0].slice(0,index)
-            let minute = appointments[i].time[0].slice(index+1,appointments[i].time[0].length)
-            let appointment_date = new Date(appointments[i].date)
-            appointment_date.setHours(hour,minute) 
-            if(appointment_date<new Date()){
-                const doctor = await Doctor.findById(appointments[i].doctorId)
-                await appointments[i].updateOne({isDeleted:true})
+//         for(let i=0;i<appointments.length;i++){
+//             // Since time is stored as String type, we need to convert that string to Valid datetime 
+//             let index = appointments[i].time[0].indexOf(":")
+//             let hour = appointments[i].time[0].slice(0,index)
+//             let minute = appointments[i].time[0].slice(index+1,appointments[i].time[0].length)
+//             let appointment_date = new Date(appointments[i].date)
+//             appointment_date.setHours(hour,minute) 
+//             if(appointment_date<new Date()){
+//                 const doctor = await Doctor.findById(appointments[i].doctorId)
+//                 await appointments[i].updateOne({isDeleted:true})
                 
-                //Updating busy slots of the doctor
+//                 //Updating busy slots of the doctor
     
-                let index
-                for(let j=0;j<doctor.busySlots.length;j++){
-                    if(doctor.busySlots[j].date.getTime() === appointments[i].date.getTime()){   
-                        index = j
-                        break
-                    }   
-                }  
-                if(index){
-                    const array = doctor.busySlots[index].time.filter(tim => !appointments[i].time.includes(tim))
-                    doctor.busySlots[index].time = array
-                    if(doctor.busySlots[index].time.length===0){
-                        doctor.busySlots.splice(index,1)
-                    }
-                    await doctor.save() 
-                }
-            }
-        }
+//                 let index
+//                 for(let j=0;j<doctor.busySlots.length;j++){
+//                     if(doctor.busySlots[j].date.getTime() === appointments[i].date.getTime()){   
+//                         index = j
+//                         break
+//                     }   
+//                 }  
+//                 if(index){
+//                     const array = doctor.busySlots[index].time.filter(tim => !appointments[i].time.includes(tim))
+//                     doctor.busySlots[index].time = array
+//                     if(doctor.busySlots[index].time.length===0){
+//                         doctor.busySlots.splice(index,1)
+//                     }
+//                     await doctor.save() 
+//                 }
+//             }
+//         }
         appointments = await Appointment.find({userId:req.params.userId,isDeleted:false})
         if(appointments.length===0){
             return res.status(200).send("No appointments to show")
