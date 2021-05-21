@@ -49,9 +49,38 @@ router.post(
             return res.status(403).send("Selected slots are not continous or invalid")
         }
       }
-      
-      // Creating Apointment document
-      
+
+      //Validating if the selected slots are available
+       const doctor =  await Doctor.findById({_id:req.body.doctorid})
+       if(!doctor){
+          return res.status(403).send("Could not find doctor")
+       }
+
+       const date = new Date(req.body.date)
+       const busySlots = doctor.busySlots
+       let bool1 = false
+       let index1
+       for(let j=0;j<busySlots.length;j++){
+           if(date.getTime()===busySlots[j].date.getTime()){
+               bool1 = true
+               index1 = j
+               break
+           }
+       }
+       
+
+       let bool2 = false
+       if(bool1===true & typeof index1 !== "undefined"){
+            for(let k = 0;k<req.body.time.length;k++){
+                bool2 = bool2 || busySlots[index1].time.includes(req.body.time[k])
+            }
+       }
+       
+       if(bool2===true){
+           return res.status(403).send("Selected slots are booked already")
+       }
+    
+      //Creating Apointment document
       const appointment = new Appointment({
           doctorId:req.body.doctorid,
           userId:user._id,
@@ -65,15 +94,9 @@ router.post(
 
 
       //Updating the Busy Slots of the doctor
-      const doctor =  await Doctor.findById({_id:req.body.doctorid})
-      if(!doctor){
-          return res.status(403).send("Could not find doctor")
-      }
-
       // If the new appointment date is already present in the Busy slots of doctor,then we just add the new time to that date
       // Else we create new busy Slot with respect to new appointment and time
       let bool = false
-      const date = new Date(req.body.date) 
       for(let i = 0;i<doctor.busySlots.length;i++){ 
           if(doctor.busySlots[i].date.getTime()===date.getTime()){
               doctor.busySlots[i].time = doctor.busySlots[i].time.concat(req.body.time)
@@ -91,7 +114,6 @@ router.post(
 }
 catch(e){
   res.status(500).send(e)
-  console.log(e)
 }
 })
 
@@ -280,22 +302,24 @@ router.get(
                 await appointments[i].updateOne({isDeleted:true})
                 
                 //Updating busy slots of the doctor
+    
                 let index
-                for(let i=0;i<doctor.busySlots.length;i++){
-                    if(doctor.busySlots[i].date.getTime() === appointments[i].date.getTime()){   
-                        index = i
+                for(let j=0;j<doctor.busySlots.length;j++){
+                    if(doctor.busySlots[j].date.getTime() === appointments[i].date.getTime()){   
+                        index = j
                         break
                     }   
                 }  
-                const array = doctor.busySlots[index].time.filter(tim => !appointments[i].time.includes(tim))
-                doctor.busySlots[index].time = array
-                if (doctor.busySlots[index].time.length===0){
-                    doctor.busySlots.splice(index,1)
+                if(index){
+                    const array = doctor.busySlots[index].time.filter(tim => !appointments[i].time.includes(tim))
+                    doctor.busySlots[index].time = array
+                    if(doctor.busySlots[index].time.length===0){
+                        doctor.busySlots.splice(index,1)
+                    }
+                    await doctor.save() 
                 }
-                await doctor.save()   
             }
         }
-         
         appointments = await Appointment.find({userId:req.params.userId,isDeleted:false})
         var array = []
         for(let i = 0;i<appointments.length;i++){
@@ -350,7 +374,7 @@ router.get('/appointments/details',
 
 
 router.post('/appointments/insurance',
-    urlencoded({ extended: true }),
+    urlencoded({ extended: true }),  
     middlewares.requireHeaders({ accessToken: true, deviceId: true }),
     middlewares.requireVerification({ phone: true, email: true }),
     async(req,res)=>{
