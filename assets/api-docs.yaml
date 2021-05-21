@@ -921,7 +921,7 @@ paths:
       security:
       - device-id: []
         access-token: []  
-  /notification/{userId}/{n_id}:
+  /notifications/{userId}/{n_id}:
     get:
       tags:
       - "Notifications"
